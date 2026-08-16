@@ -34,7 +34,52 @@ class ThemePalette {
 
 class AppPalettes {
   static const List<ThemePalette> list = [
-    // 0: Pastel Pink
+    // 0: Light Blue (Fish 🐟)
+    ThemePalette(
+      name: 'Light Blue',
+      emoji: '🐟',
+      primary: Color(0xFF0284C7),
+      onPrimary: Colors.white,
+      primaryContainer: Color(0xFFE0F2FE),
+      onPrimaryContainer: Color(0xFF0369A1),
+      secondary: Color(0xFF38BDF8),
+      surface: Color(0xFFF0F9FF),
+      onSurface: Color(0xFF0C4A6E),
+      background: Color(0xFFE0F2FE),
+      cardColor: Color(0xFFFFFFFF),
+      selectedCellColor: Color(0xFFBAE6FD),
+    ),
+    // 1: Deep Ocean (Tropical Fish 🐠)
+    ThemePalette(
+      name: 'Deep Ocean',
+      emoji: '🐠',
+      primary: Color(0xFF1D4ED8),
+      onPrimary: Colors.white,
+      primaryContainer: Color(0xFFDBEAFE),
+      onPrimaryContainer: Color(0xFF1E3A8A),
+      secondary: Color(0xFF3B82F6),
+      surface: Color(0xFFEFF6FF),
+      onSurface: Color(0xFF1E293B),
+      background: Color(0xFFDBEAFE),
+      cardColor: Color(0xFFFFFFFF),
+      selectedCellColor: Color(0xFFBFDBFE),
+    ),
+    // 2: Aqua Lagoon (Blowfish 🐡)
+    ThemePalette(
+      name: 'Aqua Lagoon',
+      emoji: '🐡',
+      primary: Color(0xFF0891B2),
+      onPrimary: Colors.white,
+      primaryContainer: Color(0xFFCFFAFE),
+      onPrimaryContainer: Color(0xFF155E75),
+      secondary: Color(0xFF06B6D4),
+      surface: Color(0xFFECFEFF),
+      onSurface: Color(0xFF083344),
+      background: Color(0xFFCFFAFE),
+      cardColor: Color(0xFFFFFFFF),
+      selectedCellColor: Color(0xFFA5F3FC),
+    ),
+    // 3: Pastel Pink
     ThemePalette(
       name: 'Pastel Pink',
       emoji: '🌸',
@@ -49,7 +94,7 @@ class AppPalettes {
       cardColor: Color(0xFFFFF9FA),
       selectedCellColor: Color(0xFFF5BFC5),
     ),
-    // 1: Starry Night
+    // 4: Starry Night
     ThemePalette(
       name: 'Starry Night',
       emoji: '🌌',
@@ -65,7 +110,7 @@ class AppPalettes {
       selectedCellColor: Color(0xFF475569),
       isDark: true,
     ),
-    // 2: Matcha Green
+    // 5: Matcha Green
     ThemePalette(
       name: 'Matcha Green',
       emoji: '🌿',
@@ -80,7 +125,7 @@ class AppPalettes {
       cardColor: Color(0xFFF7F8F4),
       selectedCellColor: Color(0xFFA3B18A),
     ),
-    // 3: Soft Lavender
+    // 6: Soft Lavender
     ThemePalette(
       name: 'Soft Lavender',
       emoji: '🪻',
@@ -95,7 +140,7 @@ class AppPalettes {
       cardColor: Color(0xFFFFFFFF),
       selectedCellColor: Color(0xFFDDD6FE),
     ),
-    // 4: Warm Sunset
+    // 7: Warm Sunset
     ThemePalette(
       name: 'Warm Sunset',
       emoji: '🌅',
@@ -110,7 +155,7 @@ class AppPalettes {
       cardColor: Color(0xFFFFFFFF),
       selectedCellColor: Color(0xFFFED7AA),
     ),
-    // 5: Cozy Coffee
+    // 8: Cozy Coffee
     ThemePalette(
       name: 'Cozy Coffee',
       emoji: '☕',
@@ -125,7 +170,7 @@ class AppPalettes {
       cardColor: Color(0xFFFDFBF7),
       selectedCellColor: Color(0xFFDEB887),
     ),
-    // 6: Ocean Breeze
+    // 9: Ocean Breeze
     ThemePalette(
       name: 'Ocean Breeze',
       emoji: '🌊',
@@ -140,7 +185,7 @@ class AppPalettes {
       cardColor: Color(0xFFF8FEFD),
       selectedCellColor: Color(0xFF99F6E4),
     ),
-    // 7: Neon Cyberpunk
+    // 10: Neon Cyberpunk
     ThemePalette(
       name: 'Neon Cyberpunk',
       emoji: '⚡',
@@ -156,7 +201,7 @@ class AppPalettes {
       selectedCellColor: Color(0xFF3F3F46),
       isDark: true,
     ),
-    // 8: Minimal Light
+    // 11: Minimal Light
     ThemePalette(
       name: 'Minimal Light',
       emoji: '⚪',
@@ -171,7 +216,7 @@ class AppPalettes {
       cardColor: Color(0xFFFFFFFF),
       selectedCellColor: Color(0xFFCBD5E1),
     ),
-    // 9: Minimal Dark
+    // 12: Minimal Dark
     ThemePalette(
       name: 'Minimal Dark',
       emoji: '🖤',

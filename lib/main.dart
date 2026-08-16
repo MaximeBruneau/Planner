@@ -35,7 +35,7 @@ class VibeCalendarApp extends ConsumerWidget {
     final themeData = AppTheme.getTheme(settings.themeIndex);
 
     return MaterialApp(
-      title: 'My Everyday Vibe 🌸',
+      title: 'My Vibe 🌸',
       debugShowCheckedModeBanner: false,
       theme: themeData,
       home: const CalendarScreen(),

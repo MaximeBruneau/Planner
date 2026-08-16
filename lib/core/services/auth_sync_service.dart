@@ -4,62 +4,198 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/mood_entry.dart';
+import '../../models/app_user.dart';
+import '../../firebase_options.dart';
 import 'storage_service.dart';
 
 class AuthSyncService {
   final StorageService _storageService;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  User? _currentUser;
+  AppUser? _currentUser;
   bool _isFirebaseInitialized = false;
 
   AuthSyncService(this._storageService);
 
-  User? get currentUser => _currentUser;
+  AppUser? get currentUser => _currentUser;
   bool get isSignedIn => _currentUser != null;
 
   Future<void> init() async {
+    // 1. Restore local cached user session
+    _currentUser = _storageService.getSavedUser();
+
+    // 2. Try Firebase initialization
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       _isFirebaseInitialized = true;
-      _currentUser = FirebaseAuth.instance.currentUser;
+
+      if (kIsWeb) {
+        try {
+          final redirectResult =
+              await FirebaseAuth.instance.getRedirectResult();
+          if (redirectResult.user != null) {
+            final fbUser = redirectResult.user!;
+            _currentUser = AppUser(
+              id: fbUser.uid,
+              email: fbUser.email ?? '',
+              displayName: fbUser.displayName ??
+                  (fbUser.email?.split('@')[0] ?? 'User'),
+              photoUrl: fbUser.photoURL,
+            );
+            await _storageService.saveUser(_currentUser);
+            await syncCloudData();
+          }
+        } catch (e) {
+          debugPrint('Redirect auth check notice: $e');
+        }
+      }
+
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser != null && _currentUser == null) {
+        _currentUser = AppUser(
+          id: fbUser.uid,
+          email: fbUser.email ?? '',
+          displayName:
+              fbUser.displayName ?? (fbUser.email?.split('@')[0] ?? 'User'),
+          photoUrl: fbUser.photoURL,
+        );
+        await _storageService.saveUser(_currentUser);
+      }
     } catch (e) {
-      debugPrint('Firebase init notice (running in local fallback mode): $e');
+      debugPrint('Firebase init notice (local-first mode): $e');
       _isFirebaseInitialized = false;
+    }
+
+    // 3. Try silent sign-in with Google if available
+    try {
+      final googleUser = await _googleSignIn.signInSilently();
+      if (googleUser != null) {
+        _currentUser = AppUser(
+          id: googleUser.id,
+          email: googleUser.email,
+          displayName:
+              googleUser.displayName ?? googleUser.email.split('@')[0],
+          photoUrl: googleUser.photoUrl,
+        );
+        await _storageService.saveUser(_currentUser);
+      }
+    } catch (e) {
+      debugPrint('Silent Google Sign In notice: $e');
     }
   }
 
   /// Sign in with Google
-  Future<User?> signInWithGoogle() async {
+  Future<AppUser?> signInWithGoogle() async {
     try {
-      if (!_isFirebaseInitialized) {
-        await init();
+      debugPrint('Starting Google Sign In flow...');
+
+      if (kIsWeb) {
+        if (!_isFirebaseInitialized) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+          _isFirebaseInitialized = true;
+        }
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+
+        try {
+          final UserCredential userCredential =
+              await FirebaseAuth.instance.signInWithPopup(googleProvider);
+          final User? fbUser = userCredential.user;
+          if (fbUser != null) {
+            _currentUser = AppUser(
+              id: fbUser.uid,
+              email: fbUser.email ?? '',
+              displayName: fbUser.displayName ??
+                  (fbUser.email?.split('@')[0] ?? 'User'),
+              photoUrl: fbUser.photoURL,
+            );
+            await _storageService.saveUser(_currentUser);
+            await syncCloudData();
+            return _currentUser;
+          }
+        } catch (popupError) {
+          debugPrint('Popup sign in error (trying redirect for Safari): $popupError');
+          final errStr = popupError.toString().toLowerCase();
+          if (errStr.contains('popup') ||
+              errStr.contains('blocked') ||
+              errStr.contains('cancelled') ||
+              errStr.contains('closed')) {
+            await FirebaseAuth.instance.signInWithRedirect(googleProvider);
+            return null;
+          }
+          rethrow;
+        }
+        return null;
       }
 
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // Cancelled by user
+      if (googleUser == null) {
+        debugPrint('Google Sign In cancelled by user');
+        return null;
+      }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      debugPrint('Google user selected: ${googleUser.email}');
+
+      // Create and persist AppUser immediately
+      _currentUser = AppUser(
+        id: googleUser.id,
+        email: googleUser.email,
+        displayName: googleUser.displayName ?? googleUser.email.split('@')[0],
+        photoUrl: googleUser.photoUrl,
       );
+      await _storageService.saveUser(_currentUser);
 
-      final UserCredential userCredential =
+      // Attempt Firebase linking & cloud backup if Firebase credentials & network are available
+      try {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        if (googleAuth.idToken != null || googleAuth.accessToken != null) {
+          if (!_isFirebaseInitialized) {
+            await Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform,
+            );
+            _isFirebaseInitialized = true;
+          }
+
+          final OAuthCredential credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
+
           await FirebaseAuth.instance.signInWithCredential(credential);
-      _currentUser = userCredential.user;
-
-      // Sync data after successful login
-      if (_currentUser != null) {
-        await syncCloudData();
+          await syncCloudData();
+        }
+      } catch (fbError) {
+        debugPrint('Firebase/Cloud linking notice (offline/local mode active): $fbError');
       }
 
       return _currentUser;
     } catch (e) {
-      debugPrint('Google Sign In Error: $e');
-      return null;
+      debugPrint('Google Sign In general error: $e');
+      return _currentUser;
     }
+  }
+
+  /// Manually set or update user profile (e.g. for offline / custom profile)
+  Future<AppUser> setUserProfile({
+    required String displayName,
+    required String email,
+    String? photoUrl,
+  }) async {
+    _currentUser = AppUser(
+      id: _currentUser?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      email: email.trim(),
+      displayName: displayName.trim().isNotEmpty ? displayName.trim() : 'Friend 🌸',
+      photoUrl: photoUrl,
+    );
+    await _storageService.saveUser(_currentUser);
+    return _currentUser!;
   }
 
   /// Sign Out
@@ -70,6 +206,7 @@ class AuthSyncService {
         await FirebaseAuth.instance.signOut();
       }
       _currentUser = null;
+      await _storageService.saveUser(null);
     } catch (e) {
       debugPrint('Sign Out Error: $e');
     }
@@ -80,7 +217,7 @@ class AuthSyncService {
     if (!_isFirebaseInitialized || _currentUser == null) return;
 
     try {
-      final uid = _currentUser!.uid;
+      final uid = _currentUser!.id;
       final firestore = FirebaseFirestore.instance;
       final collection = firestore.collection('users').doc(uid).collection('mood_entries');
 
@@ -111,7 +248,7 @@ class AuthSyncService {
   Future<void> backupSingleEntry(MoodEntry entry) async {
     if (!_isFirebaseInitialized || _currentUser == null) return;
     try {
-      final uid = _currentUser!.uid;
+      final uid = _currentUser!.id;
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -127,7 +264,7 @@ class AuthSyncService {
   Future<void> deleteCloudEntry(String dateStr) async {
     if (!_isFirebaseInitialized || _currentUser == null) return;
     try {
-      final uid = _currentUser!.uid;
+      final uid = _currentUser!.id;
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)

@@ -71,7 +71,7 @@ class NotificationService {
 
       await _notificationsPlugin.zonedSchedule(
         1001,
-        'My Everyday Vibe 🌸',
+        'My Vibe 🌸',
         message,
         tz.TZDateTime.from(scheduledDate, tz.local),
         const NotificationDetails(
@@ -109,7 +109,7 @@ class NotificationService {
     try {
       await _notificationsPlugin.show(
         9999,
-        'My Everyday Vibe 🌸',
+        'My Vibe 🌸',
         message,
         const NotificationDetails(
           android: AndroidNotificationDetails(

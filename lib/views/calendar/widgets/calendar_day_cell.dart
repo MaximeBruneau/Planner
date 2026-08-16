@@ -40,10 +40,10 @@ class CalendarDayCell extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.all(3.0),
+      margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 1.0),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(10.0),
         border: border,
       ),
       child: Column(
@@ -52,19 +52,19 @@ class CalendarDayCell extends StatelessWidget {
           Text(
             '${day.day}',
             style: GoogleFonts.fredoka(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
               color: textColor,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           if (emoji != null && emoji!.isNotEmpty)
             Text(
               emoji!,
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 14, height: 1.1),
             )
           else
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
         ],
       ),
     );

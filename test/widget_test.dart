@@ -22,7 +22,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Verify main screen renders title containing "My Everyday Vibe"
-    expect(find.textContaining('My Everyday Vibe'), findsOneWidget);
+    // Verify main screen renders title "My Vibe "
+    expect(find.text('My Vibe '), findsOneWidget);
   });
 }

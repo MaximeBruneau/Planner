@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../models/app_user.dart';
 import '../core/services/auth_sync_service.dart';
 import 'mood_provider.dart';
 
 class AuthState {
-  final User? user;
+  final AppUser? user;
   final bool isLoading;
   final String? errorMessage;
 
@@ -17,7 +17,7 @@ class AuthState {
   bool get isSignedIn => user != null;
 
   AuthState copyWith({
-    User? user,
+    AppUser? user,
     bool? isLoading,
     String? errorMessage,
   }) {
@@ -43,7 +43,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthState(user: _authSyncService.currentUser);
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<AppUser?> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final user = await _authSyncService.signInWithGoogle();
@@ -52,13 +52,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Refresh mood provider data after sync
         _ref.read(moodProvider.notifier).loadEntries();
       }
+      return user;
     } catch (e) {
-      state = AuthState(
+      state = const AuthState(
         user: null,
         isLoading: false,
         errorMessage: 'Failed to sign in with Google',
       );
+      return null;
     }
+  }
+
+  Future<void> setUserProfile({
+    required String displayName,
+    required String email,
+    String? photoUrl,
+  }) async {
+    state = state.copyWith(isLoading: true);
+    final user = await _authSyncService.setUserProfile(
+      displayName: displayName,
+      email: email,
+      photoUrl: photoUrl,
+    );
+    state = AuthState(user: user, isLoading: false);
   }
 
   Future<void> signOut() async {

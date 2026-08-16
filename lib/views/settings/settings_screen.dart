@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -149,10 +150,10 @@ class SettingsScreen extends ConsumerWidget {
                       Row(
                         children: [
                           CircleAvatar(
-                            backgroundImage: authState.user?.photoURL != null
-                                ? NetworkImage(authState.user!.photoURL!)
+                            backgroundImage: authState.user?.photoUrl != null
+                                ? NetworkImage(authState.user!.photoUrl!)
                                 : null,
-                            child: authState.user?.photoURL == null
+                            child: authState.user?.photoUrl == null
                                 ? const Icon(Icons.person_rounded)
                                 : null,
                           ),
@@ -207,18 +208,60 @@ class SettingsScreen extends ConsumerWidget {
                         ],
                       )
                     ] else ...[
-                      ElevatedButton.icon(
-                        onPressed: authState.isLoading
-                            ? null
-                            : () => ref
-                                .read(authProvider.notifier)
-                                .signInWithGoogle(),
-                        icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
-                        label: Text(
-                          authState.isLoading
-                              ? "Signing In..."
-                              : "Sign in with Google",
-                        ),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: authState.isLoading
+                                ? null
+                                : () async {
+                                    final user = await ref
+                                        .read(authProvider.notifier)
+                                        .signInWithGoogle();
+                                    if (context.mounted) {
+                                      if (user != null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                "Welcome, ${user.displayName}! 🌸 Google backup connected."),
+                                            duration: const Duration(seconds: 3),
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                kIsWeb
+                                                    ? "Google Sign-In canceled or blocked. Please ensure popups are allowed and Google Auth is enabled in Firebase."
+                                                    : "Google Sign-In could not be completed."),
+                                            duration: const Duration(seconds: 4),
+                                            behavior: SnackBarBehavior.floating,
+                                            action: SnackBarAction(
+                                              label: "Set Profile",
+                                              onPressed: () => _showProfileDialog(context, ref),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
+                            label: Text(
+                              authState.isLoading
+                                  ? "Signing In..."
+                                  : "Sign in with Google",
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: authState.isLoading
+                                ? null
+                                : () => _showProfileDialog(context, ref),
+                            icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                            label: const Text("Custom Profile 👤"),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -229,6 +272,111 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showProfileDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            left: 24,
+            right: 24,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurface.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Personalize Your Profile 🌸",
+                style: GoogleFonts.fredoka(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Enter your name and email to personalize your calendar experience.",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Your Name / Nickname",
+                  hintText: "e.g. Best Friend 🌸",
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: "Email Address",
+                  hintText: "e.g. friend@example.com",
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final email = emailController.text.trim();
+                    if (name.isEmpty && email.isEmpty) {
+                      Navigator.pop(ctx);
+                      return;
+                    }
+                    ref.read(authProvider.notifier).setUserProfile(
+                          displayName: name.isNotEmpty ? name : 'Friend 🌸',
+                          email: email.isNotEmpty ? email : 'friend@vibecalendar.app',
+                        );
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Profile saved for ${name.isNotEmpty ? name : 'Friend'}! 🌸"),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: const Text("Save Profile ✨"),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

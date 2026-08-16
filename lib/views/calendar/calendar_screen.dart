@@ -69,7 +69,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final settings = ref.watch(settingsProvider);
     final authState = ref.watch(authProvider);
 
-    final palette = AppPalettes.list[settings.themeIndex];
+    final paletteIndex = (settings.themeIndex >= 0 && settings.themeIndex < AppPalettes.list.length)
+        ? settings.themeIndex
+        : 0;
+    final palette = AppPalettes.list[paletteIndex];
 
     final isFuture = _isFutureDate(_selectedDay);
     final selectedEntry = ref.read(moodProvider.notifier).getEntryForDate(_selectedDay);
@@ -77,14 +80,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "My Everyday Vibe ${palette.emoji}",
+              "My Vibe ",
               style: GoogleFonts.fredoka(
-                fontSize: 22,
+                fontSize: 21,
                 fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
+            ),
+            Text(
+              palette.emoji,
+              style: const TextStyle(fontSize: 21),
             ),
           ],
         ),
@@ -118,14 +126,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: colorScheme.primaryContainer,
-                backgroundImage: authState.user?.photoURL != null
-                    ? NetworkImage(authState.user!.photoURL!)
+                backgroundImage: authState.user?.photoUrl != null
+                    ? NetworkImage(authState.user!.photoUrl!)
                     : null,
-                child: authState.user?.photoURL == null
-                    ? Icon(
-                        Icons.person_rounded,
-                        size: 18,
-                        color: colorScheme.primary,
+                child: authState.user?.photoUrl == null
+                    ? Text(
+                        authState.user != null
+                            ? (authState.user!.displayName.isNotEmpty
+                                ? authState.user!.displayName[0].toUpperCase()
+                                : 'U')
+                            : '👤',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
                       )
                     : null,
               ),
@@ -135,13 +150,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
           child: Column(
             children: [
-              // Monthly Calendar View
+              // Monthly Compact Calendar View
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                   child: TableCalendar(
                     firstDay: DateTime.utc(2020, 1, 1),
                     lastDay: DateTime.utc(2035, 12, 31),
@@ -149,32 +164,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                     startingDayOfWeek: StartingDayOfWeek.sunday,
                     calendarFormat: CalendarFormat.month,
-                    rowHeight: 62,
+                    rowHeight: 42,
+                    daysOfWeekHeight: 22,
                     headerStyle: HeaderStyle(
                       titleCentered: true,
                       formatButtonVisible: false,
+                      headerPadding: const EdgeInsets.symmetric(vertical: 2.0),
+                      leftChevronPadding: const EdgeInsets.all(4.0),
+                      rightChevronPadding: const EdgeInsets.all(4.0),
+                      leftChevronMargin: EdgeInsets.zero,
+                      rightChevronMargin: EdgeInsets.zero,
                       titleTextStyle: GoogleFonts.fredoka(
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
                       leftChevronIcon: Icon(
                         Icons.chevron_left_rounded,
                         color: colorScheme.primary,
+                        size: 22,
                       ),
                       rightChevronIcon: Icon(
                         Icons.chevron_right_rounded,
                         color: colorScheme.primary,
+                        size: 22,
                       ),
                     ),
                     daysOfWeekStyle: DaysOfWeekStyle(
                       weekdayStyle: GoogleFonts.fredoka(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       weekendStyle: GoogleFonts.fredoka(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
@@ -249,18 +272,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Bottom Section below Calendar based on Selected Date state
               if (isFuture) ...[
                 // Future Date Card
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(18.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
                     child: Row(
                       children: [
-                        const Text("🔮", style: TextStyle(fontSize: 26)),
-                        const SizedBox(width: 14),
+                        const Text("🔮", style: TextStyle(fontSize: 24)),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,12 +300,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               Text(
                                 "Future Date",
                                 style: GoogleFonts.fredoka(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: colorScheme.onSurface,
                                 ),
                               ),
-                              const SizedBox(height: 2),
                               Text(
                                 "Vibe logging is not available for future days.",
                                 style: GoogleFonts.plusJakartaSans(
@@ -307,24 +329,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 // Unlogged Date Prompt Card
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
                     child: Row(
                       children: [
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
                             child: Text(
                               palette.emoji,
-                              style: const TextStyle(fontSize: 22),
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +354,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               Text(
                                 "No vibe logged yet 🌸",
                                 style: GoogleFonts.fredoka(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: colorScheme.onSurface,
                                 ),
@@ -361,8 +383,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            minimumSize: const Size(0, 38),
+                                horizontal: 14, vertical: 8),
+                            minimumSize: const Size(0, 36),
                           ),
                           child: const Text("Log Vibe 🌸"),
                         ),
@@ -371,7 +393,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),

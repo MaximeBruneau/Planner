@@ -3,15 +3,39 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/mood_entry.dart';
 import '../../models/app_settings.dart';
+import '../../models/app_user.dart';
 
 class StorageService {
   static const String _entriesKey = 'vibe_mood_entries_v1';
   static const String _settingsKey = 'vibe_app_settings_v1';
+  static const String _userKey = 'vibe_app_user_v1';
 
   late SharedPreferences _prefs;
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  // User Profile Persistence
+  AppUser? getSavedUser() {
+    try {
+      final jsonString = _prefs.getString(_userKey);
+      if (jsonString == null || jsonString.isEmpty) {
+        return null;
+      }
+      return AppUser.fromJson(jsonString);
+    } catch (e) {
+      debugPrint('Error reading saved user: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveUser(AppUser? user) async {
+    if (user == null) {
+      await _prefs.remove(_userKey);
+    } else {
+      await _prefs.setString(_userKey, user.toJson());
+    }
   }
 
   // Mood Entries CRUD

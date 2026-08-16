@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_dairy/models/mood_entry.dart';
 import 'package:my_dairy/models/app_settings.dart';
+import 'package:my_dairy/models/app_user.dart';
 import 'package:my_dairy/core/constants/default_emojis.dart';
 import 'package:my_dairy/core/constants/notification_messages.dart';
 import 'package:my_dairy/core/theme/theme_palettes.dart';
@@ -41,6 +42,25 @@ void main() {
     });
   });
 
+  group('AppUser Model Tests', () {
+    test('AppUser serialization and deserialization', () {
+      const user = AppUser(
+        id: '12345',
+        email: 'friend@example.com',
+        displayName: 'Best Friend',
+        photoUrl: 'https://example.com/avatar.png',
+      );
+
+      final jsonStr = user.toJson();
+      final decoded = AppUser.fromJson(jsonStr);
+
+      expect(decoded.id, equals('12345'));
+      expect(decoded.email, equals('friend@example.com'));
+      expect(decoded.displayName, equals('Best Friend'));
+      expect(decoded.photoUrl, equals('https://example.com/avatar.png'));
+    });
+  });
+
   group('AppSettings Model Tests', () {
     test('default settings initialization', () {
       final settings = AppSettings();
@@ -64,10 +84,20 @@ void main() {
   });
 
   group('Theme Palettes & Notification Constants Tests', () {
-    test('AppPalettes list has 10 distinct color palettes', () {
-      expect(AppPalettes.list.length, equals(10));
+    test('AppPalettes list has distinct color palettes including 3 blue themes with fish emojis', () {
+      expect(AppPalettes.list.length, greaterThanOrEqualTo(10));
       final names = AppPalettes.list.map((p) => p.name).toSet();
-      expect(names.length, equals(10));
+      expect(names.length, equals(AppPalettes.list.length));
+
+      // Verify blue palettes exist with fish emojis
+      final lightBlue = AppPalettes.list.firstWhere((p) => p.name == 'Light Blue');
+      expect(lightBlue.emoji, equals('🐟'));
+
+      final deepOcean = AppPalettes.list.firstWhere((p) => p.name == 'Deep Ocean');
+      expect(deepOcean.emoji, equals('🐠'));
+
+      final aquaLagoon = AppPalettes.list.firstWhere((p) => p.name == 'Aqua Lagoon');
+      expect(aquaLagoon.emoji, equals('🐡'));
     });
 
     test('NotificationMessages list has 20 cute messages', () {
