@@ -8,11 +8,15 @@ import 'mood_bottom_sheet.dart';
 class LoggedVibeSummaryCard extends ConsumerWidget {
   final DateTime selectedDate;
   final MoodEntry entry;
+  final bool isReadOnly;
+  final String? readOnlyBadgeTitle;
 
   const LoggedVibeSummaryCard({
     super.key,
     required this.selectedDate,
     required this.entry,
+    this.isReadOnly = false,
+    this.readOnlyBadgeTitle,
   });
 
   @override
@@ -59,7 +63,7 @@ class LoggedVibeSummaryCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "Vibe Logged ✨",
+                        readOnlyBadgeTitle ?? "Vibe Logged ✨",
                         style: GoogleFonts.fredoka(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -69,21 +73,46 @@ class LoggedVibeSummaryCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Pencil Edit Button ✏️
-                IconButton.filledTonal(
-                  onPressed: () {
-                    MoodBottomSheet.show(
-                      context,
-                      selectedDate: selectedDate,
-                      existingEntry: entry,
-                    );
-                  },
-                  tooltip: "Edit Vibe ✏️",
-                  icon: const Icon(
-                    Icons.edit_rounded,
-                    size: 20,
+                // Edit Button OR Read-Only Chip
+                if (isReadOnly)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_rounded, size: 14, color: colorScheme.onSecondaryContainer),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Read-Only",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+
+                      ],
+                    ),
+                  )
+                else
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      MoodBottomSheet.show(
+                        context,
+                        selectedDate: selectedDate,
+                        existingEntry: entry,
+                      );
+                    },
+                    tooltip: "Edit Vibe ✏️",
+                    icon: const Icon(
+                      Icons.edit_rounded,
+                      size: 20,
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -122,3 +151,4 @@ class LoggedVibeSummaryCard extends ConsumerWidget {
     );
   }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/partner_provider.dart';
 import '../../core/services/notification_service.dart';
 import 'widgets/emoji_customizer.dart';
 import 'widgets/theme_selector.dart';
@@ -268,12 +269,150 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Section 5: Friend Sharing 🐰
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "FT Sharing 🐰",
+                      style: GoogleFonts.fredoka(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Share your calendar in read-only mode securely with your FT.",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final partnerState = ref.watch(partnerProvider);
+                        if (partnerState.isPaired) {
+                          final partner = partnerState.partnerInfo!;
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: colorScheme.secondaryContainer,
+                                    backgroundImage: partner.photoUrl != null
+                                        ? NetworkImage(partner.photoUrl!)
+                                        : null,
+                                    child: partner.photoUrl == null
+                                        ? const Text("🐰")
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Connected with ${partner.displayName} 🐰",
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          partner.email,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text("Disconnect Calendars?"),
+                                      content: Text(
+                                        "Are you sure you want to disconnect from ${partner.displayName}? You will no longer be able to view each other's calendars.",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(ctx);
+                                            ref.read(partnerProvider.notifier).unpair(authState.user);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: colorScheme.error,
+                                            foregroundColor: colorScheme.onError,
+                                          ),
+                                          child: const Text("Disconnect"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.link_off_rounded, size: 18),
+                                label: const Text("Disconnect Calendars"),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colorScheme.error,
+                                  side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "No FT connected yet.",
+
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                icon: const Icon(Icons.add_link_rounded, size: 18),
+                                label: const Text("Connect on Home 🌸"),
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
+
 
   void _showProfileDialog(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();

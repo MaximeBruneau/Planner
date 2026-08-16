@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/mood_entry.dart';
 import '../../models/app_settings.dart';
 import '../../models/app_user.dart';
+import '../../models/partner_info.dart';
 
 class StorageService {
   static const String _entriesKey = 'vibe_mood_entries_v1';
@@ -105,4 +106,54 @@ class StorageService {
   Future<void> saveSettings(AppSettings settings) async {
     await _prefs.setString(_settingsKey, settings.toJson());
   }
+
+  // Partner Info & Entries Cache
+  static const String _partnerKey = 'vibe_partner_info_v1';
+  static const String _partnerEntriesKey = 'vibe_partner_entries_v1';
+
+  PartnerInfo? getSavedPartner() {
+    try {
+      final jsonString = _prefs.getString(_partnerKey);
+      if (jsonString == null || jsonString.isEmpty) return null;
+      return PartnerInfo.fromJson(jsonString);
+    } catch (e) {
+      debugPrint('Error reading partner info: $e');
+      return null;
+    }
+  }
+
+  Future<void> savePartner(PartnerInfo? partner) async {
+    if (partner == null) {
+      await _prefs.remove(_partnerKey);
+      await _prefs.remove(_partnerEntriesKey);
+    } else {
+      await _prefs.setString(_partnerKey, partner.toJson());
+    }
+  }
+
+  Map<String, MoodEntry> getPartnerEntries() {
+    try {
+      final jsonString = _prefs.getString(_partnerEntriesKey);
+      if (jsonString == null || jsonString.isEmpty) return {};
+      final Map<String, dynamic> rawMap = jsonDecode(jsonString);
+      final Map<String, MoodEntry> entries = {};
+      rawMap.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          entries[key] = MoodEntry.fromMap(value);
+        } else if (value is String) {
+          entries[key] = MoodEntry.fromJson(value);
+        }
+      });
+      return entries;
+    } catch (e) {
+      debugPrint('Error reading partner entries: $e');
+      return {};
+    }
+  }
+
+  Future<void> savePartnerEntries(Map<String, MoodEntry> entries) async {
+    final rawMap = entries.map((key, value) => MapEntry(key, value.toMap()));
+    await _prefs.setString(_partnerEntriesKey, jsonEncode(rawMap));
+  }
 }
+

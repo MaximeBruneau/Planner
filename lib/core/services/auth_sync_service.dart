@@ -13,10 +13,11 @@ class AuthSyncService {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
         ? '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com'
-        : (defaultTargetPlatform == TargetPlatform.iOS
-            ? '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com'
-            : null),
+        : null,
+    serverClientId:
+        '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com',
   );
+
 
   AppUser? _currentUser;
   bool _isFirebaseInitialized = false;
