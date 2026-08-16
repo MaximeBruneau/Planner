@@ -10,7 +10,13 @@ import 'storage_service.dart';
 
 class AuthSyncService {
   final StorageService _storageService;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com'
+        : (defaultTargetPlatform == TargetPlatform.iOS
+            ? '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com'
+            : null),
+  );
 
   AppUser? _currentUser;
   bool _isFirebaseInitialized = false;
