@@ -127,20 +127,15 @@ class NotificationService {
     }
   }
 
-  /// Show instant notification when partner logs a new mood
+  /// Show discreet notification when partner logs or updates a mood
   Future<void> showPartnerMoodNotification({
     required String partnerName,
-    required String emoji,
-    String? note,
-    required String date,
   }) async {
     if (!_initialized) await init();
 
-    final title = 'FT Vibe 🐰 - $partnerName';
-    final hasNote = note != null && note.trim().isNotEmpty;
-    final body = hasNote
-        ? '$partnerName logged $emoji: "$note"'
-        : '$partnerName just logged their vibe: $emoji';
+    const title = 'FT Vibe 🐰';
+    final body = '$partnerName just logged a new vibe! Check it out 🌸';
+
 
     try {
       await _notificationsPlugin.show(

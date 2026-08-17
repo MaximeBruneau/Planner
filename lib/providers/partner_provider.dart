@@ -123,12 +123,10 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
               final partnerName = state.partnerInfo?.displayName ?? 'Your FT';
               NotificationService().showPartnerMoodNotification(
                 partnerName: partnerName,
-                emoji: newMood.emoji,
-                note: newMood.note,
-                date: newMood.date,
               );
               break;
             }
+
           }
         }
         isFirstSnapshot = false;
