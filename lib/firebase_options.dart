@@ -49,22 +49,23 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
-    appId: '1:850562549978:ios:8f2e98a301caecd92dfde3',
+    apiKey: 'AIzaSyA7dvbn198qiETUa4ggeTm7JNBCNYZxgtk',
+    appId: '1:850562549978:ios:338ac5991b05d0a12dfde3',
     messagingSenderId: '850562549978',
     projectId: 'my-dairy-2f7e2',
     storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
-    iosBundleId: 'com.vibecalendar.myDairy',
+    iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
-    appId: '1:850562549978:ios:8f2e98a301caecd92dfde3',
+    apiKey: 'AIzaSyA7dvbn198qiETUa4ggeTm7JNBCNYZxgtk',
+    appId: '1:850562549978:ios:338ac5991b05d0a12dfde3',
     messagingSenderId: '850562549978',
     projectId: 'my-dairy-2f7e2',
     storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
-    iosBundleId: 'com.vibecalendar.myDairy',
+    iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
   );
+
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
