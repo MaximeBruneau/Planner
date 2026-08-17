@@ -5,8 +5,10 @@ import '../models/mood_entry.dart';
 import '../models/partner_info.dart';
 import '../core/services/partner_service.dart';
 import '../core/services/storage_service.dart';
+import '../core/services/notification_service.dart';
 import 'auth_provider.dart';
 import 'mood_provider.dart';
+
 
 class PartnerState {
   final PartnerInfo? partnerInfo;
@@ -104,8 +106,32 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
 
   void _subscribeToPartnerEntries(String partnerUid) {
     _entriesSubscription?.cancel();
+    bool isFirstSnapshot = true;
+
     _entriesSubscription = _partnerService.streamPartnerEntries(partnerUid).listen(
       (entries) {
+        if (!isFirstSnapshot) {
+          final oldEntries = state.partnerEntries;
+          for (final mapEntry in entries.entries) {
+            final dateKey = mapEntry.key;
+            final newMood = mapEntry.value;
+            final oldMood = oldEntries[dateKey];
+
+            if (oldMood == null ||
+                oldMood.emoji != newMood.emoji ||
+                oldMood.note != newMood.note) {
+              final partnerName = state.partnerInfo?.displayName ?? 'Your FT';
+              NotificationService().showPartnerMoodNotification(
+                partnerName: partnerName,
+                emoji: newMood.emoji,
+                note: newMood.note,
+                date: newMood.date,
+              );
+              break;
+            }
+          }
+        }
+        isFirstSnapshot = false;
         state = state.copyWith(partnerEntries: entries);
       },
       onError: (err) {
@@ -113,6 +139,7 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
       },
     );
   }
+
 
 
   Future<String?> generateCode(AppUser currentUser) async {

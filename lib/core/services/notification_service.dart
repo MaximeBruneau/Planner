@@ -127,7 +127,49 @@ class NotificationService {
     }
   }
 
+  /// Show instant notification when partner logs a new mood
+  Future<void> showPartnerMoodNotification({
+    required String partnerName,
+    required String emoji,
+    String? note,
+    required String date,
+  }) async {
+    if (!_initialized) await init();
+
+    final title = 'FT Vibe 🐰 - $partnerName';
+    final hasNote = note != null && note.trim().isNotEmpty;
+    final body = hasNote
+        ? '$partnerName logged $emoji: "$note"'
+        : '$partnerName just logged their vibe: $emoji';
+
+    try {
+      await _notificationsPlugin.show(
+        2002,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'partner_vibe_channel',
+            'FT Vibe Notifications',
+            channelDescription: 'Notifications when your FT logs or updates their vibe',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Partner notification error: $e');
+    }
+  }
+
   Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();
   }
 }
+
