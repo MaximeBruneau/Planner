@@ -180,6 +180,32 @@ class PartnerService {
     }
   }
 
+  /// Real-time stream of the current user's partnerInfo
+  Stream<PartnerInfo?> streamUserPartnerInfo(String currentUid) {
+    if (currentUid.isEmpty) return Stream.value(null);
+
+    try {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .snapshots()
+          .map((doc) {
+        if (doc.exists && doc.data() != null && doc.data()!['partnerInfo'] != null) {
+          final rawMap = doc.data()!['partnerInfo'] as Map<String, dynamic>;
+          final partner = PartnerInfo.fromMap(rawMap);
+          _storageService.savePartner(partner);
+          return partner;
+        } else {
+          _storageService.savePartner(null);
+          return null;
+        }
+      });
+    } catch (e) {
+      debugPrint('Error streaming partner info: $e');
+      return Stream.value(_storageService.getSavedPartner());
+    }
+  }
+
   /// Fetch user's partner info from Firestore
   Future<PartnerInfo?> fetchCloudPartner(String currentUid) async {
     if (currentUid.isEmpty) return _storageService.getSavedPartner();
@@ -211,3 +237,4 @@ final partnerServiceProvider = Provider<PartnerService>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   return PartnerService(storageService);
 });
+

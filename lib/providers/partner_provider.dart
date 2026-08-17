@@ -49,6 +49,7 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
   final PartnerService _partnerService;
   final StorageService _storageService;
   StreamSubscription<Map<String, MoodEntry>>? _entriesSubscription;
+  StreamSubscription<PartnerInfo?>? _partnerInfoSubscription;
 
   PartnerNotifier(this._partnerService, this._storageService)
       : super(const PartnerState()) {
@@ -65,28 +66,40 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
   }
 
   Future<void> syncWithCloudUser(AppUser? currentUser) async {
-    if (currentUser == null) return;
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final cloudPartner = await _partnerService.fetchCloudPartner(currentUser.id);
-      state = state.copyWith(
-        partnerInfo: cloudPartner,
-        clearPartner: cloudPartner == null,
-        isLoading: false,
-      );
-
-      if (cloudPartner != null) {
-        _subscribeToPartnerEntries(cloudPartner.uid);
-      } else {
-        _entriesSubscription?.cancel();
-        state = state.copyWith(partnerEntries: {});
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to sync partner info',
-      );
+    if (currentUser == null) {
+      _partnerInfoSubscription?.cancel();
+      _entriesSubscription?.cancel();
+      return;
     }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    // Subscribe to real-time partner link updates on user document
+    _partnerInfoSubscription?.cancel();
+    _partnerInfoSubscription =
+        _partnerService.streamUserPartnerInfo(currentUser.id).listen(
+      (cloudPartner) {
+        state = state.copyWith(
+          partnerInfo: cloudPartner,
+          clearPartner: cloudPartner == null,
+          isLoading: false,
+          clearGeneratedCode: cloudPartner != null,
+        );
+
+        if (cloudPartner != null) {
+          _subscribeToPartnerEntries(cloudPartner.uid);
+        } else {
+          _entriesSubscription?.cancel();
+          state = state.copyWith(partnerEntries: {});
+        }
+      },
+      onError: (err) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Failed to stream partner info',
+        );
+      },
+    );
   }
 
   void _subscribeToPartnerEntries(String partnerUid) {
@@ -100,6 +113,7 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
       },
     );
   }
+
 
   Future<String?> generateCode(AppUser currentUser) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -155,9 +169,11 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
 
   @override
   void dispose() {
+    _partnerInfoSubscription?.cancel();
     _entriesSubscription?.cancel();
     super.dispose();
   }
+
 }
 
 final partnerProvider = StateNotifierProvider<PartnerNotifier, PartnerState>((ref) {
