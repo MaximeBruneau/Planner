@@ -40,11 +40,24 @@ class NotificationService {
         },
       );
 
+      // Request explicit permissions on iOS
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+      }
+
       _initialized = true;
     } catch (e) {
       debugPrint('Notification initialization error: $e');
     }
   }
+
 
   /// Schedule the 9:00 PM (21:00) daily reminder
   Future<void> scheduleDailyReminder({
@@ -155,6 +168,9 @@ class NotificationService {
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
+            presentBanner: true,
+            presentList: true,
+            interruptionLevel: InterruptionLevel.active,
           ),
         ),
       );
@@ -162,6 +178,7 @@ class NotificationService {
       debugPrint('Partner notification error: $e');
     }
   }
+
 
   Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();

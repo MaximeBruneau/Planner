@@ -65,7 +65,11 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
       partnerInfo: localPartner,
       partnerEntries: localEntries,
     );
+    if (localPartner != null) {
+      _subscribeToPartnerEntries(localPartner.uid);
+    }
   }
+
 
   Future<void> syncWithCloudUser(AppUser? currentUser) async {
     if (currentUser == null) {
