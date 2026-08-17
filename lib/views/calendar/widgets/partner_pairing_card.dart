@@ -230,9 +230,26 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                       child: OutlinedButton.icon(
                         onPressed: partnerState.isLoading
                             ? null
-                            : () => partnerNotifier.generateCode(authState.user!),
-                        icon: const Icon(Icons.qr_code_rounded, size: 18),
-                        label: const Text("Create Code"),
+                            : () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final code = await partnerNotifier.generateCode(authState.user!);
+                                if (code != null && mounted) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text("Code $code generated! 🐰 Send it to your FT."),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                        icon: partnerState.isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.qr_code_rounded, size: 18),
+                        label: Text(partnerState.isLoading ? "Creating..." : "Create Code"),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -241,11 +258,13 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _isEnteringCode = true;
-                          });
-                        },
+                        onPressed: partnerState.isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _isEnteringCode = true;
+                                });
+                              },
                         icon: const Icon(Icons.add_link_rounded, size: 18),
                         label: const Text("Enter Code"),
                         style: ElevatedButton.styleFrom(
@@ -255,6 +274,7 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                     ),
                   ],
                 ),
+
               ],
             ],
           ],

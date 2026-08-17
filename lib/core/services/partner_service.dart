@@ -28,7 +28,12 @@ class PartnerService {
         'email': currentUser.email,
         'photoUrl': currentUser.photoUrl,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          throw Exception("Firebase connection timeout. Please check your internet or Firebase Firestore rules.");
+        },
+      );
       return code;
     } catch (e) {
       debugPrint('Error generating pairing code: $e');
@@ -37,7 +42,6 @@ class PartnerService {
   }
 
   /// Redeem an invitation code to pair 1-on-1 with FT
-
   Future<PartnerInfo> redeemPairingCode({
     required String code,
     required AppUser currentUser,
@@ -50,7 +54,12 @@ class PartnerService {
     try {
       final firestore = FirebaseFirestore.instance;
       final docRef = firestore.collection('pairing_codes').doc(cleanCode);
-      final snapshot = await docRef.get();
+      final snapshot = await docRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          throw Exception("Connection timeout while checking code.");
+        },
+      );
 
       if (!snapshot.exists) {
         throw Exception("Invalid or expired code. Please check and try again.");
@@ -59,8 +68,6 @@ class PartnerService {
       final data = snapshot.data()!;
       final ownerUid = data['ownerUid'] as String?;
       final ownerDisplayName = data['displayName'] as String? ?? 'FT 🐰';
-
-
       final ownerEmail = data['email'] as String? ?? '';
       final ownerPhotoUrl = data['photoUrl'] as String?;
 
@@ -100,7 +107,12 @@ class PartnerService {
       // Remove redeemed code
       batch.delete(docRef);
 
-      await batch.commit();
+      await batch.commit().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          throw Exception("Timeout while saving partner link.");
+        },
+      );
 
       // Save locally
       await _storageService.savePartner(partnerForCurrentUser);
@@ -110,6 +122,7 @@ class PartnerService {
       rethrow;
     }
   }
+
 
   /// Unpair partner
   Future<void> unpairPartner(String currentUid, String partnerUid) async {
