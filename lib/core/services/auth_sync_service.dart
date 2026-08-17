@@ -78,23 +78,12 @@ class AuthSyncService {
       _isFirebaseInitialized = false;
     }
 
-    // 3. Try silent sign-in with Google if available
-    try {
-      final googleUser = await _googleSignIn.signInSilently();
-      if (googleUser != null) {
-        _currentUser = AppUser(
-          id: googleUser.id,
-          email: googleUser.email,
-          displayName:
-              googleUser.displayName ?? googleUser.email.split('@')[0],
-          photoUrl: googleUser.photoUrl,
-        );
-        await _storageService.saveUser(_currentUser);
-      }
-    } catch (e) {
-      debugPrint('Silent Google Sign In notice: $e');
+    // 4. Automatically sync cloud data if user is active
+    if (_currentUser != null) {
+      await syncCloudData();
     }
   }
+
 
   /// Sign in with Google
   Future<AppUser?> signInWithGoogle() async {
