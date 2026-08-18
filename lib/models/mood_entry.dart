@@ -4,26 +4,38 @@ class MoodEntry {
   final String date; // Format: yyyy-MM-dd
   final String emoji;
   final String note;
+  final String? userId;
   final DateTime updatedAt;
+  final bool deleted;
+  final String syncStatus; // 'synced' | 'pending'
 
   MoodEntry({
     required this.date,
     required this.emoji,
     this.note = '',
+    this.userId,
     DateTime? updatedAt,
+    this.deleted = false,
+    this.syncStatus = 'synced',
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   MoodEntry copyWith({
     String? date,
     String? emoji,
     String? note,
+    String? userId,
     DateTime? updatedAt,
+    bool? deleted,
+    String? syncStatus,
   }) {
     return MoodEntry(
       date: date ?? this.date,
       emoji: emoji ?? this.emoji,
       note: note ?? this.note,
+      userId: userId ?? this.userId,
       updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -32,7 +44,10 @@ class MoodEntry {
       'date': date,
       'emoji': emoji,
       'note': note,
+      'userId': userId,
       'updatedAt': updatedAt.toIso8601String(),
+      'deleted': deleted,
+      'syncStatus': syncStatus,
     };
   }
 
@@ -41,9 +56,12 @@ class MoodEntry {
       date: map['date'] as String? ?? '',
       emoji: map['emoji'] as String? ?? '😊',
       note: map['note'] as String? ?? '',
+      userId: map['userId'] as String?,
       updatedAt: map['updatedAt'] != null
-          ? DateTime.tryParse(map['updatedAt'] as String) ?? DateTime.now()
+          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      deleted: map['deleted'] as bool? ?? false,
+      syncStatus: map['syncStatus'] as String? ?? 'synced',
     );
   }
 
@@ -54,7 +72,7 @@ class MoodEntry {
 
   @override
   String toString() =>
-      'MoodEntry(date: $date, emoji: $emoji, note: $note, updatedAt: $updatedAt)';
+      'MoodEntry(date: $date, emoji: $emoji, note: $note, userId: $userId, updatedAt: $updatedAt, deleted: $deleted, syncStatus: $syncStatus)';
 
   @override
   bool operator ==(Object other) {
@@ -63,10 +81,17 @@ class MoodEntry {
         other.date == date &&
         other.emoji == emoji &&
         other.note == note &&
-        other.updatedAt == updatedAt;
+        other.userId == userId &&
+        other.deleted == deleted &&
+        other.syncStatus == syncStatus;
   }
 
   @override
   int get hashCode =>
-      date.hashCode ^ emoji.hashCode ^ note.hashCode ^ updatedAt.hashCode;
+      date.hashCode ^
+      emoji.hashCode ^
+      note.hashCode ^
+      (userId?.hashCode ?? 0) ^
+      deleted.hashCode ^
+      syncStatus.hashCode;
 }

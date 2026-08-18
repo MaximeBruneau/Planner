@@ -36,16 +36,16 @@ class LoggedVibeSummaryCard extends ConsumerWidget {
               children: [
                 // Emoji Badge
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     entry.emoji,
-                    style: const TextStyle(fontSize: 22),
+                    style: const TextStyle(fontSize: 24),
                   ),
                 ),
                 const SizedBox(width: 12),

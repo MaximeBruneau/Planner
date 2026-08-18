@@ -5,8 +5,11 @@ import 'package:timezone/timezone.dart' as tz;
 import '../constants/notification_messages.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
+  static NotificationService? _instance;
+  factory NotificationService() {
+    _instance ??= NotificationService._internal();
+    return _instance!;
+  }
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -41,7 +44,7 @@ class NotificationService {
       );
 
       // Request explicit permissions on iOS
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
                 IOSFlutterLocalNotificationsPlugin>()
@@ -54,10 +57,9 @@ class NotificationService {
 
       _initialized = true;
     } catch (e) {
-      debugPrint('Notification initialization error: $e');
+      debugPrint('Notification initialization notice: $e');
     }
   }
-
 
   /// Schedule the 9:00 PM (21:00) daily reminder
   Future<void> scheduleDailyReminder({
@@ -65,13 +67,13 @@ class NotificationService {
     int hour = 21,
     int minute = 0,
   }) async {
+    if (kIsWeb) return;
     if (!_initialized) await init();
 
     try {
       // Cancel previous scheduled reminders
       await _notificationsPlugin.cancel(1001);
 
-      // If user already logged today, skip scheduling for today, schedule for tomorrow
       final now = DateTime.now();
       var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
 
@@ -107,14 +109,15 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-      debugPrint('Daily reminder scheduled for $scheduledDate with msg: $message');
+      debugPrint('Daily reminder scheduled for $scheduledDate');
     } catch (e) {
-      debugPrint('Failed to schedule daily reminder: $e');
+      debugPrint('Failed to schedule daily reminder notice: $e');
     }
   }
 
-  /// Immediate test notification trigger for demonstration & user testing
+  /// Immediate test notification trigger
   Future<void> showTestNotification() async {
+    if (kIsWeb) return;
     if (!_initialized) await init();
 
     final message = NotificationMessages.getRandomMessage();
@@ -144,11 +147,11 @@ class NotificationService {
   Future<void> showPartnerMoodNotification({
     required String partnerName,
   }) async {
+    if (kIsWeb) return;
     if (!_initialized) await init();
 
     const title = 'FT Vibe 🐰';
     final body = '$partnerName just logged a new vibe! Check it out 🌸';
-
 
     try {
       await _notificationsPlugin.show(
@@ -175,13 +178,16 @@ class NotificationService {
         ),
       );
     } catch (e) {
-      debugPrint('Partner notification error: $e');
+      debugPrint('Partner notification notice: $e');
     }
   }
 
-
   Future<void> cancelAll() async {
-    await _notificationsPlugin.cancelAll();
+    if (kIsWeb) return;
+    try {
+      await _notificationsPlugin.cancelAll();
+    } catch (e) {
+      debugPrint('Cancel notifications notice: $e');
+    }
   }
 }
-

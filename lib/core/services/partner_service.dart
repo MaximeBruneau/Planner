@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/app_user.dart';
 import '../../models/mood_entry.dart';
 import '../../models/partner_info.dart';
+import '../../models/pairing_code.dart';
 import '../../providers/mood_provider.dart';
 import 'storage_service.dart';
 
@@ -14,7 +15,7 @@ class PartnerService {
 
   PartnerService(this._storageService);
 
-  /// Generate a unique 6-character invitation code
+  /// Generate a unique 6-character invitation code with 10-minute automatic expiration
   Future<String> generatePairingCode(AppUser currentUser) async {
     final random = Random();
     final number = 100000 + random.nextInt(900000);
@@ -22,19 +23,37 @@ class PartnerService {
 
     try {
       final firestore = FirebaseFirestore.instance;
-      await firestore.collection('pairing_codes').doc(code).set({
-        'ownerUid': currentUser.id,
-        'displayName': currentUser.displayName,
-        'email': currentUser.email,
-        'photoUrl': currentUser.photoUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-      }).timeout(
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(minutes: 10));
+
+      final pairingCodeObj = PairingCode(
+        code: code,
+        creatorUserId: currentUser.id,
+        creatorDisplayName: currentUser.displayName,
+        creatorEmail: currentUser.email,
+        creatorPhotoUrl: currentUser.photoUrl,
+        createdAt: now,
+        expiresAt: expiresAt,
+        used: false,
+      );
+
+      await firestore.collection('pairing_codes').doc(code).set(
+        pairingCodeObj.toMap(),
+      ).timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          throw Exception("Firebase connection timeout. Please check your internet or Firebase Firestore rules.");
+          throw Exception("Délai de connexion dépassé. Vérifiez votre connexion internet.");
         },
       );
+
       return code;
+    } on FirebaseException catch (fe) {
+      if (fe.code == 'permission-denied') {
+        throw Exception(
+          "Permission refusée. Assurez-vous d'avoir déployé les règles Firestore (firestore.rules).",
+        );
+      }
+      throw Exception(fe.message ?? fe.code);
     } catch (e) {
       debugPrint('Error generating pairing code: $e');
       rethrow;
@@ -48,39 +67,48 @@ class PartnerService {
   }) async {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) {
-      throw Exception("Please enter a valid code.");
+      throw Exception("Veuillez entrer un code valide.");
     }
 
     try {
       final firestore = FirebaseFirestore.instance;
-      final docRef = firestore.collection('pairing_codes').doc(cleanCode);
-      final snapshot = await docRef.get().timeout(
+      final codeDocRef = firestore.collection('pairing_codes').doc(cleanCode);
+
+      final snapshot = await codeDocRef.get().timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          throw Exception("Connection timeout while checking code.");
+          throw Exception("Délai de connexion dépassé lors de la vérification du code.");
         },
       );
 
-      if (!snapshot.exists) {
-        throw Exception("Invalid or expired code. Please check and try again.");
+      if (!snapshot.exists || snapshot.data() == null) {
+        throw Exception("Code introuvable, vérifie et réessaie.");
       }
 
       final data = snapshot.data()!;
-      final ownerUid = data['ownerUid'] as String?;
-      final ownerDisplayName = data['displayName'] as String? ?? 'FT 🐰';
-      final ownerEmail = data['email'] as String? ?? '';
-      final ownerPhotoUrl = data['photoUrl'] as String?;
+      final pairingCode = PairingCode.fromMap(data);
 
-      if (ownerUid == null || ownerUid == currentUser.id) {
-        throw Exception("You cannot use your own code.");
+      // Check if code has already been used
+      if (pairingCode.used) {
+        throw Exception("Ce code a déjà été utilisé.");
+      }
+
+      // Check if code has expired (10 minutes lifetime)
+      if (pairingCode.isExpired) {
+        throw Exception("Code expiré, demande un nouveau code.");
+      }
+
+      final ownerUid = pairingCode.creatorUserId;
+      if (ownerUid.isEmpty || ownerUid == currentUser.id) {
+        throw Exception("Tu ne peux pas utiliser ton propre code.");
       }
 
       final now = DateTime.now();
       final partnerForCurrentUser = PartnerInfo(
         uid: ownerUid,
-        displayName: ownerDisplayName,
-        email: ownerEmail,
-        photoUrl: ownerPhotoUrl,
+        displayName: pairingCode.creatorDisplayName,
+        email: pairingCode.creatorEmail ?? '',
+        photoUrl: pairingCode.creatorPhotoUrl,
         pairedAt: now,
       );
 
@@ -92,57 +120,125 @@ class PartnerService {
         pairedAt: now,
       );
 
-      // Batch link both users in Firestore
-      final batch = firestore.batch();
-      batch.set(
-        firestore.collection('users').doc(currentUser.id),
-        {'partnerInfo': partnerForCurrentUser.toMap()},
-        SetOptions(merge: true),
-      );
-      batch.set(
-        firestore.collection('users').doc(ownerUid),
-        {'partnerInfo': partnerForOwner.toMap()},
-        SetOptions(merge: true),
-      );
-      // Remove redeemed code
-      batch.delete(docRef);
+      final connectionId = '${currentUser.id}_$ownerUid';
+      final connectionDocRef =
+          firestore.collection('partner_connections').doc(connectionId);
 
-      await batch.commit().timeout(
-        const Duration(seconds: 8),
-        onTimeout: () {
-          throw Exception("Timeout while saving partner link.");
+      // 1. Mark pairing code as claimed
+      try {
+        await codeDocRef.set({
+          'used': true,
+          'claimedBy': currentUser.id,
+          'claimantInfo': partnerForOwner.toMap(),
+          'claimedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Mark code used notice: $e');
+      }
+
+      // 2. Link partner on current user
+      await firestore.collection('users').doc(currentUser.id).set(
+        {
+          'partnerId': ownerUid,
+          'partnerInfo': partnerForCurrentUser.toMap(),
+          'updatedAt': FieldValue.serverTimestamp(),
         },
+        SetOptions(merge: true),
       );
+
+      // 3. Link partner on creator
+      try {
+        await firestore.collection('users').doc(ownerUid).set(
+          {
+            'partnerId': currentUser.id,
+            'partnerInfo': partnerForOwner.toMap(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      } catch (e) {
+        debugPrint('Direct creator doc update notice (handled by sync): $e');
+      }
+
+      // 4. Create partner connection doc
+      try {
+        await connectionDocRef.set({
+          'id': connectionId,
+          'userA': currentUser.id,
+          'userB': ownerUid,
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        debugPrint('Connection doc create notice: $e');
+      }
 
       // Save locally
       await _storageService.savePartner(partnerForCurrentUser);
       return partnerForCurrentUser;
+    } on FirebaseException catch (fe) {
+      if (fe.code == 'permission-denied') {
+        throw Exception(
+          "Permission refusée par Firestore. Veuillez déployer les règles de sécurité `firestore.rules`.",
+        );
+      }
+      throw Exception(fe.message ?? fe.code);
     } catch (e) {
       debugPrint('Error redeeming pairing code: $e');
       rethrow;
     }
   }
 
-
-  /// Unpair partner
+  /// Bilateral unpair: clears partner links on both sides and marks connection as dissolved
   Future<void> unpairPartner(String currentUid, String partnerUid) async {
     try {
       final firestore = FirebaseFirestore.instance;
-      final batch = firestore.batch();
 
-      batch.update(
-        firestore.collection('users').doc(currentUid),
-        {'partnerInfo': FieldValue.delete()},
-      );
-
-      if (partnerUid.isNotEmpty) {
-        batch.update(
-          firestore.collection('users').doc(partnerUid),
-          {'partnerInfo': FieldValue.delete()},
-        );
+      if (currentUid.isNotEmpty) {
+        try {
+          await firestore.collection('users').doc(currentUid).set(
+            {
+              'partnerId': null,
+              'partnerInfo': FieldValue.delete(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        } catch (e) {
+          debugPrint('Unpair current user notice: $e');
+        }
       }
 
-      await batch.commit();
+      if (partnerUid.isNotEmpty) {
+        try {
+          await firestore.collection('users').doc(partnerUid).set(
+            {
+              'partnerId': null,
+              'partnerInfo': FieldValue.delete(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        } catch (e) {
+          debugPrint('Unpair partner notice: $e');
+        }
+
+        final connectionId1 = '${currentUid}_$partnerUid';
+        final connectionId2 = '${partnerUid}_$currentUid';
+
+        try {
+          await firestore.collection('partner_connections').doc(connectionId1).set(
+            {'status': 'dissolved', 'dissolvedAt': FieldValue.serverTimestamp()},
+            SetOptions(merge: true),
+          );
+          await firestore.collection('partner_connections').doc(connectionId2).set(
+            {'status': 'dissolved', 'dissolvedAt': FieldValue.serverTimestamp()},
+            SetOptions(merge: true),
+          );
+        } catch (e) {
+          debugPrint('Dissolve connection notice: $e');
+        }
+      }
     } catch (e) {
       debugPrint('Cloud unpair notice: $e');
     } finally {
@@ -150,7 +246,7 @@ class PartnerService {
     }
   }
 
-  /// Listen to real-time partner entries from Firestore
+  /// Listen to real-time partner entries from Firestore (Read-Only)
   Stream<Map<String, MoodEntry>> streamPartnerEntries(String partnerUid) {
     if (partnerUid.isEmpty) {
       return Stream.value({});
@@ -161,15 +257,18 @@ class PartnerService {
           .collection('users')
           .doc(partnerUid)
           .collection('mood_entries')
+          .where('deleted', isNotEqualTo: true)
           .snapshots()
           .map((snapshot) {
         final Map<String, MoodEntry> entries = {};
         for (final doc in snapshot.docs) {
           final data = doc.data();
           final entry = MoodEntry.fromMap(data);
-          entries[entry.date] = entry;
+          if (!entry.deleted) {
+            entries[entry.date] = entry;
+          }
         }
-        // Update local cache
+        // Update local partner cache
         _storageService.savePartnerEntries(entries);
         return entries;
       });
@@ -189,16 +288,49 @@ class PartnerService {
           .collection('users')
           .doc(currentUid)
           .snapshots()
-          .map((doc) {
+          .asyncMap((doc) async {
         if (doc.exists && doc.data() != null && doc.data()!['partnerInfo'] != null) {
           final rawMap = doc.data()!['partnerInfo'] as Map<String, dynamic>;
           final partner = PartnerInfo.fromMap(rawMap);
           _storageService.savePartner(partner);
           return partner;
-        } else {
-          _storageService.savePartner(null);
-          return null;
         }
+
+        // Secondary check: Did someone redeem our pairing code?
+        try {
+          final codesQuery = await FirebaseFirestore.instance
+              .collection('pairing_codes')
+              .where('creatorUserId', isEqualTo: currentUid)
+              .where('used', isEqualTo: true)
+              .limit(1)
+              .get();
+
+          if (codesQuery.docs.isNotEmpty) {
+            final codeData = codesQuery.docs.first.data();
+            if (codeData['claimantInfo'] != null) {
+              final claimantRaw = codeData['claimantInfo'] as Map<String, dynamic>;
+              final partner = PartnerInfo.fromMap(claimantRaw);
+              
+              // Automatically write partner to our own user document
+              await FirebaseFirestore.instance.collection('users').doc(currentUid).set(
+                {
+                  'partnerId': partner.uid,
+                  'partnerInfo': partner.toMap(),
+                  'updatedAt': FieldValue.serverTimestamp(),
+                },
+                SetOptions(merge: true),
+              );
+
+              _storageService.savePartner(partner);
+              return partner;
+            }
+          }
+        } catch (e) {
+          debugPrint('Check pairing code fallback notice: $e');
+        }
+
+        _storageService.savePartner(null);
+        return null;
       });
     } catch (e) {
       debugPrint('Error streaming partner info: $e');
@@ -222,7 +354,6 @@ class PartnerService {
         await _storageService.savePartner(partner);
         return partner;
       } else {
-        // If not on cloud, clear local cache
         await _storageService.savePartner(null);
         return null;
       }
@@ -237,4 +368,3 @@ final partnerServiceProvider = Provider<PartnerService>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   return PartnerService(storageService);
 });
-

@@ -13,17 +13,25 @@ void main() {
         date: '2026-08-13',
         emoji: '🥑',
         note: 'Had a wonderful cozy day!',
+        userId: 'user_123',
+        deleted: false,
+        syncStatus: 'synced',
       );
 
       final map = entry.toMap();
       expect(map['date'], equals('2026-08-13'));
       expect(map['emoji'], equals('🥑'));
       expect(map['note'], equals('Had a wonderful cozy day!'));
+      expect(map['userId'], equals('user_123'));
+      expect(map['deleted'], isFalse);
+      expect(map['syncStatus'], equals('synced'));
 
       final reconstructed = MoodEntry.fromMap(map);
       expect(reconstructed.date, equals(entry.date));
       expect(reconstructed.emoji, equals(entry.emoji));
       expect(reconstructed.note, equals(entry.note));
+      expect(reconstructed.userId, equals(entry.userId));
+      expect(reconstructed.deleted, equals(entry.deleted));
     });
 
     test('json encoding and decoding works', () {
@@ -43,12 +51,15 @@ void main() {
   });
 
   group('AppUser Model Tests', () {
-    test('AppUser serialization and deserialization', () {
-      const user = AppUser(
+    test('AppUser serialization and deserialization with duo & theme fields', () {
+      final user = AppUser(
         id: '12345',
         email: 'friend@example.com',
         displayName: 'Best Friend',
         photoUrl: 'https://example.com/avatar.png',
+        partnerId: 'partner_999',
+        unlockedThemes: ['pastel_pink', 'deep_ocean'],
+        claimedFlameMilestones: {'50': true},
       );
 
       final jsonStr = user.toJson();
@@ -58,13 +69,18 @@ void main() {
       expect(decoded.email, equals('friend@example.com'));
       expect(decoded.displayName, equals('Best Friend'));
       expect(decoded.photoUrl, equals('https://example.com/avatar.png'));
+      expect(decoded.partnerId, equals('partner_999'));
+      expect(decoded.unlockedThemes, contains('pastel_pink'));
+      expect(decoded.unlockedThemes, contains('deep_ocean'));
+      expect(decoded.claimedFlameMilestones['50'], isTrue);
     });
   });
 
   group('AppSettings Model Tests', () {
     test('default settings initialization', () {
       final settings = AppSettings();
-      expect(settings.themeIndex, equals(0));
+      expect(settings.themeId, equals('pastel_pink'));
+      expect(settings.unlockedThemes, contains('pastel_pink'));
       expect(settings.customEmojis.length, equals(10));
       expect(settings.customEmojis.first, equals(DefaultEmojis.list.first));
       expect(settings.notificationsEnabled, isTrue);
@@ -73,30 +89,41 @@ void main() {
     test('copyWith updates settings properly', () {
       final settings = AppSettings();
       final updated = settings.copyWith(
-        themeIndex: 2,
+        themeId: 'starry_night',
+        unlockedThemes: ['pastel_pink', 'starry_night'],
         notificationsEnabled: false,
       );
 
-      expect(updated.themeIndex, equals(2));
+      expect(updated.themeId, equals('starry_night'));
+      expect(updated.unlockedThemes.length, equals(2));
       expect(updated.notificationsEnabled, isFalse);
       expect(updated.customEmojis.length, equals(10));
+    });
+
+    test('isThemeUnlocked returns true for free theme Pastel Pink', () {
+      final settings = AppSettings();
+      expect(settings.isThemeUnlocked('pastel_pink'), isTrue);
+      expect(settings.isThemeUnlocked('starry_night'), isFalse);
     });
   });
 
   group('Theme Palettes & Notification Constants Tests', () {
-    test('AppPalettes list has distinct color palettes including 3 blue themes with fish emojis', () {
-      expect(AppPalettes.list.length, greaterThanOrEqualTo(10));
+    test('AppPalettes list has exactly 13 distinct color palettes', () {
+      expect(AppPalettes.list.length, equals(13));
       final names = AppPalettes.list.map((p) => p.name).toSet();
-      expect(names.length, equals(AppPalettes.list.length));
+      expect(names.length, equals(13));
 
       // Verify blue palettes exist with fish emojis
-      final lightBlue = AppPalettes.list.firstWhere((p) => p.name == 'Light Blue');
+      final lightBlue =
+          AppPalettes.list.firstWhere((p) => p.name == 'Light Blue');
       expect(lightBlue.emoji, equals('🐟'));
 
-      final deepOcean = AppPalettes.list.firstWhere((p) => p.name == 'Deep Ocean');
+      final deepOcean =
+          AppPalettes.list.firstWhere((p) => p.name == 'Deep Ocean');
       expect(deepOcean.emoji, equals('🐠'));
 
-      final aquaLagoon = AppPalettes.list.firstWhere((p) => p.name == 'Aqua Lagoon');
+      final aquaLagoon =
+          AppPalettes.list.firstWhere((p) => p.name == 'Aqua Lagoon');
       expect(aquaLagoon.emoji, equals('🐡'));
     });
 

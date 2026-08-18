@@ -22,7 +22,7 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Settings & Vibe Emojis ⚙️",
+          "Settings & Preferences ⚙️",
           style: GoogleFonts.fredoka(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -31,7 +31,7 @@ class SettingsScreen extends ConsumerWidget {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -42,16 +42,46 @@ class SettingsScreen extends ConsumerWidget {
                 child: EmojiCustomizer(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             // Section 2: Select Theme
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(18.0),
-                child: ThemeSelector(),
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ThemeSelector(),
+                    const SizedBox(height: 14),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          final restored = await ref
+                              .read(settingsProvider.notifier)
+                              .restorePurchases(userId: authState.user?.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Purchases restored! (${restored.length} themes available) 🌸",
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.restore_rounded, size: 18),
+                        label: const Text("Restore Purchased Themes"),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             // Section 3: Notification Settings
             Card(
@@ -102,14 +132,22 @@ class SettingsScreen extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text("Test reminder sent! 🌸 Check your notification shade."),
+                              content: const Text(
+                                "Test reminder sent! 🌸 Check your notification shade.",
+                              ),
                               duration: const Duration(seconds: 2),
                               behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                           );
                         }
                       },
-                      icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                      icon: const Icon(
+                        Icons.notifications_active_outlined,
+                        size: 18,
+                      ),
                       label: const Text("Send Test Notification 🌸"),
                       style: OutlinedButton.styleFrom(
                         shape: RoundedRectangleBorder(
@@ -121,7 +159,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             // Section 4: Cloud Sync & Backup
             Card(
@@ -225,8 +263,10 @@ class SettingsScreen extends ConsumerWidget {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                                "Welcome, ${user.displayName}! 🌸 Google backup connected."),
-                                            duration: const Duration(seconds: 3),
+                                              "Welcome, ${user.displayName}! 🌸 Google backup connected.",
+                                            ),
+                                            duration:
+                                                const Duration(seconds: 3),
                                             behavior: SnackBarBehavior.floating,
                                           ),
                                         );
@@ -234,21 +274,25 @@ class SettingsScreen extends ConsumerWidget {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                                kIsWeb
-                                                    ? "Google Sign-In canceled or blocked. Please ensure popups are allowed and Google Auth is enabled in Firebase."
-                                                    : "Google Sign-In could not be completed."),
-                                            duration: const Duration(seconds: 4),
+                                              kIsWeb
+                                                  ? "Google Sign-In canceled or blocked. Please ensure popups are allowed."
+                                                  : "Google Sign-In could not be completed.",
+                                            ),
+                                            duration:
+                                                const Duration(seconds: 4),
                                             behavior: SnackBarBehavior.floating,
                                             action: SnackBarAction(
                                               label: "Set Profile",
-                                              onPressed: () => _showProfileDialog(context, ref),
+                                              onPressed: () =>
+                                                  _showProfileDialog(context, ref),
                                             ),
                                           ),
                                         );
                                       }
                                     }
                                   },
-                            icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
+                            icon:
+                                const Icon(Icons.g_mobiledata_rounded, size: 24),
                             label: Text(
                               authState.isLoading
                                   ? "Signing In..."
@@ -259,7 +303,8 @@ class SettingsScreen extends ConsumerWidget {
                             onPressed: authState.isLoading
                                 ? null
                                 : () => _showProfileDialog(context, ref),
-                            icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                            icon: const Icon(Icons.person_add_alt_1_rounded,
+                                size: 18),
                             label: const Text("Custom Profile 👤"),
                           ),
                         ],
@@ -269,7 +314,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             // Section 5: Friend Sharing 🐰
             Card(
@@ -294,7 +339,6 @@ class SettingsScreen extends ConsumerWidget {
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     Consumer(
                       builder: (context, ref, child) {
@@ -306,7 +350,8 @@ class SettingsScreen extends ConsumerWidget {
                               Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor: colorScheme.secondaryContainer,
+                                    backgroundColor:
+                                        colorScheme.secondaryContainer,
                                     backgroundImage: partner.photoUrl != null
                                         ? NetworkImage(partner.photoUrl!)
                                         : null,
@@ -317,7 +362,8 @@ class SettingsScreen extends ConsumerWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           "Connected with ${partner.displayName} 🐰",
@@ -329,7 +375,8 @@ class SettingsScreen extends ConsumerWidget {
                                           partner.email,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                            color: colorScheme.onSurface
+                                                .withValues(alpha: 0.6),
                                           ),
                                         ),
                                       ],
@@ -345,7 +392,7 @@ class SettingsScreen extends ConsumerWidget {
                                     builder: (ctx) => AlertDialog(
                                       title: const Text("Disconnect Calendars?"),
                                       content: Text(
-                                        "Are you sure you want to disconnect from ${partner.displayName}? You will no longer be able to view each other's calendars.",
+                                        "Are you sure you want to disconnect from ${partner.displayName}? You will no longer be able to view each other's calendars and duo flames will reset.",
                                       ),
                                       actions: [
                                         TextButton(
@@ -355,11 +402,14 @@ class SettingsScreen extends ConsumerWidget {
                                         ElevatedButton(
                                           onPressed: () {
                                             Navigator.pop(ctx);
-                                            ref.read(partnerProvider.notifier).unpair(authState.user);
+                                            ref
+                                                .read(partnerProvider.notifier)
+                                                .unpair(authState.user);
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: colorScheme.error,
-                                            foregroundColor: colorScheme.onError,
+                                            foregroundColor:
+                                                colorScheme.onError,
                                           ),
                                           child: const Text("Disconnect"),
                                         ),
@@ -367,11 +417,15 @@ class SettingsScreen extends ConsumerWidget {
                                     ),
                                   );
                                 },
-                                icon: const Icon(Icons.link_off_rounded, size: 18),
-                                label: const Text("Disconnect Calendars"),
+                                icon: const Icon(Icons.link_off_rounded,
+                                    size: 18),
+                                label: const Text("Disconnect Partner"),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: colorScheme.error,
-                                  side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
+                                  side: BorderSide(
+                                    color: colorScheme.error
+                                        .withValues(alpha: 0.5),
+                                  ),
                                 ),
                               ),
                             ],
@@ -382,10 +436,10 @@ class SettingsScreen extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   "No FT connected yet.",
-
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
                                   ),
                                 ),
                               ),
@@ -393,7 +447,8 @@ class SettingsScreen extends ConsumerWidget {
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
-                                icon: const Icon(Icons.add_link_rounded, size: 18),
+                                icon: const Icon(Icons.add_link_rounded,
+                                    size: 18),
                                 label: const Text("Connect on Home 🌸"),
                               ),
                             ],
@@ -405,14 +460,29 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 18),
 
-            const SizedBox(height: 30),
+            // Section 6: Legal & Privacy Notice
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  "My Vibe • 100% Local-First & Private\nCrafted with care 🌸",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
-
 
   void _showProfileDialog(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();
@@ -499,12 +569,16 @@ class SettingsScreen extends ConsumerWidget {
                     }
                     ref.read(authProvider.notifier).setUserProfile(
                           displayName: name.isNotEmpty ? name : 'Friend 🌸',
-                          email: email.isNotEmpty ? email : 'friend@vibecalendar.app',
+                          email: email.isNotEmpty
+                              ? email
+                              : 'friend@vibecalendar.app',
                         );
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text("Profile saved for ${name.isNotEmpty ? name : 'Friend'}! 🌸"),
+                        content: Text(
+                          "Profile saved for ${name.isNotEmpty ? name : 'Friend'}! 🌸",
+                        ),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );

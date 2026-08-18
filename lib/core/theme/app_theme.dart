@@ -3,10 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'theme_palettes.dart';
 
 class AppTheme {
-  static ThemeData getTheme(int index) {
-    final paletteIndex = (index >= 0 && index < AppPalettes.list.length) ? index : 0;
-    final palette = AppPalettes.list[paletteIndex];
+  static ThemeData getThemeById(String id) {
+    final palette = AppPalettes.getById(id);
+    return _buildTheme(palette);
+  }
 
+  static ThemeData getTheme(int index) {
+    final palette = AppPalettes.getByIndex(index);
+    return _buildTheme(palette);
+  }
+
+  static ThemeData _buildTheme(ThemePalette palette) {
     final colorScheme = ColorScheme(
       brightness: palette.isDark ? Brightness.dark : Brightness.light,
       primary: palette.primary,
@@ -25,7 +32,8 @@ class AppTheme {
         ? ThemeData.dark().textTheme
         : ThemeData.light().textTheme;
 
-    final customTextTheme = GoogleFonts.plusJakartaSansTextTheme(baseTextTheme).copyWith(
+    final customTextTheme =
+        GoogleFonts.plusJakartaSansTextTheme(baseTextTheme).copyWith(
       titleLarge: GoogleFonts.fredoka(
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -33,6 +41,11 @@ class AppTheme {
       ),
       titleMedium: GoogleFonts.fredoka(
         fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: palette.onSurface,
+      ),
+      titleSmall: GoogleFonts.fredoka(
+        fontSize: 15,
         fontWeight: FontWeight.w600,
         color: palette.onSurface,
       ),
@@ -44,6 +57,10 @@ class AppTheme {
       bodyMedium: GoogleFonts.plusJakartaSans(
         fontSize: 14,
         color: palette.onSurface.withValues(alpha: 0.8),
+      ),
+      bodySmall: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        color: palette.onSurface.withValues(alpha: 0.6),
       ),
     );
 
@@ -93,6 +110,20 @@ class AppTheme {
           ),
           textStyle: GoogleFonts.fredoka(
             fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: palette.primary,
+          side: BorderSide(color: palette.primary.withValues(alpha: 0.3)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          textStyle: GoogleFonts.fredoka(
+            fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
         ),

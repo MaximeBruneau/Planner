@@ -7,9 +7,11 @@ import '../../models/app_user.dart';
 import '../../models/partner_info.dart';
 
 class StorageService {
-  static const String _entriesKey = 'vibe_mood_entries_v1';
-  static const String _settingsKey = 'vibe_app_settings_v1';
-  static const String _userKey = 'vibe_app_user_v1';
+  static const String _entriesKey = 'vibe_mood_entries_v2';
+  static const String _settingsKey = 'vibe_app_settings_v2';
+  static const String _userKey = 'vibe_app_user_v2';
+  static const String _partnerKey = 'vibe_partner_info_v2';
+  static const String _partnerEntriesKey = 'vibe_partner_entries_v2';
 
   late SharedPreferences _prefs;
 
@@ -64,7 +66,9 @@ class StorageService {
 
   MoodEntry? getEntryForDate(String dateStr) {
     final entries = getAllEntries();
-    return entries[dateStr];
+    final entry = entries[dateStr];
+    if (entry != null && entry.deleted) return null;
+    return entry;
   }
 
   Future<void> saveEntry(MoodEntry entry) async {
@@ -78,7 +82,13 @@ class StorageService {
   Future<void> deleteEntry(String dateStr) async {
     final entries = getAllEntries();
     if (entries.containsKey(dateStr)) {
-      entries.remove(dateStr);
+      final existing = entries[dateStr]!;
+      // Mark as deleted tombstone with pending sync
+      entries[dateStr] = existing.copyWith(
+        deleted: true,
+        updatedAt: DateTime.now(),
+        syncStatus: 'pending',
+      );
       final rawMap = entries.map((key, value) => MapEntry(key, value.toMap()));
       await _prefs.setString(_entriesKey, jsonEncode(rawMap));
     }
@@ -108,9 +118,6 @@ class StorageService {
   }
 
   // Partner Info & Entries Cache
-  static const String _partnerKey = 'vibe_partner_info_v1';
-  static const String _partnerEntriesKey = 'vibe_partner_entries_v1';
-
   PartnerInfo? getSavedPartner() {
     try {
       final jsonString = _prefs.getString(_partnerKey);
@@ -156,4 +163,3 @@ class StorageService {
     await _prefs.setString(_partnerEntriesKey, jsonEncode(rawMap));
   }
 }
-

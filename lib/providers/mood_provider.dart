@@ -28,7 +28,14 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
   }
 
   void loadEntries() {
-    state = _storageService.getAllEntries();
+    final all = _storageService.getAllEntries();
+    final nonDeleted = <String, MoodEntry>{};
+    all.forEach((key, value) {
+      if (!value.deleted) {
+        nonDeleted[key] = value;
+      }
+    });
+    state = nonDeleted;
     _updateNotificationSchedule();
   }
 
@@ -38,12 +45,14 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
 
   bool hasEntryForDate(DateTime date) {
     final key = formatDateKey(date);
-    return state.containsKey(key);
+    return state.containsKey(key) && !state[key]!.deleted;
   }
 
   MoodEntry? getEntryForDate(DateTime date) {
     final key = formatDateKey(date);
-    return state[key];
+    final entry = state[key];
+    if (entry != null && entry.deleted) return null;
+    return entry;
   }
 
   Future<void> setEntry({
@@ -57,6 +66,8 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
       emoji: emoji,
       note: note.trim(),
       updatedAt: DateTime.now(),
+      deleted: false,
+      syncStatus: 'pending',
     );
 
     // Save to Local DB
@@ -90,7 +101,7 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
 
   void _updateNotificationSchedule() {
     final todayKey = formatDateKey(DateTime.now());
-    final hasLoggedToday = state.containsKey(todayKey);
+    final hasLoggedToday = state.containsKey(todayKey) && !state[todayKey]!.deleted;
     _notificationService.scheduleDailyReminder(
       hasEntryToday: () => hasLoggedToday,
     );

@@ -43,7 +43,7 @@ class VibeCalendarApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    final themeData = AppTheme.getTheme(settings.themeIndex);
+    final themeData = AppTheme.getThemeById(settings.themeId);
 
     return MaterialApp(
       title: 'My Vibe 🌸',

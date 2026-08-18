@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
+      - main6app6pro
   workflow_dispatch:
+
 
 permissions:
   contents: read

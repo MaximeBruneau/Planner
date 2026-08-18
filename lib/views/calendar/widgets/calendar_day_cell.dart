@@ -21,52 +21,94 @@ class CalendarDayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final hasEmoji = emoji != null && emoji!.isNotEmpty;
 
     Color backgroundColor = Colors.transparent;
     Color textColor = isOutside
-        ? colorScheme.onSurface.withValues(alpha: 0.3)
+        ? colorScheme.onSurface.withValues(alpha: 0.25)
         : colorScheme.onSurface;
     BoxBorder? border;
+    List<BoxShadow> shadows = [];
 
     if (isSelected) {
-      backgroundColor = colorScheme.primaryContainer;
-      border = Border.all(color: colorScheme.primary, width: 2);
+      backgroundColor = colorScheme.primary.withValues(alpha: 0.14);
+      border = Border.all(color: colorScheme.primary, width: 2.0);
+      shadows = [
+        BoxShadow(
+          color: colorScheme.primary.withValues(alpha: 0.18),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ];
     } else if (isToday) {
-      backgroundColor = colorScheme.secondary.withValues(alpha: 0.2);
+      backgroundColor = colorScheme.secondary.withValues(alpha: 0.10);
       border = Border.all(
         color: colorScheme.secondary,
         width: 1.5,
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 1.0),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(10.0),
-        border: border,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${day.day}',
-            style: GoogleFonts.fredoka(
-              fontSize: 12,
-              fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
-              color: textColor,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellHeight = constraints.maxHeight;
+        final cellWidth = constraints.maxWidth;
+
+        final double dayWithEmojiSize = (cellHeight * 0.21).clamp(9.0, 13.0);
+        final double emojiSize = (cellHeight * 0.40).clamp(16.0, 24.0);
+        final double dayNoEmojiSize = (cellHeight * 0.30).clamp(12.0, 18.0);
+        final double hMargin = (cellWidth * 0.04).clamp(1.0, 3.5);
+        final double vMargin = (cellHeight * 0.04).clamp(1.0, 3.5);
+        final double radius = (cellHeight * 0.28).clamp(10.0, 18.0);
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: EdgeInsets.symmetric(horizontal: hMargin, vertical: vMargin),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(radius),
+            border: border,
+            boxShadow: shadows,
           ),
-          const SizedBox(height: 1),
-          if (emoji != null && emoji!.isNotEmpty)
-            Text(
-              emoji!,
-              style: const TextStyle(fontSize: 14, height: 1.1),
-            )
-          else
-            const SizedBox(height: 14),
-        ],
-      ),
+          child: Center(
+            child: hasEmoji
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${day.day}',
+                        style: GoogleFonts.fredoka(
+                          fontSize: dayWithEmojiSize,
+                          fontWeight: isSelected || isToday
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: textColor
+                              .withValues(alpha: isOutside ? 0.25 : 0.75),
+                          height: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        emoji!,
+                        style: TextStyle(fontSize: emojiSize, height: 1.1),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '${day.day}',
+                    style: GoogleFonts.fredoka(
+                      fontSize: dayNoEmojiSize,
+                      fontWeight: isSelected || isToday
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : (isToday ? colorScheme.secondary : textColor),
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
