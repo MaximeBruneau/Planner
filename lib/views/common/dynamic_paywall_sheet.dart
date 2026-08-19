@@ -62,26 +62,26 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
   String _computeTitle() {
     if (widget.title != null) return widget.title!;
     if (widget.targetTheme != null) {
-      return "Débloque ${widget.targetTheme!.name} ✨";
+      return "Unlock ${widget.targetTheme!.name} ✨";
     }
     if (widget.targetEmojiPack != null) {
-      return "Débloque le pack ${widget.targetEmojiPack!.name} 🛍️";
+      return "Unlock the ${widget.targetEmojiPack!.name} Pack 🛍️";
     }
     if (widget.featureName != null) {
-      return "Débloque ${widget.featureName} ✨";
+      return "Unlock ${widget.featureName} ✨";
     }
-    return "Passe à DuoVibe Premium ✨";
+    return "Upgrade to DuoVibe Premium ✨";
   }
 
   String _computeSubtitle() {
     if (widget.subtitle != null) return widget.subtitle!;
     if (widget.targetTheme != null) {
-      return "Profite de ce thème vibrant et de tous les futurs designs en illimité.";
+      return "Enjoy this vibrant theme and all future designs with unlimited access.";
     }
     if (widget.targetEmojiPack != null) {
-      return "Exprime chaque nuance de ton quotidien à deux sans aucune restriction.";
+      return "Express every nuance of your daily life together with zero restrictions.";
     }
-    return "Partagez vos émotions sans limites avec la version complète pour vous deux.";
+    return "Share emotions without limits with the complete premium experience for both of you.";
   }
 
   Future<void> _handleSubscriptionPurchase() async {
@@ -92,21 +92,21 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
 
     switch (_selectedTier) {
       case SubscriptionTier.yearlyWithTrial:
-        productName = "DuoVibe Premium Annuel";
-        priceFormatted = "19,99 €";
-        billingPeriod = "Abonnement annuel (7 jours d'essai gratuit)";
+        productName = "DuoVibe Premium Annual";
+        priceFormatted = "\$19.99";
+        billingPeriod = "Annual subscription (7-day free trial)";
         productEmoji = "⭐";
         break;
       case SubscriptionTier.duoPass:
-        productName = "Pass Duo Annuel (2 Comptes)";
-        priceFormatted = "29,99 €";
-        billingPeriod = "Abonnement annuel partagé à deux";
+        productName = "Duo Pass Annual (2 Accounts)";
+        priceFormatted = "\$29.99";
+        billingPeriod = "Annual subscription shared for both accounts";
         productEmoji = "🐰";
         break;
       case SubscriptionTier.monthly:
-        productName = "DuoVibe Premium Mensuel";
-        priceFormatted = "2,99 €";
-        billingPeriod = "Abonnement mensuel sans engagement";
+        productName = "DuoVibe Premium Monthly";
+        priceFormatted = "\$2.99";
+        billingPeriod = "Monthly subscription (cancel anytime)";
         productEmoji = "🌸";
         break;
     }
@@ -149,8 +149,8 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
           SnackBar(
             content: Text(
               _selectedTier == SubscriptionTier.duoPass
-                  ? "🎉 Pass Duo Activé ! Vous et votre partenaire êtes Premium !"
-                  : "🌟 Bienvenue dans DuoVibe Premium ! Tout est débloqué !",
+                  ? "🎉 Duo Pass Activated! You and your partner are now Premium!"
+                  : "🌟 Welcome to DuoVibe Premium! Everything is unlocked!",
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: const Color(0xFF2E7D32),
@@ -163,20 +163,20 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
   }
 
   Future<void> _handleSingleItemPurchase() async {
-    String productName = "Élément Premium";
-    String priceFormatted = "1,99 €";
-    String billingPeriod = "Achat unique à vie";
+    String productName = "Premium Item";
+    String priceFormatted = "\$1.99";
+    String billingPeriod = "Lifetime one-time purchase";
     String productEmoji = "✨";
 
     if (widget.targetTheme != null) {
-      productName = "Thème ${widget.targetTheme!.name}";
-      priceFormatted = "1,99 €";
-      billingPeriod = "Achat unique à vie";
+      productName = "${widget.targetTheme!.name} Theme";
+      priceFormatted = "\$1.99";
+      billingPeriod = "Lifetime one-time purchase";
       productEmoji = widget.targetTheme!.emoji;
     } else if (widget.targetEmojiPack != null) {
-      productName = "Pack ${widget.targetEmojiPack!.name}";
-      priceFormatted = "0,99 €";
-      billingPeriod = "Achat unique à vie";
+      productName = "${widget.targetEmojiPack!.name} Pack";
+      priceFormatted = "\$0.99";
+      billingPeriod = "Lifetime one-time purchase";
       productEmoji = widget.targetEmojiPack!.emoji;
     }
 
@@ -212,7 +212,7 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "🎉 $productName débloqué avec succès !",
+              "🎉 $productName unlocked successfully!",
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: const Color(0xFF2E7D32),
@@ -254,8 +254,8 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
         SnackBar(
           content: Text(
             isPremium
-                ? "✨ Achats et abonnement DuoVibe Premium restaurés !"
-                : "Restauration terminée (${result['themes']?.length ?? 1} thèmes disponibles).",
+                ? "✨ DuoVibe Premium subscription and purchases restored!"
+                : "Restore completed (${result['themes']?.length ?? 1} themes available).",
             style: GoogleFonts.plusJakartaSans(),
           ),
           behavior: SnackBarBehavior.floating,
@@ -279,9 +279,9 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
     final hasSingleItemOption =
         widget.targetTheme != null || widget.targetEmojiPack != null;
     final singleItemLabel = widget.targetTheme != null
-        ? "Acheter uniquement ce thème (1,99 € à vie)"
+        ? "Buy only this theme (\$1.99 lifetime)"
         : (widget.targetEmojiPack != null
-            ? "Acheter uniquement ce pack (0,99 € à vie)"
+            ? "Buy only this pack (\$0.99 lifetime)"
             : "");
 
     return Container(
@@ -321,7 +321,7 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
                   alignment: Alignment.centerRight,
                   child: IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    tooltip: "Fermer",
+                    tooltip: "Close",
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
@@ -399,22 +399,22 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
                 children: [
                   _buildBenefitRow(
                     icon: "🌟",
-                    title: "Accès Illimité à TOUS les émojis",
-                    subtitle: "Sélecteur clavier natif complet + tous les packs actuels & futurs",
+                    title: "Unlimited Access to ALL Emojis",
+                    subtitle: "Full native keyboard picker + all current & future packs",
                     colorScheme: colorScheme,
                   ),
                   const SizedBox(height: 12),
                   _buildBenefitRow(
                     icon: "🎨",
-                    title: "Tous les 13+ Thèmes Débloqués",
-                    subtitle: "Palettes claires, sombres et cyberpunk illimitées",
+                    title: "All 13+ Themes Unlocked",
+                    subtitle: "Unlimited light, dark, and vibrant aesthetic palettes",
                     colorScheme: colorScheme,
                   ),
                   const SizedBox(height: 12),
                   _buildBenefitRow(
                     icon: "📲",
-                    title: "Widgets Écran d'Accueil",
-                    subtitle: "Suivez l'humeur en direct de votre partenaire en un coup d'œil",
+                    title: "Home Screen Widgets",
+                    subtitle: "Track your partner's live mood at a glance on your home screen",
                     colorScheme: colorScheme,
                   ),
                 ],
@@ -426,9 +426,9 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
             // 1. Yearly Star Offer (7-Day Trial)
             _buildSubscriptionOptionCard(
               tier: SubscriptionTier.yearlyWithTrial,
-              badgeText: "⭐ OFFRE STAR • 7 JOURS GRATUITS",
-              title: "Annuel (Essai 7 jours inclus)",
-              priceSubtitle: "19,99 € / an (soit ~1,66 € / mois)",
+              badgeText: "⭐ BEST VALUE • 7 DAYS FREE",
+              title: "Annual (7-day free trial included)",
+              priceSubtitle: "\$19.99 / year (~ \$1.66 / mo)",
               isPopular: true,
               colorScheme: colorScheme,
             ),
@@ -437,9 +437,9 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
             // 2. Duo Pass Yearly
             _buildSubscriptionOptionCard(
               tier: SubscriptionTier.duoPass,
-              badgeText: "🐰 PASS DUO • POUR VOUS 2",
-              title: "Pass Duo Annuel",
-              priceSubtitle: "29,99 € / an (Débloque les 2 comptes)",
+              badgeText: "🐰 DUO PASS • FOR BOTH OF YOU",
+              title: "Annual Duo Pass",
+              priceSubtitle: "\$29.99 / year (Unlocks both accounts)",
               isPopular: false,
               colorScheme: colorScheme,
             ),
@@ -448,9 +448,9 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
             // 3. Monthly Plan
             _buildSubscriptionOptionCard(
               tier: SubscriptionTier.monthly,
-              badgeText: "⚡ SANS ENGAGEMENT",
-              title: "Mensuel",
-              priceSubtitle: "2,99 € / mois (Annulable quand vous voulez)",
+              badgeText: "⚡ FLEXIBLE",
+              title: "Monthly",
+              priceSubtitle: "\$2.99 / month (Cancel anytime)",
               isPopular: false,
               colorScheme: colorScheme,
             ),
@@ -475,10 +475,10 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
                       )
                     : Text(
                         _selectedTier == SubscriptionTier.yearlyWithTrial
-                            ? "Démarrer l'essai gratuit de 7 jours ✨"
+                            ? "Start 7-Day Free Trial ✨"
                             : (_selectedTier == SubscriptionTier.duoPass
-                                ? "Débloquer le Pass Duo (29,99 €) 🐰"
-                                : "Souscrire pour 2,99 € / mois 🌸"),
+                                ? "Unlock Duo Pass (\$29.99) 🐰"
+                                : "Subscribe for \$2.99 / month 🌸"),
                         style: GoogleFonts.fredoka(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -520,7 +520,7 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
                 TextButton(
                   onPressed: _isLoading ? null : _handleRestore,
                   child: Text(
-                    "Restaurer les achats",
+                    "Restore Purchases",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -532,7 +532,7 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
               ],
             ),
             Text(
-              "Abonnement renouvelable automatiquement. Annulable à tout moment depuis les réglages de votre compte store au moins 24h avant la fin de la période.",
+              "Auto-renewable subscription. Cancel anytime in your store account settings at least 24 hours before the end of the current period.",
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,

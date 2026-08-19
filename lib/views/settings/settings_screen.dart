@@ -177,7 +177,7 @@ class SettingsScreen extends ConsumerWidget {
                             }
                           },
                           icon: const Icon(Icons.restore_rounded, size: 18),
-                          label: const Text("Restaurer"),
+                          label: const Text("Restore Purchases"),
                         ),
                         const SizedBox(width: 8),
                         TextButton.icon(
@@ -189,7 +189,7 @@ class SettingsScreen extends ConsumerWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: const Text(
-                                    "🔒 Réinitialisé en version gratuite ! Tous les thèmes et packs payants sont reverrouillés pour tester.",
+                                    "🔒 Reset to free version! All paid themes and emoji packs are relocked for testing.",
                                   ),
                                   backgroundColor: const Color(0xFFE85D75),
                                   behavior: SnackBarBehavior.floating,
@@ -202,7 +202,7 @@ class SettingsScreen extends ConsumerWidget {
                           },
                           icon: const Icon(Icons.lock_reset_rounded, size: 18, color: Color(0xFFE85D75)),
                           label: const Text(
-                            "Reverrouiller (Test Sandbox)",
+                            "Relock (Sandbox Test)",
                             style: TextStyle(color: Color(0xFFE85D75)),
                           ),
                         ),
@@ -222,7 +222,7 @@ class SettingsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Notifications & Rappels 🔔",
+                      "Notifications & Reminders 🔔",
                       style: GoogleFonts.fredoka(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -231,7 +231,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Reçois un doux rappel chaque jour si tu n'as pas encore enregistré ton humeur.",
+                      "Receive a gentle reminder each day if you haven't logged your vibe yet.",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
@@ -241,13 +241,13 @@ class SettingsScreen extends ConsumerWidget {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        "Rappel quotidien",
+                        "Daily Reminder",
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
                       ),
-                      subtitle: const Text("Uniquement si l'humeur du jour n'est pas saisie"),
+                      subtitle: const Text("Only if today's mood has not been logged"),
                       value: settings.notificationsEnabled,
                       activeTrackColor: colorScheme.primary,
                       onChanged: (val) {
@@ -696,7 +696,7 @@ class SettingsScreen extends ConsumerWidget {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    "Liaison avec ${partner.displayName} déconnectée.",
+                                                    "Disconnected from ${partner.displayName}.",
                                                     style: GoogleFonts.plusJakartaSans(
                                                       fontWeight: FontWeight.w600,
                                                     ),

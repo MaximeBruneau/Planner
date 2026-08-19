@@ -40,8 +40,8 @@ class ThemeSelector extends ConsumerWidget {
               ),
               child: Text(
                 settings.hasActivePremium
-                    ? "13 / 13 Débloqués ✨"
-                    : "${settings.unlockedThemes.length} / 13 Débloqués",
+                    ? "13 / 13 Unlocked ✨"
+                    : "${settings.unlockedThemes.length} / 13 Unlocked",
                 style: GoogleFonts.fredoka(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -53,7 +53,7 @@ class ThemeSelector extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          "1 thème par défaut (Pastel Pink) gratuit à vie. Débloquez les 12 autres thèmes à 1,99 €, via le Pass Duo ou avec DuoVibe Premium ✨!",
+          "1 default theme (Pastel Pink) free forever. Unlock all 12 other themes for \$1.99 each, via Duo Pass, or with DuoVibe Premium ✨!",
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             color: colorScheme.onSurface.withValues(alpha: 0.7),

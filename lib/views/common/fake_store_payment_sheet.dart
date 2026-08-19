@@ -203,7 +203,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    "Paiement Approuvé ! 🎉",
+                    "Payment Approved! 🎉",
                     style: GoogleFonts.fredoka(
                       fontSize: 19,
                       fontWeight: FontWeight.w600,
@@ -212,7 +212,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Votre contenu a été débloqué instantanément.",
+                    "Your content has been unlocked instantly.",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: textSecondary,
@@ -314,7 +314,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                           ),
                         ),
                         Text(
-                          "Compte Google Play vérifié",
+                          "Verified App Store account",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             color: textSecondary,
@@ -337,7 +337,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                 const Icon(Icons.info_outline_rounded, size: 13, color: Color(0xFFE85D75)),
                 const SizedBox(width: 5),
                 Text(
-                  "Paiement simulé • Aucun débit réel sur votre carte",
+                  "Simulated sandbox • No actual charge on your card",
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -376,7 +376,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            "Traitement sécurisé...",
+                            "Processing securely...",
                             style: GoogleFonts.fredoka(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -391,7 +391,7 @@ class _FakeStorePaymentSheetState extends State<FakeStorePaymentSheet>
                           const Icon(Icons.fingerprint_rounded, size: 22, color: Colors.white),
                           const SizedBox(width: 8),
                           Text(
-                            "Acheter en 1 clic (${widget.priceFormatted})",
+                            "1-Tap Buy (${widget.priceFormatted})",
                             style: GoogleFonts.fredoka(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

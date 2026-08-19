@@ -42,7 +42,7 @@ class PartnerService {
       ).timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          throw Exception("Délai de connexion dépassé. Vérifiez votre connexion internet.");
+          throw Exception("Connection timed out. Please check your internet connection.");
         },
       );
 
@@ -50,7 +50,7 @@ class PartnerService {
     } on FirebaseException catch (fe) {
       if (fe.code == 'permission-denied') {
         throw Exception(
-          "Permission refusée. Assurez-vous d'avoir déployé les règles Firestore (firestore.rules).",
+          "Permission denied. Please ensure Firestore security rules are deployed.",
         );
       }
       throw Exception(fe.message ?? fe.code);
@@ -60,14 +60,14 @@ class PartnerService {
     }
   }
 
-  /// Redeem an invitation code to pair 1-on-1 with FT
+  /// Redeem an invitation code to pair 1-on-1 with Partner
   Future<PartnerInfo> redeemPairingCode({
     required String code,
     required AppUser currentUser,
   }) async {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) {
-      throw Exception("Veuillez entrer un code valide.");
+      throw Exception("Please enter a valid code.");
     }
 
     try {
@@ -77,12 +77,12 @@ class PartnerService {
       final snapshot = await codeDocRef.get().timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          throw Exception("Délai de connexion dépassé lors de la vérification du code.");
+          throw Exception("Connection timed out while verifying the code.");
         },
       );
 
       if (!snapshot.exists || snapshot.data() == null) {
-        throw Exception("Code introuvable, vérifie et réessaie.");
+        throw Exception("Code not found, please check and try again.");
       }
 
       final data = snapshot.data()!;
@@ -90,17 +90,17 @@ class PartnerService {
 
       // Check if code has already been used
       if (pairingCode.used) {
-        throw Exception("Ce code a déjà été utilisé.");
+        throw Exception("This code has already been used.");
       }
 
       // Check if code has expired (10 minutes lifetime)
       if (pairingCode.isExpired) {
-        throw Exception("Code expiré, demande un nouveau code.");
+        throw Exception("Code has expired. Please request a new code.");
       }
 
       final ownerUid = pairingCode.creatorUserId;
       if (ownerUid.isEmpty || ownerUid == currentUser.id) {
-        throw Exception("Tu ne peux pas utiliser ton propre code.");
+        throw Exception("You cannot use your own code.");
       }
 
       final now = DateTime.now();
@@ -173,13 +173,58 @@ class PartnerService {
         debugPrint('Connection doc create notice: $e');
       }
 
+      // 5. Automatic Duo Pass synchronization between partners
+      try {
+        // Check if creator has active Duo Pass
+        final creatorDoc = await firestore.collection('users').doc(ownerUid).get();
+        if (creatorDoc.exists && creatorDoc.data() != null) {
+          final cData = creatorDoc.data()!;
+          if (cData['isDuoPass'] == true) {
+            final expiryStr = cData['premiumExpiryDate'] as String?;
+            await firestore.collection('users').doc(currentUser.id).set({
+              'premiumGrantedByPartner': true,
+              'premiumGrantedByUserId': ownerUid,
+              'premiumExpiryDate': expiryStr,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+
+            final currentSettings = _storageService.getSettings();
+            DateTime? expiry;
+            if (expiryStr != null) {
+              try { expiry = DateTime.parse(expiryStr); } catch (_) {}
+            }
+            await _storageService.saveSettings(currentSettings.copyWith(
+              premiumGrantedByPartner: true,
+              premiumExpiryDate: expiry ?? currentSettings.premiumExpiryDate,
+            ));
+          }
+        }
+
+        // Check if claimant has active Duo Pass
+        final claimantDoc = await firestore.collection('users').doc(currentUser.id).get();
+        if (claimantDoc.exists && claimantDoc.data() != null) {
+          final clData = claimantDoc.data()!;
+          if (clData['isDuoPass'] == true) {
+            final expiryStr = clData['premiumExpiryDate'] as String?;
+            await firestore.collection('users').doc(ownerUid).set({
+              'premiumGrantedByPartner': true,
+              'premiumGrantedByUserId': currentUser.id,
+              'premiumExpiryDate': expiryStr,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+      } catch (e) {
+        debugPrint('Duo Pass pairing sync notice: $e');
+      }
+
       // Save locally
       await _storageService.savePartner(partnerForCurrentUser);
       return partnerForCurrentUser;
     } on FirebaseException catch (fe) {
       if (fe.code == 'permission-denied') {
         throw Exception(
-          "Permission refusée par Firestore. Veuillez déployer les règles de sécurité `firestore.rules`.",
+          "Permission denied by Firestore. Please deploy firestore.rules security rules.",
         );
       }
       throw Exception(fe.message ?? fe.code);

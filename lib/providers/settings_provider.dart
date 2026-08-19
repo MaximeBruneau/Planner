@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/iap_service.dart';
@@ -7,12 +8,14 @@ import '../core/services/storage_service.dart';
 import '../core/theme/theme_palettes.dart';
 import '../models/app_settings.dart';
 import '../models/emoji_pack.dart';
+import 'auth_provider.dart';
 import 'mood_provider.dart';
-
+import 'partner_provider.dart';
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final StorageService _storageService;
   final IapService _iapService;
+  StreamSubscription<bool>? _duoPassSubscription;
 
   SettingsNotifier(this._storageService, this._iapService)
       : super(_storageService.getSettings());
@@ -222,11 +225,57 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   bool isEmojiUnlocked(String emoji) {
     return state.isEmojiUnlocked(emoji);
   }
+
+  /// Synchronize real-time Duo Pass status with partner
+  void syncWithPartner({required String userId, String? partnerId}) {
+    _duoPassSubscription?.cancel();
+    _duoPassSubscription = _iapService
+        .streamPartnerGrantedPremium(
+      currentUserId: userId,
+      partnerId: partnerId,
+    )
+        .listen((isGranted) {
+      if (state.premiumGrantedByPartner != isGranted) {
+        final updated = state.copyWith(premiumGrantedByPartner: isGranted);
+        state = updated;
+        _storageService.saveSettings(updated);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _duoPassSubscription?.cancel();
+    super.dispose();
+  }
 }
 
 final settingsProvider =
     StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   final iapService = ref.watch(iapServiceProvider);
-  return SettingsNotifier(storageService, iapService);
+  final notifier = SettingsNotifier(storageService, iapService);
+
+  // Sync Duo Pass whenever partner or auth state changes
+  ref.listen<PartnerState>(partnerProvider, (previous, next) {
+    final authState = ref.read(authProvider);
+    if (authState.user != null) {
+      notifier.syncWithPartner(
+        userId: authState.user!.id,
+        partnerId: next.partnerInfo?.uid,
+      );
+    }
+  });
+
+  ref.listen<AuthState>(authProvider, (previous, next) {
+    if (next.user != null) {
+      final partnerState = ref.read(partnerProvider);
+      notifier.syncWithPartner(
+        userId: next.user!.id,
+        partnerId: partnerState.partnerInfo?.uid,
+      );
+    }
+  });
+
+  return notifier;
 });

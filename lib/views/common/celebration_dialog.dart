@@ -178,7 +178,7 @@ class _CelebrationDialogState extends State<CelebrationDialog>
 
     final currentUserName = widget.currentUser?.displayName.isNotEmpty == true
         ? widget.currentUser!.displayName.split(' ')[0]
-        : 'Toi';
+        : 'You';
 
     return AnimatedBuilder(
       animation: Listenable.merge([_mainController, _pulseController, _particleController]),
@@ -255,7 +255,7 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                               const Text("🔥", style: TextStyle(fontSize: 13)),
                               const SizedBox(width: 5),
                               Text(
-                                "DUO SYNCHRONISÉ",
+                                "DUO SYNCHRONIZED",
                                 style: GoogleFonts.fredoka(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -416,7 +416,7 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                         child: Column(
                           children: [
                             Text(
-                              "Connexion Réussie ! 🌸🔥",
+                              "Connection Successful! 🌸🔥",
                               textAlign: TextAlign.center,
                               style: GoogleFonts.fredoka(
                                 fontSize: 23,
@@ -430,7 +430,7 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 4.0),
                               child: Text(
-                                "Vos cœurs et vos journées sont maintenant reliés. Partagez votre humeur en temps réel, allumez vos flammes quotidiennes et prenez soin l'un de l'autre !",
+                                "Your days and vibes are now connected. Share your mood in real-time, build your daily duo flames, and stay in sync!",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
@@ -485,7 +485,7 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Découvrir la vibe de $partnerName",
+                                "Explore $partnerName's Vibe",
                                 style: GoogleFonts.fredoka(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

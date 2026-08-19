@@ -154,7 +154,7 @@ class EmojiPacks {
       id: 'duo_love',
       name: 'Duo & Love',
       emoji: '🐰',
-      description: '10 romantic & best friend duo emojis for FT.',
+      description: '10 romantic & best friend duo emojis for your Partner.',
       price: '\$0.99',
       emojis: [
         '💖',

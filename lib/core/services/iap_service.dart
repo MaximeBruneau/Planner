@@ -67,6 +67,28 @@ class IapService {
       partnerId: partnerId,
     );
   }
+
+  /// Stream real-time partner granted Duo Pass status
+  Stream<bool> streamPartnerGrantedPremium({
+    required String currentUserId,
+    String? partnerId,
+  }) {
+    return _purchasesService.streamPartnerGrantedPremium(
+      currentUserId: currentUserId,
+      partnerId: partnerId,
+    );
+  }
+
+  /// Check partner granted premium directly
+  Future<bool> checkPartnerGrantedPremium({
+    required String currentUserId,
+    String? partnerId,
+  }) {
+    return _purchasesService.checkPartnerGrantedPremium(
+      currentUserId: currentUserId,
+      partnerId: partnerId,
+    );
+  }
   /// Claim random theme unlock on reaching 50 duo flames
   Future<String?> claim50FlameMilestone({
     required int duoFlames,

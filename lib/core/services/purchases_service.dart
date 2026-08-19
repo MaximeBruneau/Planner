@@ -349,22 +349,123 @@ class PurchasesService {
     }
   }
 
+  /// Stream real-time Duo Pass status for current user (watches both own doc and partner doc)
+  Stream<bool> streamPartnerGrantedPremium({
+    required String currentUserId,
+    String? partnerId,
+  }) {
+    if (currentUserId.isEmpty) return Stream.value(false);
+
+    final firestore = FirebaseFirestore.instance;
+
+    return firestore
+        .collection('users')
+        .doc(currentUserId)
+        .snapshots()
+        .asyncMap((userDoc) async {
+      if (!userDoc.exists || userDoc.data() == null) return false;
+      final userData = userDoc.data()!;
+
+      // 1. Check direct flag on current user document
+      if (userData['premiumGrantedByPartner'] == true) {
+        final expiryStr = userData['premiumExpiryDate'] as String?;
+        if (expiryStr != null) {
+          try {
+            final expiry = DateTime.parse(expiryStr);
+            if (expiry.isAfter(DateTime.now())) return true;
+          } catch (_) {}
+        } else {
+          return true;
+        }
+      }
+
+      // 2. Cross-check partner's document for active Duo Pass
+      final effectivePartnerId = partnerId ?? (userData['partnerId'] as String?);
+      if (effectivePartnerId != null && effectivePartnerId.isNotEmpty) {
+        try {
+          final partnerDoc =
+              await firestore.collection('users').doc(effectivePartnerId).get();
+          if (partnerDoc.exists && partnerDoc.data() != null) {
+            final pData = partnerDoc.data()!;
+            if (pData['isDuoPass'] == true) {
+              final expiryStr = pData['premiumExpiryDate'] as String?;
+              DateTime? expiry;
+              if (expiryStr != null) {
+                try {
+                  expiry = DateTime.parse(expiryStr);
+                } catch (_) {}
+              }
+              if (expiry == null || expiry.isAfter(DateTime.now())) {
+                // Auto-sync status to current user's document as well
+                await syncDuoPassPartnerStatus(
+                  userId: effectivePartnerId,
+                  partnerId: currentUserId,
+                  isActive: true,
+                  expiryDate: expiry,
+                );
+                return true;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Cross-check partner Duo Pass notice: $e');
+        }
+      }
+
+      return false;
+    });
+  }
+
   /// Check if the connected partner has activated a Duo Pass for this user
-  Future<bool> checkPartnerGrantedPremium({required String currentUserId}) async {
+  Future<bool> checkPartnerGrantedPremium({
+    required String currentUserId,
+    String? partnerId,
+  }) async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUserId)
-          .get();
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('users').doc(currentUserId).get();
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        final granted = data['premiumGrantedByPartner'] == true;
-        if (granted) {
+        if (data['premiumGrantedByPartner'] == true) {
           final settings = _storageService.getSettings();
           final updated = settings.copyWith(premiumGrantedByPartner: true);
           await _storageService.saveSettings(updated);
           return true;
+        }
+
+        // Cross-check partner
+        final effectivePartnerId = partnerId ?? (data['partnerId'] as String?);
+        if (effectivePartnerId != null && effectivePartnerId.isNotEmpty) {
+          final partnerDoc =
+              await firestore.collection('users').doc(effectivePartnerId).get();
+          if (partnerDoc.exists && partnerDoc.data() != null) {
+            final pData = partnerDoc.data()!;
+            if (pData['isDuoPass'] == true) {
+              final expiryStr = pData['premiumExpiryDate'] as String?;
+              DateTime? expiry;
+              if (expiryStr != null) {
+                try {
+                  expiry = DateTime.parse(expiryStr);
+                } catch (_) {}
+              }
+              final settings = _storageService.getSettings();
+              final updated = settings.copyWith(
+                premiumGrantedByPartner: true,
+                premiumExpiryDate: expiry ?? settings.premiumExpiryDate,
+              );
+              await _storageService.saveSettings(updated);
+
+              // Also persist back to user's doc
+              await syncDuoPassPartnerStatus(
+                userId: effectivePartnerId,
+                partnerId: currentUserId,
+                isActive: true,
+                expiryDate: expiry,
+              );
+              return true;
+            }
+          }
         }
       }
     } catch (e) {

@@ -609,7 +609,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    "Historique Privé 🔒",
+                                    "Private History 🔒",
                                     style: GoogleFonts.fredoka(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
@@ -617,7 +617,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                     ),
                                   ),
                                   Text(
-                                    "Les humeurs antérieures à votre connexion avec $partnerName ne sont pas partagées.",
+                                    "Moods prior to connecting with $partnerName are private and not shared.",
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: colorScheme.onSurface
