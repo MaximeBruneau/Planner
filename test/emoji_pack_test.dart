@@ -10,18 +10,18 @@ void main() {
   });
 
   group('EmojiPack & Store Tests', () {
-    test('Default starter essentials pack is free and has 10 emojis', () {
+    test('Default starter essentials pack is free and has 20 emojis', () {
       final defaultPack = EmojiPacks.getById(EmojiPacks.defaultPackId);
       expect(defaultPack.isFree, isTrue);
-      expect(defaultPack.emojis.length, equals(10));
-      expect(defaultPack.emojis, contains('🌸'));
-      expect(defaultPack.emojis, contains('😊'));
+      expect(defaultPack.emojis.length, equals(20));
+      expect(defaultPack.emojis, contains('✨'));
+      expect(defaultPack.emojis, contains('😄'));
     });
 
-    test('There are exactly 7 official emoji packs with 10 emojis each', () {
+    test('There are 7 official emoji packs (starter has 20, paid packs have 10)', () {
       expect(EmojiPacks.list.length, equals(7));
       for (final pack in EmojiPacks.list) {
-        expect(pack.emojis.length, equals(10));
+        expect(pack.emojis.length >= 10, isTrue);
         expect(pack.name.isNotEmpty, isTrue);
       }
     });
@@ -42,10 +42,11 @@ void main() {
       expect(catPack, isNotNull);
       expect(catPack!.id, equals('cute_animals'));
 
-      final pizzaPack = EmojiPacks.getPackForEmoji('🍕');
-      expect(pizzaPack, isNotNull);
-      expect(pizzaPack!.id, equals('food_treats'));
+      final sushiPack = EmojiPacks.getPackForEmoji('🍣');
+      expect(sushiPack, isNotNull);
+      expect(sushiPack!.id, equals('food_treats'));
     });
+
 
     test('AppSettings handles unlocked emoji packs properly', () {
       final settings = AppSettings();

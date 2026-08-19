@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/utils/date_utils_helper.dart';
 import 'emoji_pack.dart';
 
 class AppUser {
@@ -103,12 +104,8 @@ class AppUser {
       unlockedThemes: themes,
       unlockedEmojiPacks: emojiPacks,
       claimedFlameMilestones: milestones,
-      createdAt: map['createdAt'] != null
-          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      createdAt: DateUtilsHelper.parseDateTime(map['createdAt']),
+      updatedAt: DateUtilsHelper.parseDateTime(map['updatedAt']),
     );
   }
 

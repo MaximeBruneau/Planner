@@ -6,8 +6,10 @@ import '../models/partner_info.dart';
 import '../core/services/partner_service.dart';
 import '../core/services/storage_service.dart';
 import '../core/services/notification_service.dart';
+import '../core/services/widget_sync_service.dart';
 import 'auth_provider.dart';
 import 'mood_provider.dart';
+
 
 
 class PartnerState {
@@ -26,6 +28,38 @@ class PartnerState {
   });
 
   bool get isPaired => partnerInfo != null;
+
+  /// Returns partner entries filtered so dates prior to pairedAt are excluded
+  Map<String, MoodEntry> get filteredPartnerEntries {
+    if (partnerInfo?.pairedAt == null) return partnerEntries;
+    final threshold = "${partnerInfo!.pairedAt.year}-${partnerInfo!.pairedAt.month.toString().padLeft(2, '0')}-${partnerInfo!.pairedAt.day.toString().padLeft(2, '0')}";
+    final result = <String, MoodEntry>{};
+    for (final entry in partnerEntries.entries) {
+      if (entry.key.compareTo(threshold) >= 0) {
+        result[entry.key] = entry.value;
+      }
+    }
+    return result;
+  }
+
+  /// Get partner entry for specific date string or DateTime (strictly protected by pairedAt)
+  MoodEntry? getPartnerEntryForDate(dynamic date) {
+    String dateKey;
+    if (date is DateTime) {
+      dateKey = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    } else if (date is String) {
+      dateKey = date;
+    } else {
+      return null;
+    }
+
+    if (partnerInfo?.pairedAt != null) {
+      final threshold = "${partnerInfo!.pairedAt.year}-${partnerInfo!.pairedAt.month.toString().padLeft(2, '0')}-${partnerInfo!.pairedAt.day.toString().padLeft(2, '0')}";
+      if (dateKey.compareTo(threshold) < 0) return null;
+    }
+    return partnerEntries[dateKey];
+  }
+
 
   PartnerState copyWith({
     PartnerInfo? partnerInfo,
@@ -66,10 +100,17 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
       partnerEntries: localEntries,
     );
     if (localPartner != null) {
-      _subscribeToPartnerEntries(localPartner.uid);
+      _subscribeToPartnerEntries(localPartner.uid, pairedAt: localPartner.pairedAt);
     }
+    _syncWidget(partner: localPartner, entries: localEntries);
   }
 
+  void _syncWidget({PartnerInfo? partner, Map<String, MoodEntry>? entries}) {
+    WidgetSyncService.syncPartnerMoodWidget(
+      partner: partner ?? state.partnerInfo,
+      partnerEntries: entries ?? state.partnerEntries,
+    );
+  }
 
   Future<void> syncWithCloudUser(AppUser? currentUser) async {
     if (currentUser == null) {
@@ -93,10 +134,11 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
         );
 
         if (cloudPartner != null) {
-          _subscribeToPartnerEntries(cloudPartner.uid);
+          _subscribeToPartnerEntries(cloudPartner.uid, pairedAt: cloudPartner.pairedAt);
         } else {
           _entriesSubscription?.cancel();
           state = state.copyWith(partnerEntries: {});
+          _syncWidget(partner: null, entries: {});
         }
       },
       onError: (err) {
@@ -108,11 +150,14 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
     );
   }
 
-  void _subscribeToPartnerEntries(String partnerUid) {
+  void _subscribeToPartnerEntries(String partnerUid, {DateTime? pairedAt}) {
     _entriesSubscription?.cancel();
     bool isFirstSnapshot = true;
 
-    _entriesSubscription = _partnerService.streamPartnerEntries(partnerUid).listen(
+    _entriesSubscription = _partnerService.streamPartnerEntries(
+      partnerUid,
+      pairedAt: pairedAt,
+    ).listen(
       (entries) {
         if (!isFirstSnapshot) {
           final oldEntries = state.partnerEntries;
@@ -135,6 +180,7 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
         }
         isFirstSnapshot = false;
         state = state.copyWith(partnerEntries: entries);
+        _syncWidget(entries: entries);
       },
       onError: (err) {
         state = state.copyWith(errorMessage: 'Partner stream error');
@@ -171,7 +217,8 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
         isLoading: false,
         clearGeneratedCode: true,
       );
-      _subscribeToPartnerEntries(partner.uid);
+      _subscribeToPartnerEntries(partner.uid, pairedAt: partner.pairedAt);
+      _syncWidget(partner: partner);
       return true;
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
@@ -189,12 +236,25 @@ class PartnerNotifier extends StateNotifier<PartnerState> {
     await _partnerService.unpairPartner(currentUser?.id ?? '', partnerUid);
     _entriesSubscription?.cancel();
     state = const PartnerState();
+    _syncWidget(partner: null, entries: {});
   }
 
+
   MoodEntry? getPartnerEntryForDate(DateTime date) {
+    final partner = state.partnerInfo;
+    if (partner == null) return null;
+
+    // Privacy guard: Never return partner entries prior to pairing date
+    final pairingDay = DateTime(partner.pairedAt.year, partner.pairedAt.month, partner.pairedAt.day);
+    final targetDay = DateTime(date.year, date.month, date.day);
+    if (targetDay.isBefore(pairingDay)) {
+      return null;
+    }
+
     final dateKey = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
     return state.partnerEntries[dateKey];
   }
+
 
   @override
   void dispose() {

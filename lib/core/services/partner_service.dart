@@ -191,6 +191,7 @@ class PartnerService {
 
   /// Bilateral unpair: clears partner links on both sides and marks connection as dissolved
   Future<void> unpairPartner(String currentUid, String partnerUid) async {
+
     try {
       final firestore = FirebaseFirestore.instance;
 
@@ -207,6 +208,19 @@ class PartnerService {
         } catch (e) {
           debugPrint('Unpair current user notice: $e');
         }
+
+        // Clean up any pairing codes created by current user
+        try {
+          final codesQuery = await firestore
+              .collection('pairing_codes')
+              .where('creatorUserId', isEqualTo: currentUid)
+              .get();
+          for (final doc in codesQuery.docs) {
+            await doc.reference.delete();
+          }
+        } catch (e) {
+          debugPrint('Clean creator pairing codes notice: $e');
+        }
       }
 
       if (partnerUid.isNotEmpty) {
@@ -221,6 +235,19 @@ class PartnerService {
           );
         } catch (e) {
           debugPrint('Unpair partner notice: $e');
+        }
+
+        // Clean up any pairing codes created by partner
+        try {
+          final partnerCodesQuery = await firestore
+              .collection('pairing_codes')
+              .where('creatorUserId', isEqualTo: partnerUid)
+              .get();
+          for (final doc in partnerCodesQuery.docs) {
+            await doc.reference.delete();
+          }
+        } catch (e) {
+          debugPrint('Clean partner pairing codes notice: $e');
         }
 
         final connectionId1 = '${currentUid}_$partnerUid';
@@ -243,14 +270,23 @@ class PartnerService {
       debugPrint('Cloud unpair notice: $e');
     } finally {
       await _storageService.savePartner(null);
+      await _storageService.savePartnerEntries({});
     }
   }
 
   /// Listen to real-time partner entries from Firestore (Read-Only)
-  Stream<Map<String, MoodEntry>> streamPartnerEntries(String partnerUid) {
+  /// Privacy Guard: Never expose entries prior to the date of pairing
+  Stream<Map<String, MoodEntry>> streamPartnerEntries(
+    String partnerUid, {
+    DateTime? pairedAt,
+  }) {
     if (partnerUid.isEmpty) {
       return Stream.value({});
     }
+
+    final pairingDateStr = pairedAt != null
+        ? "${pairedAt.year}-${pairedAt.month.toString().padLeft(2, '0')}-${pairedAt.day.toString().padLeft(2, '0')}"
+        : null;
 
     try {
       return FirebaseFirestore.instance
@@ -265,7 +301,10 @@ class PartnerService {
           final data = doc.data();
           final entry = MoodEntry.fromMap(data);
           if (!entry.deleted) {
-            entries[entry.date] = entry;
+            // Privacy filter: Only include entries on or after pairing date
+            if (pairingDateStr == null || entry.date.compareTo(pairingDateStr) >= 0) {
+              entries[entry.date] = entry;
+            }
           }
         }
         // Update local partner cache
@@ -275,6 +314,9 @@ class PartnerService {
     } catch (e) {
       debugPrint('Error streaming partner entries: $e');
       final local = _storageService.getPartnerEntries();
+      if (pairingDateStr != null) {
+        local.removeWhere((date, _) => date.compareTo(pairingDateStr) < 0);
+      }
       return Stream.value(local);
     }
   }
@@ -296,39 +338,6 @@ class PartnerService {
           return partner;
         }
 
-        // Secondary check: Did someone redeem our pairing code?
-        try {
-          final codesQuery = await FirebaseFirestore.instance
-              .collection('pairing_codes')
-              .where('creatorUserId', isEqualTo: currentUid)
-              .where('used', isEqualTo: true)
-              .limit(1)
-              .get();
-
-          if (codesQuery.docs.isNotEmpty) {
-            final codeData = codesQuery.docs.first.data();
-            if (codeData['claimantInfo'] != null) {
-              final claimantRaw = codeData['claimantInfo'] as Map<String, dynamic>;
-              final partner = PartnerInfo.fromMap(claimantRaw);
-              
-              // Automatically write partner to our own user document
-              await FirebaseFirestore.instance.collection('users').doc(currentUid).set(
-                {
-                  'partnerId': partner.uid,
-                  'partnerInfo': partner.toMap(),
-                  'updatedAt': FieldValue.serverTimestamp(),
-                },
-                SetOptions(merge: true),
-              );
-
-              _storageService.savePartner(partner);
-              return partner;
-            }
-          }
-        } catch (e) {
-          debugPrint('Check pairing code fallback notice: $e');
-        }
-
         _storageService.savePartner(null);
         return null;
       });
@@ -339,6 +348,7 @@ class PartnerService {
   }
 
   /// Fetch user's partner info from Firestore
+
   Future<PartnerInfo?> fetchCloudPartner(String currentUid) async {
     if (currentUid.isEmpty) return _storageService.getSavedPartner();
 

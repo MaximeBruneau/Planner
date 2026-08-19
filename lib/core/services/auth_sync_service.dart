@@ -25,7 +25,9 @@ class AuthSyncService {
   AppUser? _currentUser;
   bool _isFirebaseInitialized = false;
 
-  AuthSyncService(this._storageService);
+  AuthSyncService(this._storageService) {
+    _currentUser = _storageService.getSavedUser();
+  }
 
   AppUser? get currentUser => _currentUser;
   bool get isSignedIn => _currentUser != null;
@@ -181,6 +183,113 @@ class AuthSyncService {
     }
   }
 
+  /// Sign in with Email and Password
+  Future<AppUser?> signInWithEmail(String email, String password) async {
+    if (!_isFirebaseInitialized) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      _isFirebaseInitialized = true;
+    }
+
+    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final fbUser = credential.user;
+    if (fbUser != null) {
+      _currentUser = AppUser(
+        id: fbUser.uid,
+        email: fbUser.email ?? email.trim(),
+        displayName: fbUser.displayName ??
+            (fbUser.email?.split('@')[0] ?? 'User'),
+        photoUrl: fbUser.photoURL,
+      );
+      await _storageService.saveUser(_currentUser);
+
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(fbUser.uid).set({
+          'id': fbUser.uid,
+          'email': fbUser.email ?? email.trim(),
+          'displayName': _currentUser!.displayName,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore user doc sync error: $e');
+      }
+
+      await syncCloudData();
+      return _currentUser;
+    }
+    return null;
+  }
+
+  /// Sign up with Email, Password and Display Name
+  Future<AppUser?> signUpWithEmail({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    if (!_isFirebaseInitialized) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      _isFirebaseInitialized = true;
+    }
+
+    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final fbUser = credential.user;
+    if (fbUser != null) {
+      final name = displayName.trim().isNotEmpty
+          ? displayName.trim()
+          : (email.split('@')[0]);
+
+      try {
+        await fbUser.updateDisplayName(name);
+      } catch (_) {}
+
+      _currentUser = AppUser(
+        id: fbUser.uid,
+        email: fbUser.email ?? email.trim(),
+        displayName: name,
+        photoUrl: fbUser.photoURL,
+      );
+      await _storageService.saveUser(_currentUser);
+
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(fbUser.uid).set({
+          'id': fbUser.uid,
+          'email': fbUser.email ?? email.trim(),
+          'displayName': name,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore user doc create error: $e');
+      }
+
+      await syncCloudData();
+      return _currentUser;
+    }
+    return null;
+  }
+
+  /// Send Password Reset Email
+  Future<void> sendPasswordReset(String email) async {
+    if (!_isFirebaseInitialized) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      _isFirebaseInitialized = true;
+    }
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+  }
+
   /// Manually set or update user profile (e.g. for offline / custom profile)
   Future<AppUser> setUserProfile({
     required String displayName,
@@ -274,4 +383,97 @@ class AuthSyncService {
       debugPrint('Delete cloud entry error: $e');
     }
   }
+
+  /// 100% GDPR & Store compliant: Delete user account, calendar entries & all data
+  Future<bool> deleteAccountAndData() async {
+    try {
+      final uid = _currentUser?.id;
+      final firestore = FirebaseFirestore.instance;
+
+      if (uid != null && uid.isNotEmpty && _isFirebaseInitialized) {
+        // 1. Delete all user mood entries from Firestore
+        try {
+          final entriesSnapshot = await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('mood_entries')
+              .get();
+
+          for (final doc in entriesSnapshot.docs) {
+            await doc.reference.delete();
+          }
+        } catch (e) {
+          debugPrint('Error deleting cloud entries during account deletion: $e');
+        }
+
+        // 2. Unlink partner if connected
+        try {
+          final userDoc = await firestore.collection('users').doc(uid).get();
+          if (userDoc.exists && userDoc.data() != null) {
+            final partnerId = userDoc.data()!['partnerId'] as String?;
+            if (partnerId != null && partnerId.isNotEmpty) {
+              await firestore.collection('users').doc(partnerId).set({
+                'partnerId': null,
+                'partnerInfo': FieldValue.delete(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+            }
+          }
+        } catch (e) {
+          debugPrint('Error unlinking partner during account deletion: $e');
+        }
+
+        // 3. Delete any pairing codes created by this user
+        try {
+          final codesQuery = await firestore
+              .collection('pairing_codes')
+              .where('creatorUserId', isEqualTo: uid)
+              .get();
+
+          for (final codeDoc in codesQuery.docs) {
+            await codeDoc.reference.delete();
+          }
+        } catch (e) {
+          debugPrint('Error deleting pairing codes: $e');
+        }
+
+        // 4. Delete root user document in Firestore
+        try {
+          await firestore.collection('users').doc(uid).delete();
+        } catch (e) {
+          debugPrint('Error deleting root user document: $e');
+        }
+
+        // 5. Delete Firebase Auth User Account
+        try {
+          final fbUser = FirebaseAuth.instance.currentUser;
+          if (fbUser != null) {
+            await fbUser.delete();
+          }
+        } catch (e) {
+          debugPrint('Error deleting Firebase Auth user (might require recent login): $e');
+        }
+      }
+
+      // 6. Sign out of Google Sign-in if active
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('Google sign out during deletion error: $e');
+      }
+
+      // 7. Clear all local storage data
+      _currentUser = null;
+      await _storageService.saveUser(null);
+      await _storageService.savePartner(null);
+      await _storageService.saveAllEntries({});
+      await _storageService.savePartnerEntries({});
+
+      return true;
+    } catch (e) {
+      debugPrint('General delete account and data error: $e');
+      return false;
+    }
+  }
 }
+

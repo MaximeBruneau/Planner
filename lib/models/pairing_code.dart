@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/utils/date_utils_helper.dart';
 
 class PairingCode {
   final String code;
@@ -13,7 +14,7 @@ class PairingCode {
   PairingCode({
     required this.code,
     required this.creatorUserId,
-    this.creatorDisplayName = 'FT 🐰',
+    this.creatorDisplayName = 'Duo 🐰',
     this.creatorEmail,
     this.creatorPhotoUrl,
     DateTime? createdAt,
@@ -48,12 +49,9 @@ class PairingCode {
   }
 
   factory PairingCode.fromMap(Map<String, dynamic> map) {
-    final created = map['createdAt'] != null
-        ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-        : DateTime.now();
+    final created = DateUtilsHelper.parseDateTime(map['createdAt']);
     final expires = map['expiresAt'] != null
-        ? DateTime.tryParse(map['expiresAt'].toString()) ??
-            created.add(const Duration(minutes: 10))
+        ? DateUtilsHelper.parseDateTime(map['expiresAt'])
         : created.add(const Duration(minutes: 10));
 
     return PairingCode(
@@ -61,7 +59,7 @@ class PairingCode {
       creatorUserId: map['creatorUserId'] as String? ??
           (map['ownerUid'] as String? ?? ''),
       creatorDisplayName: map['creatorDisplayName'] as String? ??
-          (map['displayName'] as String? ?? 'FT 🐰'),
+          (map['displayName'] as String? ?? 'Duo 🐰'),
       creatorEmail:
           map['creatorEmail'] as String? ?? (map['email'] as String?),
       creatorPhotoUrl:

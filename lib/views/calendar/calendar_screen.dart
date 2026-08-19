@@ -125,7 +125,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _selectedTabIndex == 0 ? "My Vibe " : "FT Vibe ",
+                  _selectedTabIndex == 0 ? "My Vibe " : "Duo Vibe ",
                   style: GoogleFonts.fredoka(
                     fontSize: 21,
                     fontWeight: FontWeight.w600,
@@ -149,19 +149,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("🔥", style: TextStyle(fontSize: 12)),
-                  const SizedBox(width: 3),
-                  Text(
-                    "${streakState.personalStreak} streak",
-                    style: GoogleFonts.fredoka(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  if (partnerState.isPaired) ...[
+                  if (_selectedTabIndex == 0) ...[
+                    const Text("🔥", style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 3),
                     Text(
-                      " • 🔥🔥 ${streakState.duoFlames}/50",
+                      "${streakState.personalStreak} streak",
                       style: GoogleFonts.fredoka(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -169,18 +161,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ),
                   ] else ...[
-                    Text(
-                      " • Connect FT 🐰",
-                      style: GoogleFonts.fredoka(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    if (partnerState.isPaired) ...[
+                      const Text("🔥🔥", style: TextStyle(fontSize: 12)),
+                      const SizedBox(width: 3),
+                      Text(
+                        "${streakState.duoFlames} streak",
+                        style: GoogleFonts.fredoka(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
                       ),
-                    ),
+                    ] else ...[
+                      const Text("🐰", style: TextStyle(fontSize: 12)),
+                      const SizedBox(width: 3),
+                      Text(
+                        "Connect Duo",
+                        style: GoogleFonts.fredoka(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
             ),
+
           ],
         ),
         actions: [
@@ -561,7 +569,69 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ],
                 ] else ...[
                   // --- FT VIBE TAB CONTENT (PAIRED) ---
-                  if (isFuture) ...[
+                  if (partnerState.partnerInfo != null &&
+                      DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day).isBefore(
+                        DateTime(
+                          partnerState.partnerInfo!.pairedAt.year,
+                          partnerState.partnerInfo!.pairedAt.month,
+                          partnerState.partnerInfo!.pairedAt.day,
+                        ),
+                      )) ...[
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 14.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text("🔒", style: TextStyle(fontSize: 20)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    DateFormat('EEEE, MMMM d').format(_selectedDay),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Historique Privé 🔒",
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Les humeurs antérieures à votre connexion avec $partnerName ne sont pas partagées.",
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else if (isFuture) ...[
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -607,6 +677,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ),
                   ] else if (selectedPartnerEntry != null) ...[
+
                     LoggedVibeSummaryCard(
                       selectedDate: _selectedDay,
                       entry: selectedPartnerEntry,

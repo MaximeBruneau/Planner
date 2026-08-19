@@ -81,7 +81,7 @@ void main() {
       final settings = AppSettings();
       expect(settings.themeId, equals('pastel_pink'));
       expect(settings.unlockedThemes, contains('pastel_pink'));
-      expect(settings.customEmojis.length, equals(10));
+      expect(settings.customEmojis.length, equals(20));
       expect(settings.customEmojis.first, equals(DefaultEmojis.list.first));
       expect(settings.notificationsEnabled, isTrue);
     });
@@ -97,8 +97,9 @@ void main() {
       expect(updated.themeId, equals('starry_night'));
       expect(updated.unlockedThemes.length, equals(2));
       expect(updated.notificationsEnabled, isFalse);
-      expect(updated.customEmojis.length, equals(10));
+      expect(updated.customEmojis.length, equals(20));
     });
+
 
     test('isThemeUnlocked returns true for free theme Pastel Pink', () {
       final settings = AppSettings();

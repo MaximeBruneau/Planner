@@ -11,6 +11,10 @@ class AppSettings {
   final String notificationTime; // e.g. "21:00"
   final bool notificationsEnabled;
   final Map<String, bool> claimedFlameMilestones;
+  final bool isPremium;
+  final bool isDuoPass;
+  final bool premiumGrantedByPartner;
+  final DateTime? premiumExpiryDate;
 
   AppSettings({
     this.themeIndex = 0,
@@ -21,12 +25,26 @@ class AppSettings {
     this.notificationTime = "21:00",
     this.notificationsEnabled = true,
     Map<String, bool>? claimedFlameMilestones,
+    this.isPremium = false,
+    this.isDuoPass = false,
+    this.premiumGrantedByPartner = false,
+    this.premiumExpiryDate,
   })  : themeId = themeId ?? 'pastel_pink',
         unlockedThemes = unlockedThemes ?? ['pastel_pink'],
         unlockedEmojiPacks =
             unlockedEmojiPacks ?? [EmojiPacks.defaultPackId],
         customEmojis = customEmojis ?? List<String>.from(DefaultEmojis.list),
         claimedFlameMilestones = claimedFlameMilestones ?? {};
+
+  bool get hasActivePremium {
+    if (isPremium || isDuoPass || premiumGrantedByPartner) {
+      if (premiumExpiryDate != null) {
+        return premiumExpiryDate!.isAfter(DateTime.now());
+      }
+      return true;
+    }
+    return false;
+  }
 
   AppSettings copyWith({
     int? themeIndex,
@@ -37,6 +55,10 @@ class AppSettings {
     String? notificationTime,
     bool? notificationsEnabled,
     Map<String, bool>? claimedFlameMilestones,
+    bool? isPremium,
+    bool? isDuoPass,
+    bool? premiumGrantedByPartner,
+    DateTime? premiumExpiryDate,
   }) {
     return AppSettings(
       themeIndex: themeIndex ?? this.themeIndex,
@@ -49,20 +71,28 @@ class AppSettings {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       claimedFlameMilestones: claimedFlameMilestones ??
           Map<String, bool>.from(this.claimedFlameMilestones),
+      isPremium: isPremium ?? this.isPremium,
+      isDuoPass: isDuoPass ?? this.isDuoPass,
+      premiumGrantedByPartner:
+          premiumGrantedByPartner ?? this.premiumGrantedByPartner,
+      premiumExpiryDate: premiumExpiryDate ?? this.premiumExpiryDate,
     );
   }
 
   bool isThemeUnlocked(String id) {
     if (id == 'pastel_pink') return true;
+    if (hasActivePremium) return true;
     return unlockedThemes.contains(id);
   }
 
   bool isEmojiPackUnlocked(String id) {
     if (id == EmojiPacks.defaultPackId) return true;
+    if (hasActivePremium) return true;
     return unlockedEmojiPacks.contains(id);
   }
 
   bool isEmojiUnlocked(String emoji) {
+    if (hasActivePremium) return true;
     final pack = EmojiPacks.getPackForEmoji(emoji);
     if (pack == null || pack.isFree) return true;
     return isEmojiPackUnlocked(pack.id);
@@ -78,6 +108,10 @@ class AppSettings {
       'notificationTime': notificationTime,
       'notificationsEnabled': notificationsEnabled,
       'claimedFlameMilestones': claimedFlameMilestones,
+      'isPremium': isPremium,
+      'isDuoPass': isDuoPass,
+      'premiumGrantedByPartner': premiumGrantedByPartner,
+      'premiumExpiryDate': premiumExpiryDate?.toIso8601String(),
     };
   }
 
@@ -108,6 +142,14 @@ class AppSettings {
     final id = map['themeId'] as String? ?? 'pastel_pink';
     final idx = (map['themeIndex'] as num?)?.toInt() ?? 0;
 
+    final expiryStr = map['premiumExpiryDate'] as String?;
+    DateTime? expiry;
+    if (expiryStr != null && expiryStr.isNotEmpty) {
+      try {
+        expiry = DateTime.parse(expiryStr);
+      } catch (_) {}
+    }
+
     return AppSettings(
       themeIndex: idx,
       themeId: id,
@@ -117,6 +159,10 @@ class AppSettings {
       notificationTime: map['notificationTime'] as String? ?? "21:00",
       notificationsEnabled: map['notificationsEnabled'] as bool? ?? true,
       claimedFlameMilestones: milestones,
+      isPremium: map['isPremium'] == true,
+      isDuoPass: map['isDuoPass'] == true,
+      premiumGrantedByPartner: map['premiumGrantedByPartner'] == true,
+      premiumExpiryDate: expiry,
     );
   }
 
@@ -125,3 +171,4 @@ class AppSettings {
   factory AppSettings.fromJson(String source) =>
       AppSettings.fromMap(jsonDecode(source) as Map<String, dynamic>);
 }
+

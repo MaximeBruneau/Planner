@@ -47,4 +47,47 @@ class DateUtilsHelper {
   static String formatFullDate(DateTime date) {
     return _fullDateFormat.format(date);
   }
+
+  /// Resilient parser for DateTime supporting Firestore Timestamps, strings, ints, and DateTimes
+  static DateTime parseDateTime(dynamic value, [DateTime? fallback]) {
+    final defaultFallback = fallback ?? DateTime.now();
+    if (value == null) return defaultFallback;
+    if (value is DateTime) return value;
+
+    // Handle Firestore Timestamp object (has toDate() method)
+    try {
+      if (value.runtimeType.toString().contains('Timestamp')) {
+        final toDateMethod = (value as dynamic).toDate;
+        if (toDateMethod != null) {
+          final res = toDateMethod();
+          if (res is DateTime) return res;
+        }
+      }
+    } catch (_) {}
+
+    // Handle int (timestamp in millis or seconds)
+    if (value is int) {
+      if (value < 10000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value * 1000);
+      }
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+
+    // Handle String
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+
+      // Match Firestore string representation e.g. "Timestamp(seconds=1787062680, nanoseconds=757000000)"
+      final match = RegExp(r'seconds=(\d+)').firstMatch(value);
+      if (match != null) {
+        final seconds = int.tryParse(match.group(1)!);
+        if (seconds != null) {
+          return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+        }
+      }
+    }
+
+    return defaultFallback;
+  }
 }

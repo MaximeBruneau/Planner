@@ -93,15 +93,11 @@ class StreakNotifier extends StateNotifier<StreakState> {
   }
 }
 
-final iapServiceProvider = Provider<IapService>((ref) {
-  final storage = ref.watch(storageServiceProvider);
-  return IapService(storage);
-});
-
 final streakProvider = StateNotifierProvider<StreakNotifier, StreakState>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   final iapService = ref.watch(iapServiceProvider);
   final notifier = StreakNotifier(storageService, iapService);
+
 
   // Watch moods & partner entries to update streaks reactively
   final userMoods = ref.watch(moodProvider);

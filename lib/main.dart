@@ -4,10 +4,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/widget_sync_service.dart';
 import 'core/theme/app_theme.dart';
+
 import 'providers/mood_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/auth_provider.dart';
 import 'views/calendar/calendar_screen.dart';
+import 'views/auth/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +27,10 @@ void main() async {
   final storageService = StorageService();
   await storageService.init();
 
-
   final notificationService = NotificationService();
   await notificationService.init();
+
+  await WidgetSyncService.init();
 
   runApp(
     ProviderScope(
@@ -43,13 +48,16 @@ class VibeCalendarApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final authState = ref.watch(authProvider);
     final themeData = AppTheme.getThemeById(settings.themeId);
 
     return MaterialApp(
-      title: 'My Vibe 🌸',
+      title: 'DuoVibe 🌸',
       debugShowCheckedModeBanner: false,
       theme: themeData,
-      home: const CalendarScreen(),
+      home: authState.isSignedIn
+          ? const CalendarScreen()
+          : const AuthScreen(),
     );
   }
 }

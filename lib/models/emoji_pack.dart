@@ -22,16 +22,26 @@ class EmojiPacks {
   static const String defaultPackId = 'default_pack';
 
   static const defaultEmojis = [
-    '😊',
+    '😄',
     '😴',
-    '🌿',
-    '🥑',
-    '✨',
-    '🌸',
+    '🥺',
+    '🤯',
+    '😡',
+    '🥳',
+    '💪',
+    '💼',
+    '🎮',
+    '💆‍♂️',
+    '✈️',
+    '🤒',
+    '🥵',
+    '🍕',
+    '🥰',
+    '🍆',
+    '❤️',
     '☕',
     '🌧️',
-    '🔥',
-    '💖',
+    '✨',
   ];
 
   static const List<EmojiPack> list = [
@@ -39,11 +49,12 @@ class EmojiPacks {
       id: defaultPackId,
       name: 'Starter Essentials',
       emoji: '🌸',
-      description: 'The 10 essential starter vibes, free forever.',
+      description: 'The 20 essential starter vibes, free forever.',
       price: 'Free',
       isFree: true,
       emojis: defaultEmojis,
     ),
+
     EmojiPack(
       id: 'cute_animals',
       name: 'Cute Animals',

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/utils/date_utils_helper.dart';
 
 class MoodEntry {
   final String date; // Format: yyyy-MM-dd
@@ -57,9 +58,7 @@ class MoodEntry {
       emoji: map['emoji'] as String? ?? '😊',
       note: map['note'] as String? ?? '',
       userId: map['userId'] as String?,
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      updatedAt: DateUtilsHelper.parseDateTime(map['updatedAt']),
       deleted: map['deleted'] as bool? ?? false,
       syncStatus: map['syncStatus'] as String? ?? 'synced',
     );

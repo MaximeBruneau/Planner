@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/utils/date_utils_helper.dart';
 
 class PartnerInfo {
   final String uid;
@@ -28,12 +29,10 @@ class PartnerInfo {
   factory PartnerInfo.fromMap(Map<String, dynamic> map) {
     return PartnerInfo(
       uid: map['uid'] as String? ?? '',
-      displayName: map['displayName'] as String? ?? 'FT 🐰',
+      displayName: map['displayName'] as String? ?? 'Duo 🐰',
       email: map['email'] as String? ?? '',
       photoUrl: map['photoUrl'] as String?,
-      pairedAt: map['pairedAt'] != null
-          ? DateTime.tryParse(map['pairedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      pairedAt: DateUtilsHelper.parseDateTime(map['pairedAt']),
     );
   }
 

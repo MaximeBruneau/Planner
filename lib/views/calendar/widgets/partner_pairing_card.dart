@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/partner_provider.dart';
+import '../../common/celebration_dialog.dart';
 
 class PartnerPairingCard extends ConsumerStatefulWidget {
   const PartnerPairingCard({super.key});
@@ -65,7 +66,7 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Share with your FT 🐰",
+              "Share with your Partner 🐰",
               textAlign: TextAlign.center,
               style: GoogleFonts.fredoka(
                 fontSize: 20,
@@ -169,7 +170,7 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                   controller: _codeController,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
-                    labelText: "Enter your FT's code",
+                    labelText: "Enter your partner's code",
 
                     hintText: "e.g. VIBE-4892",
                     prefixIcon: const Icon(Icons.key_rounded),
@@ -198,20 +199,27 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                         onPressed: partnerState.isLoading
                             ? null
                             : () async {
-                                final messenger = ScaffoldMessenger.of(context);
+                                final user = authState.user;
+                                if (user == null) return;
                                 final success = await partnerNotifier.redeemCode(
                                   _codeController.text,
-                                  authState.user!,
+                                  user,
                                 );
-                                if (success && mounted) {
-                                  messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Calendars connected successfully! 🐰"),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                if (!mounted || !context.mounted) return;
+                                if (success) {
+                                  final partner = ref.read(partnerProvider).partnerInfo;
+                                  if (partner != null && context.mounted) {
+                                    CelebrationDialog.show(
+                                      context,
+                                      currentUser: user,
+                                      partner: partner,
+                                    );
+                                  }
                                 }
                               },
+
+
+
                         child: partnerState.isLoading
                             ? const SizedBox(
                                 width: 20,
@@ -219,6 +227,7 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text("Submit 🐰"),
+
                       ),
                     ),
                   ],
@@ -236,7 +245,7 @@ class _PartnerPairingCardState extends ConsumerState<PartnerPairingCard> {
                                 if (code != null && mounted) {
                                   messenger.showSnackBar(
                                     SnackBar(
-                                      content: Text("Code $code generated! 🐰 Send it to your FT."),
+                                      content: Text("Code $code generated! 🐰 Send it to your partner."),
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );

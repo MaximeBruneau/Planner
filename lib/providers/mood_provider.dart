@@ -67,7 +67,7 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
       note: note.trim(),
       updatedAt: DateTime.now(),
       deleted: false,
-      syncStatus: 'pending',
+      syncStatus: 'synced',
     );
 
     // Save to Local DB
@@ -100,12 +100,26 @@ class MoodNotifier extends StateNotifier<Map<String, MoodEntry>> {
   }
 
   void _updateNotificationSchedule() {
+    final settings = _storageService.getSettings();
+    if (!settings.notificationsEnabled) {
+
+      _notificationService.cancelAll();
+      return;
+    }
+
+    final parts = settings.notificationTime.split(':');
+    final hour = int.tryParse(parts[0]) ?? 21;
+    final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+
     final todayKey = formatDateKey(DateTime.now());
     final hasLoggedToday = state.containsKey(todayKey) && !state[todayKey]!.deleted;
     _notificationService.scheduleDailyReminder(
       hasEntryToday: () => hasLoggedToday,
+      hour: hour,
+      minute: minute,
     );
   }
+
 }
 
 final moodProvider =

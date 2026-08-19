@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/utils/date_utils_helper.dart';
 
 class PartnerConnection {
   final String id;
@@ -33,9 +34,7 @@ class PartnerConnection {
       userA: map['userA'] as String? ?? '',
       userB: map['userB'] as String? ?? '',
       status: map['status'] as String? ?? 'active',
-      createdAt: map['createdAt'] != null
-          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      createdAt: DateUtilsHelper.parseDateTime(map['createdAt']),
     );
   }
 
