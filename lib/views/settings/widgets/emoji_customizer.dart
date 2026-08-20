@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/default_emojis.dart';
 import '../../../models/emoji_pack.dart';
-import '../../../providers/auth_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../common/dynamic_paywall_sheet.dart';
 import 'emoji_pack_paywall_bottom_sheet.dart';
@@ -24,7 +23,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
     final colorScheme = theme.colorScheme;
     final settings = ref.watch(settingsProvider);
     final vibeEmojis = settings.customEmojis;
-    final isAllUnlocked = settings.hasAllEmojiPacks || settings.hasActivePremium;
+    final isAllUnlocked = settings.hasActivePremium;
     final unlockedPacksCount = isAllUnlocked
         ? EmojiPacks.list.length
         : settings.unlockedEmojiPacks.length;
@@ -71,7 +70,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
         ),
         const SizedBox(height: 8),
         Text(
-          "Your daily calendar deck holds 10 quick-pick emojis. Tap any slot (1-10) to choose from the 20 Free Starter vibes, your unlocked packs, or the custom keyboard ⌨️.",
+          "Your daily calendar deck holds 10 quick-pick emojis. Tap any slot (1-10) to choose from the 20 Free Starter vibes or your unlocked packs.",
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             color: colorScheme.onSurface.withValues(alpha: 0.7),
@@ -79,7 +78,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
         ),
         const SizedBox(height: 16),
 
-        // Master Unlock All Emojis Banner (if not yet all unlocked)
+        // Couple Streak Milestone Banner (if not yet all unlocked)
         if (!isAllUnlocked) ...[
           Container(
             padding: const EdgeInsets.all(14),
@@ -118,7 +117,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
                     ],
                   ),
                   child: const Center(
-                    child: Text("🌟", style: TextStyle(fontSize: 22)),
+                    child: Text("🔥", style: TextStyle(fontSize: 22)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -127,7 +126,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Unlock ALL 60+ Emojis & Keyboard",
+                        "30 Duo Flames Milestone Reward",
                         style: GoogleFonts.fredoka(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -135,7 +134,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
                         ),
                       ),
                       Text(
-                        "Get all packs + any native keyboard emoji for \$2.99 or with Premium.",
+                        "Reach 30 flames together to unlock the exclusive 'Duo & Love' pack, or get all packs with Premium.",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: const Color(0xFF7A3344),
@@ -149,9 +148,9 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
                   onPressed: () {
                     DynamicPaywallSheet.show(
                       context,
-                      title: "Unlock All 60+ Emojis & Keyboard ✨",
+                      title: "Unlock All Themed Emoji Packs ✨",
                       subtitle:
-                          "Get every emoji pack + unrestricted access to any native keyboard emoji for \$2.99 lifetime or with DuoVibe Premium.",
+                          "Enjoy unlimited access to all themed packs with DuoVibe Premium.",
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -165,7 +164,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
                     elevation: 0,
                   ),
                   child: Text(
-                    "Unlock All",
+                    "Premium",
                     style: GoogleFonts.fredoka(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -335,7 +334,7 @@ class _EmojiCustomizerState extends ConsumerState<EmojiCustomizer> {
   }
 }
 
-class _EmojiPacksSelectorSheet extends ConsumerStatefulWidget {
+class _EmojiPacksSelectorSheet extends ConsumerWidget {
   final int targetSlotIndex;
   final bool isSlotSpecific;
 
@@ -345,79 +344,14 @@ class _EmojiPacksSelectorSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_EmojiPacksSelectorSheet> createState() =>
-      _EmojiPacksSelectorSheetState();
-}
-
-class _EmojiPacksSelectorSheetState
-    extends ConsumerState<_EmojiPacksSelectorSheet> {
-  final TextEditingController _keyboardEmojiController =
-      TextEditingController();
-  String _customEmojiPreview = "✨";
-
-  @override
-  void dispose() {
-    _keyboardEmojiController.dispose();
-    super.dispose();
-  }
-
-  void _applyKeyboardEmoji(BuildContext context, bool isUnlocked) {
-    if (!isUnlocked) {
-      DynamicPaywallSheet.show(
-        context,
-        title: "Unlock Custom Keyboard Emojis ✨",
-        subtitle:
-            "Type and choose any emoji from your device's native keyboard with DuoVibe Premium or the All Emojis Bundle.",
-      );
-      return;
-    }
-
-    final text = _keyboardEmojiController.text.trim();
-    if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Please enter an emoji using your keyboard ⌨️"),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      );
-      return;
-    }
-
-    // Extract first emoji character
-    final emoji = text.characters.first;
-    ref
-        .read(settingsProvider.notifier)
-        .updateEmoji(widget.targetSlotIndex, emoji);
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Slot #${widget.targetSlotIndex + 1} set to $emoji ✨",
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-        ),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final settings = ref.watch(settingsProvider);
-    final authState = ref.watch(authProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom > 0
         ? MediaQuery.of(context).viewInsets.bottom
         : MediaQuery.of(context).padding.bottom;
     final screenHeight = MediaQuery.sizeOf(context).height;
-
-    final isKeyboardEmojiUnlocked = settings.canUseCustomKeyboardEmojis;
-    final isMasterUnlocked =
-        settings.hasAllEmojiPacks || settings.hasActivePremium;
 
     return Container(
       constraints: BoxConstraints(
@@ -460,8 +394,8 @@ class _EmojiPacksSelectorSheetState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.isSlotSpecific
-                        ? "Choose Emoji for Slot #${widget.targetSlotIndex + 1} 🌸"
+                    isSlotSpecific
+                        ? "Choose Emoji for Slot #${targetSlotIndex + 1} 🌸"
                         : "Emoji Packs Store 🛍️",
                     style: GoogleFonts.fredoka(
                       fontSize: 18,
@@ -470,7 +404,7 @@ class _EmojiPacksSelectorSheetState
                     ),
                   ),
                   Text(
-                    "Pick from the 20 Free Starter vibes, themed packs, or keyboard.",
+                    "Pick from the 20 Free Starter vibes or your unlocked packs.",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -490,267 +424,10 @@ class _EmojiPacksSelectorSheetState
           Expanded(
             child: ListView(
               children: [
-                // 1. Custom Keyboard Emoji Section
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isKeyboardEmojiUnlocked
-                          ? colorScheme.primary.withValues(alpha: 0.3)
-                          : const Color(0xFFFFA000).withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Text("⌨️", style: TextStyle(fontSize: 18)),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Custom Keyboard Emoji",
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: isKeyboardEmojiUnlocked
-                                  ? const Color(0xFF2E7D32)
-                                      .withValues(alpha: 0.12)
-                                  : const Color(0xFFFFA000)
-                                      .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isKeyboardEmojiUnlocked
-                                      ? Icons.check_circle_rounded
-                                      : Icons.lock_rounded,
-                                  size: 12,
-                                  color: isKeyboardEmojiUnlocked
-                                      ? const Color(0xFF2E7D32)
-                                      : const Color(0xFFE65100),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  isKeyboardEmojiUnlocked
-                                      ? "UNLOCKED"
-                                      : "PREMIUM",
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isKeyboardEmojiUnlocked
-                                        ? const Color(0xFF2E7D32)
-                                        : const Color(0xFFE65100),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Type or paste any emoji directly from your phone's native emoji keyboard.",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          color: colorScheme.onSurface.withValues(alpha: 0.65),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          // Emoji Preview Box
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: colorScheme.primary.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                _customEmojiPreview,
-                                style: const TextStyle(fontSize: 22),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          // Keyboard Input Field
-                          Expanded(
-                            child: TextField(
-                              controller: _keyboardEmojiController,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
-                                color: colorScheme.onSurface,
-                              ),
-                              onChanged: (val) {
-                                if (val.trim().isNotEmpty) {
-                                  setState(() {
-                                    _customEmojiPreview =
-                                        val.trim().characters.first;
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: "Tap to type any emoji... (e.g. 🦄)",
-                                hintStyle: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  color: colorScheme.onSurface
-                                      .withValues(alpha: 0.45),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 10),
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(
-                                    color: colorScheme.outline
-                                        .withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Apply Button
-                          ElevatedButton(
-                            onPressed: () => _applyKeyboardEmoji(
-                              context,
-                              isKeyboardEmojiUnlocked,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.primary,
-                              foregroundColor: colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: isKeyboardEmojiUnlocked
-                                ? const Text("Apply")
-                                : const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.lock_rounded, size: 14),
-                                      SizedBox(width: 4),
-                                      Text("Unlock"),
-                                    ],
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 2. Master Bundle Banner (if not yet owned)
-                if (!isMasterUnlocked) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFEEF2), Color(0xFFFFF6ED)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFE85D75).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("🛍️", style: TextStyle(fontSize: 24)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "All Emojis Master Bundle",
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF4A1521),
-                                ),
-                              ),
-                              Text(
-                                "Unlock all 6 packs + keyboard forever (\$2.99)",
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  color: const Color(0xFF7A3344),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final success = await ref
-                                .read(settingsProvider.notifier)
-                                .purchaseAllEmojiPacks(
-                                  userId: authState.user?.id,
-                                );
-                            if (context.mounted && success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                      "🎉 All Emoji Packs & Keyboard unlocked forever!"),
-                                  backgroundColor: const Color(0xFF2E7D32),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE85D75),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            "\$2.99",
-                            style: GoogleFonts.fredoka(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-
-                // 3. Themed Emoji Packs List (Free Starter pack with 20 emojis, Paid packs with 10 emojis each)
+                // Themed Emoji Packs List (Free Starter pack with 20 emojis, Themed packs with 10 emojis each)
                 ...EmojiPacks.list.map((pack) {
                   final isUnlocked = settings.isEmojiPackUnlocked(pack.id);
+                  final isDuoLove = pack.id == 'duo_love';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
@@ -788,13 +465,38 @@ class _EmojiPacksSelectorSheetState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    pack.name,
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.onSurface,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        pack.name,
+                                        style: GoogleFonts.fredoka(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      if (isDuoLove && !isUnlocked) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFF758F)
+                                                .withValues(alpha: 0.15),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            "🔥 30 Flames",
+                                            style: GoogleFonts.fredoka(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFFE85D75),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                   Text(
                                     pack.description,
@@ -893,14 +595,14 @@ class _EmojiPacksSelectorSheetState
                                     ref
                                         .read(settingsProvider.notifier)
                                         .updateEmoji(
-                                          widget.targetSlotIndex,
+                                          targetSlotIndex,
                                           emojiChar,
                                         );
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          "Slot #${widget.targetSlotIndex + 1} updated to $emojiChar ✨",
+                                          "Slot #${targetSlotIndex + 1} updated to $emojiChar ✨",
                                           style: GoogleFonts.plusJakartaSans(
                                               fontWeight: FontWeight.w600),
                                         ),

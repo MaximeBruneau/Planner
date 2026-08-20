@@ -18,23 +18,24 @@ void main() {
       expect(defaultPack.emojis, contains('😄'));
     });
 
-    test('There are 7 official emoji packs (starter has 20, paid packs have 10)', () {
-      expect(EmojiPacks.list.length, equals(7));
+    test('There are 8 official emoji packs (starter has 20, paid packs have 10)', () {
+      expect(EmojiPacks.list.length, equals(8));
       for (final pack in EmojiPacks.list) {
         expect(pack.emojis.length >= 10, isTrue);
         expect(pack.name.isNotEmpty, isTrue);
       }
     });
 
-    test('Paid pack IDs list contains all 6 non-free packs', () {
+    test('Paid pack IDs list contains all 7 non-free packs', () {
       final paidIds = EmojiPacks.paidPackIds;
-      expect(paidIds.length, equals(6));
+      expect(paidIds.length, equals(7));
       expect(paidIds, contains('cute_animals'));
       expect(paidIds, contains('food_treats'));
       expect(paidIds, contains('vibes_moods'));
       expect(paidIds, contains('nature_chill'));
       expect(paidIds, contains('gaming_geek'));
       expect(paidIds, contains('duo_love'));
+      expect(paidIds, contains('christmas_magic'));
     });
 
     test('getPackForEmoji finds corresponding pack for an emoji', () {
@@ -45,6 +46,10 @@ void main() {
       final sushiPack = EmojiPacks.getPackForEmoji('🍣');
       expect(sushiPack, isNotNull);
       expect(sushiPack!.id, equals('food_treats'));
+
+      final santaPack = EmojiPacks.getPackForEmoji('🎅');
+      expect(santaPack, isNotNull);
+      expect(santaPack!.id, equals('christmas_magic'));
     });
 
 

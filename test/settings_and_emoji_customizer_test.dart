@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_dairy/models/app_settings.dart';
+import 'package:my_dairy/models/emoji_pack.dart';
 import 'package:my_dairy/core/services/storage_service.dart';
 import 'package:my_dairy/core/services/purchases_service.dart';
 import 'package:my_dairy/core/services/iap_service.dart';
@@ -95,15 +96,7 @@ void main() {
       expect(premiumSettings.canUseCustomKeyboardEmojis, isTrue);
 
       final allPacksSettings = AppSettings(
-        unlockedEmojiPacks: [
-          'default_pack',
-          'cute_animals',
-          'food_treats',
-          'vibes_moods',
-          'nature_chill',
-          'gaming_geek',
-          'duo_love',
-        ],
+        unlockedEmojiPacks: EmojiPacks.list.map((p) => p.id).toList(),
       );
       expect(allPacksSettings.hasAllEmojiPacks, isTrue);
       expect(allPacksSettings.canUseCustomKeyboardEmojis, isTrue);

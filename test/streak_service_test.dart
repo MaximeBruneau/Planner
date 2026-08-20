@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_dairy/core/services/streak_service.dart';
 import 'package:my_dairy/core/theme/theme_palettes.dart';
+import 'package:my_dairy/models/emoji_pack.dart';
 import 'package:my_dairy/models/mood_entry.dart';
 
 void main() {
@@ -102,6 +103,58 @@ void main() {
       };
       final flames = StreakService.calculateDuoFlames(uEntries, pEntries, refDate);
       expect(flames, 1);
+    });
+  });
+
+  group('30-Flame Milestone Emoji Pack Unlock Tests', () {
+    test('returns null when duo flames < 30', () {
+      final unlock = StreakService.checkAndClaim30FlameEmojiMilestone(
+        duoFlames: 29,
+        currentUnlockedEmojiPacks: ['default_pack'],
+        claimedMilestones: {},
+      );
+      expect(unlock, isNull);
+    });
+
+    test('returns null when 30 milestone was already claimed', () {
+      final unlock = StreakService.checkAndClaim30FlameEmojiMilestone(
+        duoFlames: 30,
+        currentUnlockedEmojiPacks: ['default_pack'],
+        claimedMilestones: {'30': true},
+      );
+      expect(unlock, isNull);
+    });
+
+    test('unlocks duo_love pack when reaching 30 duo flames and duo_love is locked', () {
+      final unlock = StreakService.checkAndClaim30FlameEmojiMilestone(
+        duoFlames: 30,
+        currentUnlockedEmojiPacks: ['default_pack', 'cute_animals'],
+        claimedMilestones: {},
+      );
+      expect(unlock, equals('duo_love'));
+    });
+
+    test('unlocks another locked pack if duo_love is already owned', () {
+      final unlock = StreakService.checkAndClaim30FlameEmojiMilestone(
+        duoFlames: 32,
+        currentUnlockedEmojiPacks: ['default_pack', 'duo_love'],
+        claimedMilestones: {},
+        random: Random(42),
+      );
+      expect(unlock, isNotNull);
+      expect(unlock, isNot('duo_love'));
+      expect(unlock, isNot('default_pack'));
+      expect(EmojiPacks.paidPackIds.contains(unlock), isTrue);
+    });
+
+    test('returns all_unlocked when all emoji packs are already owned', () {
+      final allPacks = EmojiPacks.list.map((p) => p.id).toList();
+      final unlock = StreakService.checkAndClaim30FlameEmojiMilestone(
+        duoFlames: 35,
+        currentUnlockedEmojiPacks: allPacks,
+        claimedMilestones: {},
+      );
+      expect(unlock, equals('all_unlocked'));
     });
   });
 

@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../../models/emoji_pack.dart';
 import '../../models/mood_entry.dart';
 import '../theme/theme_palettes.dart';
 import '../utils/date_utils_helper.dart';
@@ -95,6 +96,35 @@ class StreakService {
     }
 
     return flames;
+  }
+
+  /// Check if 30-flame milestone can be claimed.
+  /// Unlocks 'duo_love' exclusive pack (or another locked pack), 'all_unlocked' if all packs owned, or null if <30 flames or already claimed.
+  static String? checkAndClaim30FlameEmojiMilestone({
+    required int duoFlames,
+    required List<String> currentUnlockedEmojiPacks,
+    required Map<String, bool> claimedMilestones,
+    Random? random,
+  }) {
+    if (duoFlames < 30) return null;
+    if (claimedMilestones['30'] == true) return null;
+
+    // Prioritize unlocking the exclusive 'duo_love' pack
+    if (!currentUnlockedEmojiPacks.contains('duo_love')) {
+      return 'duo_love';
+    }
+
+    final paidPacks = EmojiPacks.paidPackIds;
+    final lockedPacks = paidPacks
+        .where((id) => !currentUnlockedEmojiPacks.contains(id))
+        .toList();
+
+    if (lockedPacks.isEmpty) {
+      return 'all_unlocked';
+    }
+
+    final rand = random ?? Random();
+    return lockedPacks[rand.nextInt(lockedPacks.length)];
   }
 
   /// Check if 50-flame milestone can be claimed.

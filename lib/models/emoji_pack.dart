@@ -169,6 +169,25 @@ class EmojiPacks {
         '🥂',
       ],
     ),
+    EmojiPack(
+      id: 'christmas_magic',
+      name: 'Christmas Magic',
+      emoji: '🎄',
+      description: '10 festive holiday & winter Christmas vibes.',
+      price: '\$0.99',
+      emojis: [
+        '🎄',
+        '🎅',
+        '⛄',
+        '🎁',
+        '❄️',
+        '🦌',
+        '🔔',
+        '🍪',
+        '🕯️',
+        '🥂',
+      ],
+    ),
   ];
 
   static List<String> get paidPackIds =>

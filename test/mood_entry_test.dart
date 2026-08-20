@@ -109,10 +109,10 @@ void main() {
   });
 
   group('Theme Palettes & Notification Constants Tests', () {
-    test('AppPalettes list has exactly 13 distinct color palettes', () {
-      expect(AppPalettes.list.length, equals(13));
+    test('AppPalettes list has exactly 14 distinct color palettes', () {
+      expect(AppPalettes.list.length, equals(14));
       final names = AppPalettes.list.map((p) => p.name).toSet();
-      expect(names.length, equals(13));
+      expect(names.length, equals(14));
 
       // Verify blue palettes exist with fish emojis
       final lightBlue =

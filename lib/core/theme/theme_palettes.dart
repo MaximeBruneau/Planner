@@ -284,6 +284,25 @@ class AppPalettes {
     selectedCellColor: Color(0xFF334155),
   );
 
+  // 13: Christmas Magic (Holiday Festive)
+  static const ThemePalette christmasMagic = ThemePalette(
+    id: 'christmas_magic',
+    name: 'Christmas Magic',
+    emoji: '🎄',
+    isFreeByDefault: false,
+    isDark: false,
+    primary: Color(0xFFC41E3A),
+    onPrimary: Colors.white,
+    primaryContainer: Color(0xFFFFEBEE),
+    onPrimaryContainer: Color(0xFF5C0A15),
+    secondary: Color(0xFF2E7D32),
+    surface: Color(0xFFFFFBFB),
+    onSurface: Color(0xFF2C1014),
+    background: Color(0xFFFFF0F2),
+    cardColor: Color(0xFFFFFFFF),
+    selectedCellColor: Color(0xFFFFCDD2),
+  );
+
   static const List<ThemePalette> list = [
     pastelPink,      // 0: Free Default 🌸
     lightBlue,       // 1: 🐟
@@ -298,6 +317,7 @@ class AppPalettes {
     neonCyberpunk,   // 10: ⚡
     minimalLight,    // 11: ⚪
     minimalDark,     // 12: 🖤
+    christmasMagic,  // 13: 🎄
   ];
 
   static ThemePalette getById(String id) {

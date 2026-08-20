@@ -89,6 +89,42 @@ class IapService {
       partnerId: partnerId,
     );
   }
+  /// Claim exclusive emoji pack unlock on reaching 30 duo flames
+  Future<String?> claim30FlameEmojiMilestone({
+    required int duoFlames,
+    String? userId,
+  }) async {
+    final settings = _storageService.getSettings();
+    final unlockedPacks = settings.unlockedEmojiPacks;
+    final claimedMilestones = settings.claimedFlameMilestones;
+
+    final result = StreakService.checkAndClaim30FlameEmojiMilestone(
+      duoFlames: duoFlames,
+      currentUnlockedEmojiPacks: unlockedPacks,
+      claimedMilestones: claimedMilestones,
+    );
+
+    if (result == null) return null;
+
+    final updatedMilestones = Map<String, bool>.from(claimedMilestones)
+      ..['30'] = true;
+    List<String> updatedPacks = List<String>.from(unlockedPacks);
+
+    if (result != 'all_unlocked') {
+      if (!updatedPacks.contains(result)) {
+        updatedPacks.add(result);
+      }
+    }
+
+    final updatedSettings = settings.copyWith(
+      unlockedEmojiPacks: updatedPacks,
+      claimedFlameMilestones: updatedMilestones,
+    );
+    await _storageService.saveSettings(updatedSettings);
+
+    return result;
+  }
+
   /// Claim random theme unlock on reaching 50 duo flames
   Future<String?> claim50FlameMilestone({
     required int duoFlames,

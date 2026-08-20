@@ -9,8 +9,8 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   group('Theme Palettes & Engine Tests', () {
-    test('AppPalettes list contains exactly 13 themes', () {
-      expect(AppPalettes.list.length, equals(13));
+    test('AppPalettes list contains exactly 14 themes', () {
+      expect(AppPalettes.list.length, equals(14));
     });
 
     test('Pastel Pink is free by default and default theme', () {
@@ -20,13 +20,15 @@ void main() {
       expect(pastel.emoji, equals('🌸'));
     });
 
-    test('All other 12 themes are paid/unlockable', () {
+    test('All other 13 themes are paid/unlockable', () {
       final paidThemes = AppPalettes.paidThemeIds;
-      expect(paidThemes.length, equals(12));
+      expect(paidThemes.length, equals(13));
       for (final id in paidThemes) {
         final palette = AppPalettes.getById(id);
         expect(palette.isFreeByDefault, isFalse);
       }
+      expect(AppPalettes.getById('christmas_magic').name, equals('Christmas Magic'));
+      expect(AppPalettes.getById('christmas_magic').emoji, equals('🎄'));
     });
 
     test('Specific dark themes are correctly flagged', () {
