@@ -33,7 +33,9 @@ class AppSettings {
         unlockedThemes = unlockedThemes ?? ['pastel_pink'],
         unlockedEmojiPacks =
             unlockedEmojiPacks ?? [EmojiPacks.defaultPackId],
-        customEmojis = customEmojis ?? List<String>.from(DefaultEmojis.list),
+        customEmojis = customEmojis != null
+            ? List<String>.from(customEmojis).take(10).toList()
+            : List<String>.from(DefaultEmojis.list.take(10)),
         claimedFlameMilestones = claimedFlameMilestones ?? {};
 
   bool get hasActivePremium {
@@ -79,6 +81,12 @@ class AppSettings {
     );
   }
 
+  bool get hasAllEmojiPacks =>
+      hasActivePremium ||
+      EmojiPacks.paidPackIds.every((id) => unlockedEmojiPacks.contains(id));
+
+  bool get canUseCustomKeyboardEmojis => hasActivePremium || hasAllEmojiPacks;
+
   bool isThemeUnlocked(String id) {
     if (id == 'pastel_pink') return true;
     if (hasActivePremium) return true;
@@ -87,12 +95,12 @@ class AppSettings {
 
   bool isEmojiPackUnlocked(String id) {
     if (id == EmojiPacks.defaultPackId) return true;
-    if (hasActivePremium) return true;
+    if (hasActivePremium || hasAllEmojiPacks) return true;
     return unlockedEmojiPacks.contains(id);
   }
 
   bool isEmojiUnlocked(String emoji) {
-    if (hasActivePremium) return true;
+    if (hasActivePremium || hasAllEmojiPacks) return true;
     final pack = EmojiPacks.getPackForEmoji(emoji);
     if (pack == null || pack.isFree) return true;
     return isEmojiPackUnlocked(pack.id);
@@ -118,8 +126,8 @@ class AppSettings {
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     final rawEmojis = map['customEmojis'] as List?;
     final emojis = rawEmojis != null
-        ? List<String>.from(rawEmojis.map((e) => e.toString()))
-        : List<String>.from(DefaultEmojis.list);
+        ? List<String>.from(rawEmojis.map((e) => e.toString())).take(10).toList()
+        : List<String>.from(DefaultEmojis.list.take(10));
 
     final rawThemes = map['unlockedThemes'] as List?;
     final themes = rawThemes != null

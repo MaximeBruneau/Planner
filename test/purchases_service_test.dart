@@ -73,6 +73,20 @@ void main() {
       expect(settings.isEmojiPackUnlocked('food_treats'), isFalse);
     });
 
+    test('purchaseAllEmojiPacks unlocks all emoji packs and enables keyboard emojis', () async {
+      final success = await purchasesService.purchaseAllEmojiPacks();
+      expect(success, isTrue);
+
+      final settings = storageService.getSettings();
+      expect(settings.hasAllEmojiPacks, isTrue);
+      expect(settings.canUseCustomKeyboardEmojis, isTrue);
+      expect(settings.isEmojiPackUnlocked('cute_animals'), isTrue);
+      expect(settings.isEmojiPackUnlocked('food_treats'), isTrue);
+      expect(settings.isEmojiPackUnlocked('gaming_geek'), isTrue);
+      expect(settings.isEmojiUnlocked('🐱'), isTrue);
+      expect(settings.isEmojiUnlocked('🦄'), isTrue);
+    });
+
     test('restorePurchases restores previous state and returns map', () async {
       await purchasesService.purchaseSingleTheme(themeId: 'neon_cyberpunk');
       await purchasesService.purchaseSubscription(tier: SubscriptionTier.monthly);

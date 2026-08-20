@@ -64,6 +64,51 @@ void main() {
       expect(saved.notificationsEnabled, isFalse);
     });
 
+    test('Customizing mood emoji updates active 10-slot deck properly via SettingsNotifier', () async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = StorageService();
+      await storage.init();
+      final purchases = PurchasesService(storage);
+      final iap = IapService(storage, purchases);
+
+      final notifier = SettingsNotifier(storage, iap);
+      expect(notifier.state.customEmojis.length, equals(10));
+
+      // Update slot 1 (index 0) and slot 10 (index 9) with emojis from the 20 starter pack
+      await notifier.updateEmoji(0, '🚀');
+      await notifier.updateEmoji(9, '✨');
+
+      expect(notifier.state.customEmojis[0], equals('🚀'));
+      expect(notifier.state.customEmojis[9], equals('✨'));
+      expect(notifier.state.customEmojis.length, equals(10));
+
+      final saved = storage.getSettings();
+      expect(saved.customEmojis[0], equals('🚀'));
+      expect(saved.customEmojis[9], equals('✨'));
+    });
+
+    test('canUseCustomKeyboardEmojis is true when isPremium or hasAllEmojiPacks', () {
+      final freeSettings = AppSettings();
+      expect(freeSettings.canUseCustomKeyboardEmojis, isFalse);
+
+      final premiumSettings = AppSettings(isPremium: true);
+      expect(premiumSettings.canUseCustomKeyboardEmojis, isTrue);
+
+      final allPacksSettings = AppSettings(
+        unlockedEmojiPacks: [
+          'default_pack',
+          'cute_animals',
+          'food_treats',
+          'vibes_moods',
+          'nature_chill',
+          'gaming_geek',
+          'duo_love',
+        ],
+      );
+      expect(allPacksSettings.hasAllEmojiPacks, isTrue);
+      expect(allPacksSettings.canUseCustomKeyboardEmojis, isTrue);
+    });
+
     test('Changing theme updates themeId and persists in storage', () async {
       SharedPreferences.setMockInitialValues({});
       final storage = StorageService();

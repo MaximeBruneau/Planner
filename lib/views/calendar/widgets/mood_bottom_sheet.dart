@@ -165,7 +165,7 @@ class _MoodBottomSheetState extends ConsumerState<MoodBottomSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Emoji selector row / grid (2 rows of 5 large emojis)
+            // Emoji selector row / grid (10 active deck emojis)
             Wrap(
               spacing: 12,
               runSpacing: 12,

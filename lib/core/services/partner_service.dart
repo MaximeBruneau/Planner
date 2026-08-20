@@ -242,12 +242,23 @@ class PartnerService {
 
       if (currentUid.isNotEmpty) {
         try {
+          final userDoc = await firestore.collection('users').doc(currentUid).get();
+          final isOwner = userDoc.exists && (userDoc.data()?['isDuoPass'] == true || userDoc.data()?['isPremium'] == true);
+
+          final Map<String, dynamic> updateData = {
+            'partnerId': null,
+            'partnerInfo': FieldValue.delete(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+
+          // If current user is not the direct purchaser, revoke gifted Duo Pass
+          if (!isOwner) {
+            updateData['premiumGrantedByPartner'] = false;
+            updateData['premiumGrantedByUserId'] = FieldValue.delete();
+          }
+
           await firestore.collection('users').doc(currentUid).set(
-            {
-              'partnerId': null,
-              'partnerInfo': FieldValue.delete(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
+            updateData,
             SetOptions(merge: true),
           );
         } catch (e) {
@@ -270,12 +281,23 @@ class PartnerService {
 
       if (partnerUid.isNotEmpty) {
         try {
+          final partnerDoc = await firestore.collection('users').doc(partnerUid).get();
+          final isPartnerOwner = partnerDoc.exists && (partnerDoc.data()?['isDuoPass'] == true || partnerDoc.data()?['isPremium'] == true);
+
+          final Map<String, dynamic> partnerUpdateData = {
+            'partnerId': null,
+            'partnerInfo': FieldValue.delete(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+
+          // If partner is not the direct purchaser, revoke gifted Duo Pass
+          if (!isPartnerOwner) {
+            partnerUpdateData['premiumGrantedByPartner'] = false;
+            partnerUpdateData['premiumGrantedByUserId'] = FieldValue.delete();
+          }
+
           await firestore.collection('users').doc(partnerUid).set(
-            {
-              'partnerId': null,
-              'partnerInfo': FieldValue.delete(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
+            partnerUpdateData,
             SetOptions(merge: true),
           );
         } catch (e) {
@@ -316,6 +338,18 @@ class PartnerService {
     } finally {
       await _storageService.savePartner(null);
       await _storageService.savePartnerEntries({});
+
+      // Revoke locally if not direct purchaser
+      final localSettings = _storageService.getSettings();
+      if (!localSettings.isDuoPass && !localSettings.isPremium) {
+        final isThemeStillUnlocked = localSettings.isThemeUnlocked(localSettings.themeId);
+        final updatedSettings = localSettings.copyWith(
+          premiumGrantedByPartner: false,
+          themeId: isThemeStillUnlocked ? localSettings.themeId : 'pastel_pink',
+          themeIndex: isThemeStillUnlocked ? localSettings.themeIndex : 0,
+        );
+        await _storageService.saveSettings(updatedSettings);
+      }
     }
   }
 

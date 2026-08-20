@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/constants/default_emojis.dart';
 import '../core/services/iap_service.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/purchases_service.dart';
@@ -141,20 +142,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
 
-  /// Update a specific emoji slot in the 10 custom emojis
+  /// Update a specific emoji slot in the 10 active deck emojis
   Future<void> updateEmoji(int index, String emoji) async {
     final list = List<String>.from(state.customEmojis);
+    while (list.length < 10) {
+      if (list.length < DefaultEmojis.list.length) {
+        list.add(DefaultEmojis.list[list.length]);
+      } else {
+        list.add('😊');
+      }
+    }
     if (index >= 0 && index < list.length) {
       list[index] = emoji;
-    } else if (list.length < 10) {
-      list.add(emoji);
     }
-    await updateCustomEmojis(list);
+    await updateCustomEmojis(list.take(10).toList());
   }
 
-  /// Update favorite 10 emojis
+  /// Update active deck of 10 vibe emojis
   Future<void> updateCustomEmojis(List<String> emojis) async {
-    final updated = state.copyWith(customEmojis: emojis);
+    final updated = state.copyWith(customEmojis: emojis.take(10).toList());
     state = updated;
     await _storageService.saveSettings(updated);
   }

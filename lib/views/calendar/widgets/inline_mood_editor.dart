@@ -167,7 +167,7 @@ class _InlineMoodEditorState extends ConsumerState<InlineMoodEditor> {
                 ),
               ),
             ] else ...[
-              // Emoji Selector Row / Grid
+              // Emoji Selector Row / Grid (10 active deck emojis)
               Wrap(
                 spacing: 10,
                 runSpacing: 10,

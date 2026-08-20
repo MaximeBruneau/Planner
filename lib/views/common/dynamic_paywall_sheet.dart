@@ -178,6 +178,11 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
       priceFormatted = "\$0.99";
       billingPeriod = "Lifetime one-time purchase";
       productEmoji = widget.targetEmojiPack!.emoji;
+    } else {
+      productName = "All Emojis & Custom Keyboard Bundle";
+      priceFormatted = "\$2.99";
+      billingPeriod = "Lifetime one-time purchase";
+      productEmoji = "🛍️";
     }
 
     final paymentConfirmed = await FakeStorePaymentSheet.show(
@@ -203,6 +208,10 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
       success = await ref
           .read(settingsProvider.notifier)
           .purchaseEmojiPack(widget.targetEmojiPack!.id, userId: user?.id);
+    } else {
+      success = await ref
+          .read(settingsProvider.notifier)
+          .purchaseAllEmojiPacks(userId: user?.id);
     }
 
     if (mounted) {
@@ -276,13 +285,17 @@ class _DynamicPaywallSheetState extends ConsumerState<DynamicPaywallSheet> {
     final dynamicTitle = _computeTitle();
     final dynamicSubtitle = _computeSubtitle();
 
-    final hasSingleItemOption =
-        widget.targetTheme != null || widget.targetEmojiPack != null;
+    final hasSingleItemOption = widget.targetTheme != null ||
+        widget.targetEmojiPack != null ||
+        (widget.featureName != null &&
+            widget.featureName!.toLowerCase().contains("emoji")) ||
+        (widget.title != null &&
+            widget.title!.toLowerCase().contains("emoji"));
     final singleItemLabel = widget.targetTheme != null
         ? "Buy only this theme (\$1.99 lifetime)"
         : (widget.targetEmojiPack != null
             ? "Buy only this pack (\$0.99 lifetime)"
-            : "");
+            : "Unlock All Emojis & Keyboard Bundle (\$2.99 lifetime)");
 
     return Container(
       constraints: BoxConstraints(
