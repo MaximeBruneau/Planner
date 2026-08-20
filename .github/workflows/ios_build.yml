@@ -1,9 +1,10 @@
-name: Build Unsigned iOS (.ipa)
+﻿name: Build Unsigned iOS (.ipa)
 
 on:
   push:
     branches:
       - main
+      - main6app6pro
   workflow_dispatch:
 
 permissions:
@@ -11,42 +12,41 @@ permissions:
 
 jobs:
   build-ios:
-    runs-on: macos-14
+    name: Build iOS IPA
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: ☕ Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Flutter
+      - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-
-      - name: Install dependencies
+      - name: 📦 Install Flutter Dependencies
         run: flutter pub get
 
-      - name: Build iOS (No Codesign)
+      - name: 🔨 Build iOS (Release, No CodeSign)
         run: flutter build ios --release --no-codesign
 
-      - name: Package IPA
+      - name: 📦 Package .app into .ipa
         run: |
-          cd build/ios/iphoneos
           mkdir -p Payload
-          cp -r Runner.app Payload/
+          cp -R build/ios/iphoneos/Runner.app Payload/
           zip -r -y -q mydairy.ipa Payload
-          mv mydairy.ipa ../../../mydairy.ipa
+          rm -rf Payload
 
-      - name: Upload IPA Artifact
+      - name: 🚀 Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: mydairy-ipa
           path: mydairy.ipa
-          retention-days: 7
+          retention-days: 14
