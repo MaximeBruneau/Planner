@@ -1,4 +1,4 @@
-﻿name: Build Unsigned iOS (.ipa)
+name: Build Unsigned iOS (.ipa)
 
 on:
   push:
@@ -26,9 +26,9 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
           channel: 'stable'
           cache: true
+
 
       - name: Install dependencies
         run: flutter pub get
