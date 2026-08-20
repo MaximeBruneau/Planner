@@ -284,23 +284,23 @@ class AppPalettes {
     selectedCellColor: Color(0xFF334155),
   );
 
-  // 13: Christmas Magic (Holiday Festive)
+  // 13: Christmas Magic (Holiday Festive & Rich Santa Red)
   static const ThemePalette christmasMagic = ThemePalette(
     id: 'christmas_magic',
     name: 'Christmas Magic',
     emoji: '🎄',
     isFreeByDefault: false,
     isDark: false,
-    primary: Color(0xFFC41E3A),
+    primary: Color(0xFFD32F2F), // Vibrant Santa Holiday Red
     onPrimary: Colors.white,
-    primaryContainer: Color(0xFFFFEBEE),
-    onPrimaryContainer: Color(0xFF5C0A15),
-    secondary: Color(0xFF2E7D32),
-    surface: Color(0xFFFFFBFB),
-    onSurface: Color(0xFF2C1014),
-    background: Color(0xFFFFF0F2),
+    primaryContainer: Color(0xFFFFCDD2), // Festive warm red container
+    onPrimaryContainer: Color(0xFF5C0008),
+    secondary: Color(0xFF1B5E20), // Evergreen Pine Green
+    surface: Color(0xFFFFF5F6), // Warm soft red tinted surface
+    onSurface: Color(0xFF330A10), // Deep rich cranberry for crisp contrast
+    background: Color(0xFFFFEBEE), // Clearly warm red festive background
     cardColor: Color(0xFFFFFFFF),
-    selectedCellColor: Color(0xFFFFCDD2),
+    selectedCellColor: Color(0xFFEF9A9A), // Distinctive holiday red cell selection
   );
 
   static const List<ThemePalette> list = [
