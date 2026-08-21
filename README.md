@@ -1,6 +1,6 @@
-# my_dairy
+# Super Planner 🗓️
 
-A new Flutter project.
+Super Planner - Collaborative shared calendar for groups, friends, and couples.
 
 ## Getting Started
 
