@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 
 void main() {
-  final inputBytes = File('d:/Github/myDairy/assets/app_icon.png').readAsBytesSync();
+  final inputBytes = File('assets/app_icon.png').readAsBytesSync();
   final original = img.decodeImage(inputBytes);
   
   if (original == null) {
@@ -44,8 +44,8 @@ void main() {
   img.compositeImage(fullCanvas, resized, dstX: posX, dstY: posY);
   img.compositeImage(fgCanvas, resized, dstX: posX, dstY: posY);
   
-  File('d:/Github/myDairy/assets/app_icon_full.png').writeAsBytesSync(img.encodePng(fullCanvas));
-  File('d:/Github/myDairy/assets/app_icon_fg.png').writeAsBytesSync(img.encodePng(fgCanvas));
+  File('assets/app_icon_full.png').writeAsBytesSync(img.encodePng(fullCanvas));
+  File('assets/app_icon_fg.png').writeAsBytesSync(img.encodePng(fgCanvas));
   
   print('Successfully processed icons!');
 }
