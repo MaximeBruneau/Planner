@@ -1,0 +1,66 @@
+workflows:
+  ios-workflow:
+    name: iOS Build (IPA & App)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Flutter test
+        script: |
+          flutter test
+      - name: Build Flutter iOS (Release, Unsigned)
+        script: |
+          flutter build ios --release --no-codesign
+      - name: Package Unsigned IPA
+        script: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -r -y -q superplanner.ipa Payload
+          rm -rf Payload
+    artifacts:
+      - superplanner.ipa
+      - build/ios/iphoneos/Runner.app
+
+  android-workflow:
+    name: Android Build (APK & App Bundle)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Flutter test
+        script: |
+          flutter test
+      - name: Build Android APK
+        script: |
+          flutter build apk --release
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/*.aab
