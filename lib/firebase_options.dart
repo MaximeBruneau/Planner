@@ -55,15 +55,16 @@ class DefaultFirebaseOptions {
     projectId: 'super-planner-app-3af40',
     storageBucket: 'super-planner-app-3af40.firebasestorage.app',
     iosClientId: '475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com',
-    iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
+    iosBundleId: 'com.superplanner.app',
   );
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyA7dvbn198qiETUa4ggeTm7JNBCNYZxgtk',
-    appId: '1:850562549978:ios:338ac5991b05d0a12dfde3',
-    messagingSenderId: '850562549978',
-    projectId: 'my-dairy-2f7e2',
-    storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
-    iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
+    apiKey: 'AIzaSyD1dOzOzxKmBzP44Pz7RSJWbxcEo9M-QMU',
+    appId: '1:475381692973:ios:6f07c5cde44d03945916a4',
+    messagingSenderId: '475381692973',
+    projectId: 'super-planner-app-3af40',
+    storageBucket: 'super-planner-app-3af40.firebasestorage.app',
+    iosClientId: '475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com',
+    iosBundleId: 'com.superplanner.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

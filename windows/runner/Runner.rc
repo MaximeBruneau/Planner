@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.vibecalendar" "\0"
-            VALUE "FileDescription", "my_dairy" "\0"
+            VALUE "CompanyName", "com.superplanner" "\0"
+            VALUE "FileDescription", "Super Planner" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "my_dairy" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.vibecalendar. All rights reserved." "\0"
-            VALUE "OriginalFilename", "my_dairy.exe" "\0"
-            VALUE "ProductName", "my_dairy" "\0"
+            VALUE "InternalName", "super_planner" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.superplanner. All rights reserved." "\0"
+            VALUE "OriginalFilename", "super_planner.exe" "\0"
+            VALUE "ProductName", "Super Planner" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
