@@ -2,7 +2,7 @@ name: super_planner
 description: "Super Planner - Collaborative shared calendar for groups, friends, and couples."
 publish_to: 'none'
 
-version: 1.0.5+6
+version: 1.0.6+7
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
