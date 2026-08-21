@@ -258,8 +258,28 @@ class AuthSyncService {
 
   /// Quick Guest / Offline Mode
   Future<AppUser> startAsGuest({String? name}) async {
+    if (!_isFirebaseInitialized) {
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        _isFirebaseInitialized = true;
+      } catch (_) {}
+    }
+
+    String id = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+    if (_isFirebaseInitialized) {
+      try {
+        final credential = await FirebaseAuth.instance.signInAnonymously();
+        if (credential.user != null) {
+          id = credential.user!.uid;
+        }
+      } catch (e) {
+        debugPrint('Anonymous sign in notice: $e');
+      }
+    }
+
     final guestName = (name != null && name.trim().isNotEmpty) ? name.trim() : 'Guest Planner';
-    final id = 'guest_${DateTime.now().millisecondsSinceEpoch}';
 
     _currentUser = AppUser(
       id: id,

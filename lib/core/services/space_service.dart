@@ -64,11 +64,13 @@ class SpaceService {
       });
 
       // 3. Link space to user document in Firestore
-      await firestore.collection('users').doc(creator.id).set({
-        'currentSpaceId': spaceId,
-        'joinedSpaceIds': FieldValue.arrayUnion([spaceId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      if (creator.id.isNotEmpty) {
+        await firestore.collection('users').doc(creator.id).set({
+          'currentSpaceId': spaceId,
+          'joinedSpaceIds': FieldValue.arrayUnion([spaceId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
     } catch (e) {
       debugPrint('Firestore create space notice (local cache saved): $e');
     }
@@ -78,39 +80,71 @@ class SpaceService {
     return space;
   }
 
-  /// Join an existing shared calendar space using its 6-character code
+  /// Join an existing shared calendar space using its code (e.g. SUPER-4892 or 4892)
   Future<SharedSpace> joinSpaceByCode({
     required String code,
     required AppUser user,
   }) async {
-    final cleanCode = code.trim().toUpperCase();
-    if (cleanCode.isEmpty) {
+    final rawInput = code.trim().toUpperCase();
+    if (rawInput.isEmpty) {
       throw Exception("Please enter a valid space code.");
     }
 
+    // Generate smart variations of the code to handle various user input formats
+    final cleanInput = rawInput.replaceAll(' ', '-');
+    final digitsOnly = rawInput.replaceAll(RegExp(r'[^0-9]'), '');
+    final candidates = <String>{
+      rawInput,
+      cleanInput,
+      if (digitsOnly.isNotEmpty) 'SUPER-$digitsOnly',
+      if (!rawInput.startsWith('SUPER-')) 'SUPER-$rawInput',
+    };
+
     try {
       final firestore = FirebaseFirestore.instance;
+      String? resolvedSpaceId;
 
-      // 1. Look up space ID from code
-      final codeDoc = await firestore
-          .collection('space_codes')
-          .doc(cleanCode)
-          .get()
-          .timeout(const Duration(seconds: 8), onTimeout: () {
-        throw Exception("Connection timed out. Please check your network.");
-      });
+      // 1. Try finding in `space_codes` collection
+      for (final candidate in candidates) {
+        final codeDoc = await firestore
+            .collection('space_codes')
+            .doc(candidate)
+            .get()
+            .timeout(const Duration(seconds: 6), onTimeout: () {
+          return firestore.collection('space_codes').doc('__non_existent__').get();
+        });
 
-      if (!codeDoc.exists || codeDoc.data() == null) {
-        throw Exception("Calendar space with code '$cleanCode' not found. Please check the code.");
+        if (codeDoc.exists && codeDoc.data() != null) {
+          resolvedSpaceId = codeDoc.data()!['spaceId'] as String?;
+          if (resolvedSpaceId != null && resolvedSpaceId.isNotEmpty) break;
+        }
       }
 
-      final spaceId = codeDoc.data()!['spaceId'] as String;
-      if (spaceId.isEmpty) {
-        throw Exception("Invalid calendar space configuration.");
+      // 2. Direct fallback: query `spaces` collection by code field
+      if (resolvedSpaceId == null || resolvedSpaceId.isEmpty) {
+        for (final candidate in candidates) {
+          final querySnap = await firestore
+              .collection('spaces')
+              .where('code', isEqualTo: candidate)
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 6), onTimeout: () {
+            return firestore.collection('spaces').where('code', isEqualTo: '__none__').get();
+          });
+
+          if (querySnap.docs.isNotEmpty) {
+            resolvedSpaceId = querySnap.docs.first.id;
+            break;
+          }
+        }
       }
 
-      // 2. Fetch the space document
-      final spaceDoc = await firestore.collection('spaces').doc(spaceId).get();
+      if (resolvedSpaceId == null || resolvedSpaceId.isEmpty) {
+        throw Exception("Calendar space with code '$rawInput' not found. Please verify the code.");
+      }
+
+      // 3. Fetch the space document
+      final spaceDoc = await firestore.collection('spaces').doc(resolvedSpaceId).get();
       if (!spaceDoc.exists || spaceDoc.data() == null) {
         throw Exception("This shared calendar is no longer active.");
       }
@@ -126,8 +160,8 @@ class SpaceService {
         joinedAt: DateTime.now(),
       );
 
-      // 3. Update space document with new member
-      await firestore.collection('spaces').doc(spaceId).set({
+      // 4. Update space document with new member
+      await firestore.collection('spaces').doc(resolvedSpaceId).set({
         'memberIds': FieldValue.arrayUnion([user.id]),
         'members': {
           user.id: member.toMap(),
@@ -136,12 +170,14 @@ class SpaceService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // 4. Update user document
-      await firestore.collection('users').doc(user.id).set({
-        'currentSpaceId': spaceId,
-        'joinedSpaceIds': FieldValue.arrayUnion([spaceId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // 5. Update user document
+      if (user.id.isNotEmpty) {
+        await firestore.collection('users').doc(user.id).set({
+          'currentSpaceId': resolvedSpaceId,
+          'joinedSpaceIds': FieldValue.arrayUnion([resolvedSpaceId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
 
       final updatedMembers = Map<String, SpaceMember>.from(space.members)..[user.id] = member;
       final updatedSpace = space.copyWith(
@@ -216,10 +252,12 @@ class SpaceService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      await firestore.collection('users').doc(userId).update({
-        'currentSpaceId': null,
-        'joinedSpaceIds': FieldValue.arrayRemove([spaceId]),
-      });
+      if (userId.isNotEmpty) {
+        await firestore.collection('users').doc(userId).update({
+          'currentSpaceId': null,
+          'joinedSpaceIds': FieldValue.arrayRemove([spaceId]),
+        });
+      }
     } catch (e) {
       debugPrint('Error leaving space: $e');
     } finally {

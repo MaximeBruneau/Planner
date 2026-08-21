@@ -33,138 +33,203 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
   }
 
   void _showJoinDialog(BuildContext parentContext) {
+    String? localError;
+    bool isSubmitting = false;
+
     showDialog(
       context: parentContext,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            const Text("🔗", style: TextStyle(fontSize: 22)),
-            const SizedBox(width: 8),
-            Text(
-              "Join Calendar",
-              style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                const Text("🔗", style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 8),
+                Text(
+                  "Join Calendar",
+                  style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
+                ),
+              ],
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Enter the 6-character code (e.g. SUPER-4892) shared by your group.",
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _joinCodeController,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: "Invite Code",
-                hintText: "SUPER-1234",
-                prefixIcon: const Icon(Icons.vpn_key_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final code = _joinCodeController.text.trim();
-              if (code.isEmpty) return;
-              Navigator.pop(ctx);
-
-              final success = await ref.read(spaceProvider.notifier).joinSpace(code);
-              if (!mounted) return;
-
-              if (success) {
-                Navigator.of(context).pop(); // Close sheet
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("🎉 Joined shared calendar space $code!"),
-                    behavior: SnackBarBehavior.floating,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Enter the invite code (e.g. SUPER-4892) shared by your group.",
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _joinCodeController,
+                  textCapitalization: TextCapitalization.characters,
+                  enabled: !isSubmitting,
+                  decoration: InputDecoration(
+                    labelText: "Invite Code",
+                    hintText: "SUPER-1234",
+                    prefixIcon: const Icon(Icons.vpn_key_rounded),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                );
-              } else {
-                final err = ref.read(spaceProvider).errorMessage ?? "Could not join space.";
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(err), behavior: SnackBarBehavior.floating),
-                );
-              }
-            },
-            child: const Text("Join Space"),
-          ),
-        ],
+                ),
+                if (localError != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            localError!,
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final code = _joinCodeController.text.trim();
+                        if (code.isEmpty) return;
+
+                        setDialogState(() {
+                          isSubmitting = true;
+                          localError = null;
+                        });
+
+                        final success = await ref.read(spaceProvider.notifier).joinSpace(code);
+
+                        if (!mounted || !parentContext.mounted) return;
+
+                        if (success) {
+                          if (ctx.mounted) Navigator.pop(ctx); // Close dialog
+                          Navigator.of(context).pop(); // Close sheet
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("🎉 Joined shared calendar space $code!"),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        } else {
+                          final err = ref.read(spaceProvider).errorMessage ?? "Could not join space.";
+                          setDialogState(() {
+                            isSubmitting = false;
+                            localError = err;
+                          });
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text("Join Space"),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   void _showCreateDialog(BuildContext parentContext) {
+    bool isSubmitting = false;
+
     showDialog(
       context: parentContext,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            const Text("✨", style: TextStyle(fontSize: 22)),
-            const SizedBox(width: 8),
-            Text(
-              "New Shared Calendar",
-              style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Give your shared calendar space a name (e.g. Weekend Squad 🍕, Paris Trip ✈️, Family 🏡)",
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _createNameController,
-              decoration: InputDecoration(
-                labelText: "Space Name",
-                hintText: "e.g. Weekend Squad 🍕",
-                prefixIcon: const Icon(Icons.group_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = _createNameController.text.trim();
-              Navigator.pop(ctx);
-
-              final space = await ref.read(spaceProvider.notifier).createSpace(
-                    name: name.isNotEmpty ? name : 'Our Shared Calendar 🗓️',
-                  );
-              if (!mounted || space == null) return;
-
-              Navigator.of(context).pop(); // Close sheet
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("✨ Created '${space.name}'! Code: ${space.code}"),
-                  behavior: SnackBarBehavior.floating,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                const Text("✨", style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 8),
+                Text(
+                  "New Shared Calendar",
+                  style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
                 ),
-              );
-            },
-            child: const Text("Create Space"),
-          ),
-        ],
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Give your shared calendar space a name (e.g. Weekend Squad 🍕, Paris Trip ✈️, Family 🏡)",
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _createNameController,
+                  enabled: !isSubmitting,
+                  decoration: InputDecoration(
+                    labelText: "Space Name",
+                    hintText: "e.g. Weekend Squad 🍕",
+                    prefixIcon: const Icon(Icons.group_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final name = _createNameController.text.trim();
+                        setDialogState(() => isSubmitting = true);
+
+                        final space = await ref.read(spaceProvider.notifier).createSpace(
+                              name: name.isNotEmpty ? name : 'Our Shared Calendar 🗓️',
+                            );
+                        if (!mounted || !parentContext.mounted) return;
+
+                        if (space != null) {
+                          if (ctx.mounted) Navigator.pop(ctx); // Close dialog
+                          Navigator.of(context).pop(); // Close sheet
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("✨ Created '${space.name}'! Code: ${space.code}"),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        } else {
+                          setDialogState(() => isSubmitting = false);
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text("Create Space"),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
