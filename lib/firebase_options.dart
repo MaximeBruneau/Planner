@@ -32,31 +32,31 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
-    appId: '1:850562549978:web:8f2e98a301caecd92dfde3',
-    messagingSenderId: '850562549978',
-    projectId: 'my-dairy-2f7e2',
-    authDomain: 'my-dairy-2f7e2.firebaseapp.com',
-    storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
+    apiKey: 'AIzaSyCIpHLylNoq2vfc_GajE-KS8kmNakeBzXA',
+    appId: '1:475381692973:web:0b69a658e36328b75916a4',
+    messagingSenderId: '475381692973',
+    projectId: 'super-planner-app-3af40',
+    authDomain: 'super-planner-app-3af40.firebaseapp.com',
+    storageBucket: 'super-planner-app-3af40.firebasestorage.app',
+    measurementId: 'G-FFMMX5QG83',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
-    appId: '1:850562549978:android:8f2e98a301caecd92dfde3',
-    messagingSenderId: '850562549978',
-    projectId: 'my-dairy-2f7e2',
-    storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
+    apiKey: 'AIzaSyBFIHb8E1E4TGW-pT1qG0od8yZTY0AN0mc',
+    appId: '1:475381692973:android:28f7c0f72f53c9325916a4',
+    messagingSenderId: '475381692973',
+    projectId: 'super-planner-app-3af40',
+    storageBucket: 'super-planner-app-3af40.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA7dvbn198qiETUa4ggeTm7JNBCNYZxgtk',
-    appId: '1:850562549978:ios:338ac5991b05d0a12dfde3',
-    messagingSenderId: '850562549978',
-    projectId: 'my-dairy-2f7e2',
-    storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
+    apiKey: 'AIzaSyD1dOzOzxKmBzP44Pz7RSJWbxcEo9M-QMU',
+    appId: '1:475381692973:ios:6f07c5cde44d03945916a4',
+    messagingSenderId: '475381692973',
+    projectId: 'super-planner-app-3af40',
+    storageBucket: 'super-planner-app-3af40.firebasestorage.app',
+    iosClientId: '475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com',
     iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyA7dvbn198qiETUa4ggeTm7JNBCNYZxgtk',
     appId: '1:850562549978:ios:338ac5991b05d0a12dfde3',
@@ -66,13 +66,13 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.vibecalendar.myDairy.J8LC2ARP9K',
   );
 
-
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU',
-    appId: '1:850562549978:web:8f2e98a301caecd92dfde3',
-    messagingSenderId: '850562549978',
-    projectId: 'my-dairy-2f7e2',
-    authDomain: 'my-dairy-2f7e2.firebaseapp.com',
-    storageBucket: 'my-dairy-2f7e2.firebasestorage.app',
+    apiKey: 'AIzaSyCIpHLylNoq2vfc_GajE-KS8kmNakeBzXA',
+    appId: '1:475381692973:web:ffde3b40d601452b5916a4',
+    messagingSenderId: '475381692973',
+    projectId: 'super-planner-app-3af40',
+    authDomain: 'super-planner-app-3af40.firebaseapp.com',
+    storageBucket: 'super-planner-app-3af40.firebasestorage.app',
+    measurementId: 'G-B2NTP38ZLH',
   );
 }

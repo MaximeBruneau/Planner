@@ -40,7 +40,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await authNotifier.signUpWithEmail(
         email: email,
         password: password,
-        displayName: name.isNotEmpty ? name : 'Friend 🌸',
+        displayName: name.isNotEmpty ? name : 'Planner Friend',
       );
     } else {
       await authNotifier.signInWithEmail(email, password);
@@ -147,32 +147,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // App Brand Icon
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.15),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        "🌸",
-                        style: TextStyle(fontSize: 40),
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.asset(
+                      'assets/app_icon.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: 16),
 
                   // App Title & Tagline
                   Text(
-                    "DuoVibe 🌸",
+                    "Super Planner 🗓️",
                     style: GoogleFonts.fredoka(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -181,7 +169,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Your private daily mood tracker & shared duo journal ✨",
+                    "Collaborative shared calendar for groups, friends, and couples ✨",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
@@ -384,7 +372,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 controller: _nameController,
                                 decoration: InputDecoration(
                                   labelText: "Your Name / Nickname",
-                                  hintText: "e.g. Camille 🌸",
+                                  hintText: "e.g. Alex 🍕",
                                   prefixIcon: const Icon(Icons.badge_outlined),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
@@ -489,7 +477,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       )
                                     : Text(
                                         _isSignUp
-                                            ? "Create My Account 🌸"
+                                            ? "Create My Account 🗓️"
                                             : "Sign In ✨",
                                         style: const TextStyle(fontSize: 15),
                                       ),
@@ -500,11 +488,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+
+                  // Quick Demo / Guest Mode Button
+                  TextButton.icon(
+                    onPressed: () {
+                      ref.read(authProvider.notifier).startAsGuest();
+                    },
+                    icon: const Icon(Icons.flash_on_rounded, size: 18),
+                    label: const Text("Continue as Guest / Try Offline"),
+                  ),
+                  const SizedBox(height: 12),
 
                   // Privacy Note
                   Text(
-                    "By continuing, your calendar will stay safely synced across all your devices ☁️🔒",
+                    "Share your calendar with friends, family, and couples with zero hassle ☁️🔒",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,

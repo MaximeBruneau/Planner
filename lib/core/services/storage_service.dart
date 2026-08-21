@@ -1,17 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../models/mood_entry.dart';
-import '../../models/app_settings.dart';
 import '../../models/app_user.dart';
-import '../../models/partner_info.dart';
+import '../../models/shared_space.dart';
+import '../../models/plan_activity.dart';
+import '../../models/app_settings.dart';
 
 class StorageService {
-  static const String _entriesKey = 'vibe_mood_entries_v2';
-  static const String _settingsKey = 'vibe_app_settings_v2';
-  static const String _userKey = 'vibe_app_user_v2';
-  static const String _partnerKey = 'vibe_partner_info_v2';
-  static const String _partnerEntriesKey = 'vibe_partner_entries_v2';
+  static const String _userKey = 'super_planner_user_v1';
+  static const String _spaceKey = 'super_planner_current_space_v1';
+  static const String _activitiesPrefix = 'super_planner_activities_';
+  static const String _settingsKey = 'super_planner_settings_v1';
 
   late SharedPreferences _prefs;
 
@@ -19,13 +19,11 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // User Profile Persistence
+  // --- App User ---
   AppUser? getSavedUser() {
     try {
       final jsonString = _prefs.getString(_userKey);
-      if (jsonString == null || jsonString.isEmpty) {
-        return null;
-      }
+      if (jsonString == null || jsonString.isEmpty) return null;
       return AppUser.fromJson(jsonString);
     } catch (e) {
       debugPrint('Error reading saved user: $e');
@@ -41,65 +39,54 @@ class StorageService {
     }
   }
 
-  // Mood Entries CRUD
-  Map<String, MoodEntry> getAllEntries() {
+  // --- Shared Space ---
+  SharedSpace? getCurrentSpace() {
     try {
-      final jsonString = _prefs.getString(_entriesKey);
-      if (jsonString == null || jsonString.isEmpty) {
-        return {};
-      }
-      final Map<String, dynamic> rawMap = jsonDecode(jsonString);
-      final Map<String, MoodEntry> entries = {};
-      rawMap.forEach((key, value) {
-        if (value is Map<String, dynamic>) {
-          entries[key] = MoodEntry.fromMap(value);
-        } else if (value is String) {
-          entries[key] = MoodEntry.fromJson(value);
-        }
-      });
-      return entries;
+      final jsonString = _prefs.getString(_spaceKey);
+      if (jsonString == null || jsonString.isEmpty) return null;
+      return SharedSpace.fromJson(jsonString);
     } catch (e) {
-      debugPrint('Error reading mood entries: $e');
-      return {};
+      debugPrint('Error reading current space: $e');
+      return null;
     }
   }
 
-  MoodEntry? getEntryForDate(String dateStr) {
-    final entries = getAllEntries();
-    final entry = entries[dateStr];
-    if (entry != null && entry.deleted) return null;
-    return entry;
-  }
-
-  Future<void> saveEntry(MoodEntry entry) async {
-    final entries = getAllEntries();
-    entries[entry.date] = entry;
-
-    final rawMap = entries.map((key, value) => MapEntry(key, value.toMap()));
-    await _prefs.setString(_entriesKey, jsonEncode(rawMap));
-  }
-
-  Future<void> deleteEntry(String dateStr) async {
-    final entries = getAllEntries();
-    if (entries.containsKey(dateStr)) {
-      final existing = entries[dateStr]!;
-      // Mark as deleted tombstone with pending sync
-      entries[dateStr] = existing.copyWith(
-        deleted: true,
-        updatedAt: DateTime.now(),
-        syncStatus: 'pending',
-      );
-      final rawMap = entries.map((key, value) => MapEntry(key, value.toMap()));
-      await _prefs.setString(_entriesKey, jsonEncode(rawMap));
+  Future<void> saveCurrentSpace(SharedSpace? space) async {
+    if (space == null) {
+      await _prefs.remove(_spaceKey);
+    } else {
+      await _prefs.setString(_spaceKey, space.toJson());
     }
   }
 
-  Future<void> saveAllEntries(Map<String, MoodEntry> newEntries) async {
-    final rawMap = newEntries.map((key, value) => MapEntry(key, value.toMap()));
-    await _prefs.setString(_entriesKey, jsonEncode(rawMap));
+  // --- Space Activities ---
+  List<PlanActivity> getSpaceActivities(String spaceId) {
+    if (spaceId.isEmpty) return [];
+    try {
+      final jsonString = _prefs.getString('$_activitiesPrefix$spaceId');
+      if (jsonString == null || jsonString.isEmpty) return [];
+      final List<dynamic> rawList = jsonDecode(jsonString);
+      return rawList
+          .map((item) => PlanActivity.fromMap(item as Map<String, dynamic>))
+          .where((a) => !a.deleted)
+          .toList();
+    } catch (e) {
+      debugPrint('Error reading space activities: $e');
+      return [];
+    }
   }
 
-  // App Settings Persistence
+  Future<void> saveSpaceActivities(String spaceId, List<PlanActivity> activities) async {
+    if (spaceId.isEmpty) return;
+    try {
+      final rawList = activities.map((a) => a.toMap()).toList();
+      await _prefs.setString('$_activitiesPrefix$spaceId', jsonEncode(rawList));
+    } catch (e) {
+      debugPrint('Error saving space activities: $e');
+    }
+  }
+
+  // --- App Settings ---
   AppSettings getSettings() {
     try {
       final jsonString = _prefs.getString(_settingsKey);
@@ -117,49 +104,12 @@ class StorageService {
     await _prefs.setString(_settingsKey, settings.toJson());
   }
 
-  // Partner Info & Entries Cache
-  PartnerInfo? getSavedPartner() {
-    try {
-      final jsonString = _prefs.getString(_partnerKey);
-      if (jsonString == null || jsonString.isEmpty) return null;
-      return PartnerInfo.fromJson(jsonString);
-    } catch (e) {
-      debugPrint('Error reading partner info: $e');
-      return null;
-    }
-  }
-
-  Future<void> savePartner(PartnerInfo? partner) async {
-    if (partner == null) {
-      await _prefs.remove(_partnerKey);
-      await _prefs.remove(_partnerEntriesKey);
-    } else {
-      await _prefs.setString(_partnerKey, partner.toJson());
-    }
-  }
-
-  Map<String, MoodEntry> getPartnerEntries() {
-    try {
-      final jsonString = _prefs.getString(_partnerEntriesKey);
-      if (jsonString == null || jsonString.isEmpty) return {};
-      final Map<String, dynamic> rawMap = jsonDecode(jsonString);
-      final Map<String, MoodEntry> entries = {};
-      rawMap.forEach((key, value) {
-        if (value is Map<String, dynamic>) {
-          entries[key] = MoodEntry.fromMap(value);
-        } else if (value is String) {
-          entries[key] = MoodEntry.fromJson(value);
-        }
-      });
-      return entries;
-    } catch (e) {
-      debugPrint('Error reading partner entries: $e');
-      return {};
-    }
-  }
-
-  Future<void> savePartnerEntries(Map<String, MoodEntry> entries) async {
-    final rawMap = entries.map((key, value) => MapEntry(key, value.toMap()));
-    await _prefs.setString(_partnerEntriesKey, jsonEncode(rawMap));
+  // --- Clear All Data ---
+  Future<void> clearAll() async {
+    await _prefs.clear();
   }
 }
+
+final storageServiceProvider = Provider<StorageService>((ref) {
+  throw UnimplementedError('storageServiceProvider must be initialized in main');
+});

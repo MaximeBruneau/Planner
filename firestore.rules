@@ -2,45 +2,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // User documents:
-    // - Authenticated users can read basic profile info (needed for pairing & partner display)
-    // - Users can write their own document
-    // - Partner can link partnerId during pairing handshake
+    
+    // User profile documents
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
-      allow update: if isAuthenticated() && (
-        isOwner(userId) || 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId', 'partnerInfo', 'updatedAt'])
-      );
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
 
-      // Mood entries:
-      // - Only owner can create/update/delete their mood entries
-      // - Authenticated partner can read (read-only calendar)
-      match /mood_entries/{entryId} {
-        allow read: if isAuthenticated();
-        allow write: if isOwner(userId);
+    // Space code lookup index (e.g. SUPER-4892)
+    match /space_codes/{code} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Shared calendar spaces
+    match /spaces/{spaceId} {
+      // Any authenticated user can read or create a space, and members can update
+      allow read, write: if isAuthenticated();
+
+      // Collaborative activities, proposals & checklists inside space
+      match /activities/{activityId} {
+        allow read, write: if isAuthenticated();
       }
-    }
-
-    // Pairing codes:
-    // - 10-minute temporary codes
-    // - Any authenticated user can create, read, update and delete
-    match /pairing_codes/{code} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Partner connections (bi-directional 1-on-1 links)
-    match /partner_connections/{connectionId} {
-      allow read, write: if isAuthenticated();
     }
   }
 }

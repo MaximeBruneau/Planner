@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/app_user.dart';
 import '../core/services/auth_sync_service.dart';
-import 'mood_provider.dart';
+import '../core/services/storage_service.dart';
 
 class AuthState {
   final AppUser? user;
@@ -18,22 +18,23 @@ class AuthState {
 
   AuthState copyWith({
     AppUser? user,
+    bool clearUser = false,
     bool? isLoading,
     String? errorMessage,
+    bool clearError = false,
   }) {
     return AuthState(
-      user: user ?? this.user,
+      user: clearUser ? null : (user ?? this.user),
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthSyncService _authSyncService;
-  final Ref _ref;
 
-  AuthNotifier(this._authSyncService, this._ref)
+  AuthNotifier(this._authSyncService)
       : super(AuthState(user: _authSyncService.currentUser)) {
     _init();
   }
@@ -44,13 +45,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<AppUser?> signInWithGoogle() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _authSyncService.signInWithGoogle();
       state = AuthState(user: user, isLoading: false);
-      if (user != null) {
-        _ref.read(moodProvider.notifier).loadEntries();
-      }
       return user;
     } catch (e) {
       state = state.copyWith(
@@ -62,13 +60,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<AppUser?> signInWithEmail(String email, String password) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _authSyncService.signInWithEmail(email, password);
       state = AuthState(user: user, isLoading: false);
-      if (user != null) {
-        _ref.read(moodProvider.notifier).loadEntries();
-      }
       return user;
     } catch (e) {
       final errMessage = _parseAuthError(e);
@@ -85,7 +80,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     required String displayName,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _authSyncService.signUpWithEmail(
         email: email,
@@ -93,9 +88,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         displayName: displayName,
       );
       state = AuthState(user: user, isLoading: false);
-      if (user != null) {
-        _ref.read(moodProvider.notifier).loadEntries();
-      }
       return user;
     } catch (e) {
       final errMessage = _parseAuthError(e);
@@ -107,8 +99,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<AppUser> startAsGuest({String? name}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    final user = await _authSyncService.startAsGuest(name: name);
+    state = AuthState(user: user, isLoading: false);
+    return user;
+  }
+
   Future<bool> sendPasswordReset(String email) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       await _authSyncService.sendPasswordReset(email);
       state = state.copyWith(isLoading: false);
@@ -127,7 +126,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final str = error.toString().toLowerCase();
     if (str.contains('operation-not-allowed')) {
       return 'Email/Password sign-in is disabled in Firebase Console. Please enable it under Authentication > Sign-in method.';
-    } else if (str.contains('user-not-found') || str.contains('invalid-credential') || str.contains('wrong-password')) {
+    } else if (str.contains('user-not-found') ||
+        str.contains('invalid-credential') ||
+        str.contains('wrong-password')) {
       return 'Incorrect email or password. Please check and try again.';
     } else if (str.contains('email-already-in-use')) {
       return 'An account with this email already exists. Try signing in instead.';
@@ -141,45 +142,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return 'Authentication error: ${error.toString().split(']').last.trim()}';
   }
 
-  Future<void> setUserProfile({
-    required String displayName,
-    required String email,
-    String? photoUrl,
-  }) async {
-    state = state.copyWith(isLoading: true);
-    final user = await _authSyncService.setUserProfile(
-      displayName: displayName,
-      email: email,
-      photoUrl: photoUrl,
-    );
-    state = AuthState(user: user, isLoading: false);
-  }
-
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
     await _authSyncService.signOut();
     state = const AuthState(user: null, isLoading: false);
   }
 
-  Future<void> triggerSync() async {
-    state = state.copyWith(isLoading: true);
-    await _authSyncService.syncCloudData();
-    _ref.read(moodProvider.notifier).loadEntries();
-    state = state.copyWith(isLoading: false);
-  }
-
-  /// Complete GDPR & App Store compliant account & data deletion
   Future<bool> deleteAccountAndData() async {
     state = state.copyWith(isLoading: true);
     final success = await _authSyncService.deleteAccountAndData();
     state = const AuthState(user: null, isLoading: false);
-    _ref.read(moodProvider.notifier).loadEntries();
     return success;
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final authSync = ref.watch(authSyncServiceProvider);
-  return AuthNotifier(authSync, ref);
+final authSyncServiceProvider = Provider<AuthSyncService>((ref) {
+  final storageService = ref.watch(storageServiceProvider);
+  return AuthSyncService(storageService);
 });
 
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  final authSync = ref.watch(authSyncServiceProvider);
+  return AuthNotifier(authSync);
+});

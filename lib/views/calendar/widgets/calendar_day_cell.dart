@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class CalendarDayCell extends StatelessWidget {
   final DateTime day;
-  final String? emoji;
+  final int count;
   final bool isSelected;
   final bool isToday;
   final bool isOutside;
@@ -11,7 +11,7 @@ class CalendarDayCell extends StatelessWidget {
   const CalendarDayCell({
     super.key,
     required this.day,
-    this.emoji,
+    this.count = 0,
     this.isSelected = false,
     this.isToday = false,
     this.isOutside = false,
@@ -21,7 +21,7 @@ class CalendarDayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final hasEmoji = emoji != null && emoji!.isNotEmpty;
+    final hasItems = count > 0;
 
     Color backgroundColor = Colors.transparent;
     Color textColor = isOutside
@@ -53,9 +53,7 @@ class CalendarDayCell extends StatelessWidget {
         final cellHeight = constraints.maxHeight;
         final cellWidth = constraints.maxWidth;
 
-        final double dayWithEmojiSize = (cellHeight * 0.21).clamp(9.0, 13.0);
-        final double emojiSize = (cellHeight * 0.40).clamp(16.0, 24.0);
-        final double dayNoEmojiSize = (cellHeight * 0.30).clamp(12.0, 18.0);
+        final double daySize = (cellHeight * 0.32).clamp(13.0, 18.0);
         final double hMargin = (cellWidth * 0.04).clamp(1.0, 3.5);
         final double vMargin = (cellHeight * 0.04).clamp(1.0, 3.5);
         final double radius = (cellHeight * 0.28).clamp(10.0, 18.0);
@@ -70,42 +68,35 @@ class CalendarDayCell extends StatelessWidget {
             boxShadow: shadows,
           ),
           child: Center(
-            child: hasEmoji
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${day.day}',
-                        style: GoogleFonts.fredoka(
-                          fontSize: dayWithEmojiSize,
-                          fontWeight: isSelected || isToday
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: textColor
-                              .withValues(alpha: isOutside ? 0.25 : 0.75),
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        emoji!,
-                        style: TextStyle(fontSize: emojiSize, height: 1.1),
-                      ),
-                    ],
-                  )
-                : Text(
-                    '${day.day}',
-                    style: GoogleFonts.fredoka(
-                      fontSize: dayNoEmojiSize,
-                      fontWeight: isSelected || isToday
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? colorScheme.primary
-                          : (isToday ? colorScheme.secondary : textColor),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${day.day}',
+                  style: GoogleFonts.fredoka(
+                    fontSize: daySize,
+                    fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : (isToday
+                            ? colorScheme.secondary
+                            : textColor.withValues(alpha: isOutside ? 0.25 : 0.85)),
+                  ),
+                ),
+                if (hasItems && !isOutside) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
                     ),
                   ),
+                ],
+              ],
+            ),
           ),
         );
       },

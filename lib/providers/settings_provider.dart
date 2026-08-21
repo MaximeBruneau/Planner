@@ -1,31 +1,18 @@
-import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/constants/default_emojis.dart';
-import '../core/services/iap_service.dart';
 import '../core/services/notification_service.dart';
-import '../core/services/purchases_service.dart';
 import '../core/services/storage_service.dart';
 import '../core/theme/theme_palettes.dart';
 import '../models/app_settings.dart';
-import '../models/emoji_pack.dart';
-import 'auth_provider.dart';
-import 'mood_provider.dart';
-import 'partner_provider.dart';
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final StorageService _storageService;
-  final IapService _iapService;
-  StreamSubscription<bool>? _duoPassSubscription;
+  final NotificationService _notificationService;
 
-  SettingsNotifier(this._storageService, this._iapService)
+  SettingsNotifier(this._storageService, this._notificationService)
       : super(_storageService.getSettings());
 
-  /// Update theme by ID (e.g. 'pastel_pink', 'starry_night')
+  /// Update theme by ID (all 13 themes are free)
   Future<void> updateThemeById(String themeId) async {
-    if (!state.isThemeUnlocked(themeId)) {
-      return; // Theme is locked, do not apply
-    }
     final index = AppPalettes.getIndexById(themeId);
     final updated = state.copyWith(
       themeId: themeId,
@@ -41,247 +28,35 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await updateThemeById(palette.id);
   }
 
-  /// Purchase and unlock a single theme
-  Future<bool> purchaseAndApplyTheme(String themeId, {String? userId}) async {
-    final success = await _iapService.purchaseTheme(
-      themeId: themeId,
-      userId: userId,
-    );
-    if (success) {
-      state = _storageService.getSettings();
-    }
-    return success;
-  }
-
-  /// Purchase and unlock All Themes pack
-  Future<bool> purchaseAllThemesPack({String? userId}) async {
-    final success = await _iapService.purchaseAllThemesPack(userId: userId);
-    if (success) {
-      state = _storageService.getSettings();
-    }
-    return success;
-  }
-
-  /// Purchase and unlock a single Emoji Pack ($0.99)
-  Future<bool> purchaseEmojiPack(String packId, {String? userId}) async {
-    final success = await _iapService.purchaseEmojiPack(
-      packId: packId,
-      userId: userId,
-    );
-    if (success) {
-      state = _storageService.getSettings();
-    }
-    return success;
-  }
-
-  /// Purchase and unlock All Emoji Packs master bundle ($2.99)
-  Future<bool> purchaseAllEmojiPacks({String? userId}) async {
-    final success = await _iapService.purchaseAllEmojiPacks(userId: userId);
-    if (success) {
-      state = _storageService.getSettings();
-    }
-    return success;
-  }
-
-  /// Purchase Premium Subscription (Monthly, Yearly with Trial, or Duo Pass)
-  Future<bool> purchaseSubscription({
-    required SubscriptionTier tier,
-    String? userId,
-    String? partnerId,
-  }) async {
-    final success = await _iapService.purchaseSubscription(
-      tier: tier,
-      userId: userId,
-      partnerId: partnerId,
-    );
-    if (success) {
-      state = _storageService.getSettings();
-    }
-    return success;
-  }
-
-  /// Restore purchases (themes, emoji packs & premium subscriptions)
-  Future<Map<String, dynamic>> restorePurchases({
-    String? userId,
-    String? partnerId,
-  }) async {
-    final restored = await _iapService.restorePurchases(
-      userId: userId,
-      partnerId: partnerId,
-    );
-    state = _storageService.getSettings();
-    return restored;
-  }
-
-  /// Reset all purchases and lock all premium themes & emoji packs (Sandbox test mode)
-  Future<void> resetPurchasesToFree({String? userId}) async {
-    final updated = state.copyWith(
-      unlockedThemes: ['pastel_pink'],
-      unlockedEmojiPacks: [EmojiPacks.defaultPackId],
-      isPremium: false,
-      isDuoPass: false,
-      premiumGrantedByPartner: false,
-      themeId: 'pastel_pink',
-      themeIndex: 0,
-    );
-    state = updated;
-    await _storageService.saveSettings(updated);
-
-    if (userId != null && userId.isNotEmpty) {
-      try {
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({
-          'unlockedThemes': ['pastel_pink'],
-          'unlockedEmojiPacks': [EmojiPacks.defaultPackId],
-          'isPremium': false,
-          'isDuoPass': false,
-          'premiumGrantedByPartner': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      } catch (_) {}
-    }
-  }
-
-
-  /// Update a specific emoji slot in the 10 active deck emojis
-  Future<void> updateEmoji(int index, String emoji) async {
-    final list = List<String>.from(state.customEmojis);
-    while (list.length < 10) {
-      if (list.length < DefaultEmojis.list.length) {
-        list.add(DefaultEmojis.list[list.length]);
-      } else {
-        list.add('😊');
-      }
-    }
-    if (index >= 0 && index < list.length) {
-      list[index] = emoji;
-    }
-    await updateCustomEmojis(list.take(10).toList());
-  }
-
-  /// Update active deck of 10 vibe emojis
-  Future<void> updateCustomEmojis(List<String> emojis) async {
-    final updated = state.copyWith(customEmojis: emojis.take(10).toList());
+  /// Toggle group activity change notifications
+  Future<void> toggleGroupActivityNotifications(bool enabled) async {
+    final updated = state.copyWith(groupActivityNotifications: enabled);
     state = updated;
     await _storageService.saveSettings(updated);
   }
 
-  /// Toggle daily reminder
+  /// Toggle general notifications
   Future<void> toggleNotifications(bool enabled) async {
     final updated = state.copyWith(notificationsEnabled: enabled);
     state = updated;
     await _storageService.saveSettings(updated);
 
-    if (enabled) {
-      final parts = updated.notificationTime.split(':');
-      final hour = int.tryParse(parts[0]) ?? 21;
-      final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
-      NotificationService().scheduleDailyReminder(
-        hasEntryToday: () {
-          final entries = _storageService.getAllEntries();
-          final now = DateTime.now();
-          final todayKey =
-              "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-          return entries.containsKey(todayKey) && !entries[todayKey]!.deleted;
-        },
-        hour: hour,
-        minute: minute,
-      );
-    } else {
-      NotificationService().cancelAll();
+    if (!enabled) {
+      _notificationService.cancelAll();
     }
   }
 
-  /// Update daily reminder notification time (e.g. "20:30")
+  /// Update notification time
   Future<void> updateNotificationTime(String time) async {
     final updated = state.copyWith(notificationTime: time);
     state = updated;
     await _storageService.saveSettings(updated);
-
-    if (updated.notificationsEnabled) {
-      final parts = time.split(':');
-      final hour = int.tryParse(parts[0]) ?? 21;
-      final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
-      NotificationService().scheduleDailyReminder(
-        hasEntryToday: () {
-          final entries = _storageService.getAllEntries();
-          final now = DateTime.now();
-          final todayKey =
-              "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-          return entries.containsKey(todayKey) && !entries[todayKey]!.deleted;
-        },
-        hour: hour,
-        minute: minute,
-      );
-    }
-  }
-
-
-
-  /// Check if a theme is unlocked
-  bool isThemeUnlocked(String themeId) {
-    return state.isThemeUnlocked(themeId);
-  }
-
-  /// Check if an emoji pack is unlocked
-  bool isEmojiPackUnlocked(String packId) {
-    return state.isEmojiPackUnlocked(packId);
-  }
-
-  /// Check if a specific emoji is unlocked
-  bool isEmojiUnlocked(String emoji) {
-    return state.isEmojiUnlocked(emoji);
-  }
-
-  /// Synchronize real-time Duo Pass status with partner
-  void syncWithPartner({required String userId, String? partnerId}) {
-    _duoPassSubscription?.cancel();
-    _duoPassSubscription = _iapService
-        .streamPartnerGrantedPremium(
-      currentUserId: userId,
-      partnerId: partnerId,
-    )
-        .listen((isGranted) {
-      if (state.premiumGrantedByPartner != isGranted) {
-        final updated = state.copyWith(premiumGrantedByPartner: isGranted);
-        state = updated;
-        _storageService.saveSettings(updated);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _duoPassSubscription?.cancel();
-    super.dispose();
   }
 }
 
 final settingsProvider =
     StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
   final storageService = ref.watch(storageServiceProvider);
-  final iapService = ref.watch(iapServiceProvider);
-  final notifier = SettingsNotifier(storageService, iapService);
-
-  // Sync Duo Pass whenever partner or auth state changes
-  ref.listen<PartnerState>(partnerProvider, (previous, next) {
-    final authState = ref.read(authProvider);
-    if (authState.user != null) {
-      notifier.syncWithPartner(
-        userId: authState.user!.id,
-        partnerId: next.partnerInfo?.uid,
-      );
-    }
-  });
-
-  ref.listen<AuthState>(authProvider, (previous, next) {
-    if (next.user != null) {
-      final partnerState = ref.read(partnerProvider);
-      notifier.syncWithPartner(
-        userId: next.user!.id,
-        partnerId: partnerState.partnerInfo?.uid,
-      );
-    }
-  });
-
-  return notifier;
+  final notificationService = NotificationService();
+  return SettingsNotifier(storageService, notificationService);
 });

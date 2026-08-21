@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import '../constants/notification_messages.dart';
 
 class NotificationService {
   static NotificationService? _instance;
@@ -43,7 +42,6 @@ class NotificationService {
         },
       );
 
-      // Request explicit permissions on iOS
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -61,39 +59,65 @@ class NotificationService {
     }
   }
 
-  /// Schedule the 9:00 PM (21:00) daily reminder
-  Future<void> scheduleDailyReminder({
-    required bool Function() hasEntryToday,
-    int hour = 21,
-    int minute = 0,
+  /// Show notification when someone in the shared group adds/updates an idea or plan
+  Future<void> showGroupActivityNotification({
+    required String title,
+    required String body,
   }) async {
     if (kIsWeb) return;
     if (!_initialized) await init();
 
     try {
-      // Cancel previous scheduled reminders
-      await _notificationsPlugin.cancel(1001);
-
-      final now = DateTime.now();
-      var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
-
-      // If scheduled date passed or today is already logged, move to tomorrow
-      if (scheduledDate.isBefore(now) || hasEntryToday()) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
-      }
-
-      final message = NotificationMessages.getRandomMessage();
-
-      await _notificationsPlugin.zonedSchedule(
-        1001,
-        'My Vibe 🌸',
-        message,
-        tz.TZDateTime.from(scheduledDate, tz.local),
+      final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      await _notificationsPlugin.show(
+        id,
+        title,
+        body,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_vibe_channel',
-            'Daily Vibe Reminders',
-            channelDescription: 'Nightly reminder to log your daily vibe emoji',
+            'group_activity_channel',
+            'Shared Calendar Updates',
+            channelDescription: 'Notifications when group members add or modify plans and ideas',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+            interruptionLevel: InterruptionLevel.active,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Group notification notice: $e');
+    }
+  }
+
+  /// Schedule a reminder for an upcoming confirmed event
+  Future<void> scheduleActivityReminder({
+    required int notificationId,
+    required String title,
+    required String body,
+    required DateTime eventTime,
+  }) async {
+    if (kIsWeb) return;
+    if (!_initialized) await init();
+
+    try {
+      if (eventTime.isBefore(DateTime.now())) return;
+
+      await _notificationsPlugin.zonedSchedule(
+        notificationId,
+        title,
+        body,
+        tz.TZDateTime.from(eventTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'event_reminders_channel',
+            'Event Reminders',
+            channelDescription: 'Reminders for planned group activities',
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
@@ -107,78 +131,9 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-      debugPrint('Daily reminder scheduled for $scheduledDate');
-    } catch (e) {
-      debugPrint('Failed to schedule daily reminder notice: $e');
-    }
-  }
-
-  /// Immediate test notification trigger
-  Future<void> showTestNotification() async {
-    if (kIsWeb) return;
-    if (!_initialized) await init();
-
-    final message = NotificationMessages.getRandomMessage();
-
-    try {
-      await _notificationsPlugin.show(
-        9999,
-        'My Vibe 🌸',
-        message,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'vibe_test_channel',
-            'Test Notifications',
-            channelDescription: 'Test notifications for Vibe Calendar',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
       );
     } catch (e) {
-      debugPrint('Test notification error: $e');
-    }
-  }
-
-  /// Show discreet notification when partner logs or updates a mood
-  Future<void> showPartnerMoodNotification({
-    required String partnerName,
-  }) async {
-    if (kIsWeb) return;
-    if (!_initialized) await init();
-
-    const title = 'FT Vibe 🐰';
-    final body = '$partnerName just logged a new vibe! Check it out 🌸';
-
-    try {
-      await _notificationsPlugin.show(
-        2002,
-        title,
-        body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'partner_vibe_channel',
-            'FT Vibe Notifications',
-            channelDescription: 'Notifications when your FT logs or updates their vibe',
-            importance: Importance.max,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-            presentBanner: true,
-            presentList: true,
-            interruptionLevel: InterruptionLevel.active,
-          ),
-        ),
-      );
-    } catch (e) {
-      debugPrint('Partner notification notice: $e');
+      debugPrint('Failed to schedule activity reminder: $e');
     }
   }
 

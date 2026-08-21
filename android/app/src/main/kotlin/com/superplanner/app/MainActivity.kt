@@ -1,4 +1,4 @@
-package com.vibecalendar.my_dairy
+package com.superplanner.app
 
 import io.flutter.embedding.android.FlutterActivity
 

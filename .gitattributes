@@ -1,4 +1,5 @@
-﻿* text=auto
+# Auto detect text files and perform LF normalization
+* text=auto
 *.pbxproj text eol=lf
 *.plist text eol=lf
 *.xcscheme text eol=lf

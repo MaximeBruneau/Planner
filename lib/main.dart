@@ -4,10 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/notification_service.dart';
-import 'core/services/widget_sync_service.dart';
 import 'core/theme/app_theme.dart';
-
-import 'providers/mood_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/auth_provider.dart';
 import 'views/calendar/calendar_screen.dart';
@@ -30,20 +27,18 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.init();
 
-  await WidgetSyncService.init();
-
   runApp(
     ProviderScope(
       overrides: [
         storageServiceProvider.overrideWithValue(storageService),
       ],
-      child: const VibeCalendarApp(),
+      child: const SuperPlannerApp(),
     ),
   );
 }
 
-class VibeCalendarApp extends ConsumerWidget {
-  const VibeCalendarApp({super.key});
+class SuperPlannerApp extends ConsumerWidget {
+  const SuperPlannerApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +47,7 @@ class VibeCalendarApp extends ConsumerWidget {
     final themeData = AppTheme.getThemeById(settings.themeId);
 
     return MaterialApp(
-      title: 'DuoVibe 🌸',
+      title: 'Super Planner 🗓️',
       debugShowCheckedModeBanner: false,
       theme: themeData,
       home: authState.isSignedIn

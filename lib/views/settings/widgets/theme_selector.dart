@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_palettes.dart';
 import '../../../providers/settings_provider.dart';
-import '../../calendar/widgets/paywall_bottom_sheet.dart';
 
 class ThemeSelector extends ConsumerWidget {
   const ThemeSelector({super.key});
@@ -39,9 +38,7 @@ class ThemeSelector extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                settings.hasActivePremium
-                    ? "13 / 13 Unlocked ✨"
-                    : "${settings.unlockedThemes.length} / 13 Unlocked",
+                "All 13 Free ✨",
                 style: GoogleFonts.fredoka(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -51,15 +48,14 @@ class ThemeSelector extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
-          "1 default theme (Pastel Pink) free forever. Unlock all 12 other themes for \$1.99 each, via Duo Pass, or with DuoVibe Premium ✨!",
+          "Personalize your Super Planner experience with any of these aesthetic themes.",
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             color: colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
-
         const SizedBox(height: 16),
 
         GridView.builder(
@@ -67,25 +63,20 @@ class ThemeSelector extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 2.1,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.3,
           ),
           itemCount: AppPalettes.list.length,
           itemBuilder: (context, index) {
             final palette = AppPalettes.list[index];
             final isSelected = currentThemeId == palette.id;
-            final isUnlocked = settings.isThemeUnlocked(palette.id);
 
             return Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  if (isUnlocked) {
-                    ref.read(settingsProvider.notifier).updateThemeById(palette.id);
-                  } else {
-                    PaywallBottomSheet.show(context, palette: palette);
-                  }
+                  ref.read(settingsProvider.notifier).updateThemeById(palette.id);
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: AnimatedContainer(
@@ -112,38 +103,19 @@ class ThemeSelector extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      // Swatch Icon preview
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: palette.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                palette.emoji,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: palette.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            palette.emoji,
+                            style: const TextStyle(fontSize: 14),
                           ),
-                          if (!isUnlocked)
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.black87,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.lock_rounded,
-                                color: Colors.white,
-                                size: 10,
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -151,27 +123,21 @@ class ThemeSelector extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    palette.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: palette.onSurface,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              palette.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.fredoka(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: palette.onSurface,
+                              ),
                             ),
                             Row(
                               children: [
                                 Container(
-                                  width: 8,
-                                  height: 8,
+                                  width: 7,
+                                  height: 7,
                                   decoration: BoxDecoration(
                                     color: palette.secondary,
                                     shape: BoxShape.circle,
@@ -179,8 +145,8 @@ class ThemeSelector extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Container(
-                                  width: 8,
-                                  height: 8,
+                                  width: 7,
+                                  height: 7,
                                   decoration: BoxDecoration(
                                     color: palette.cardColor,
                                     shape: BoxShape.circle,
@@ -190,25 +156,6 @@ class ThemeSelector extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                if (palette.isFreeByDefault)
-                                  Text(
-                                    "FREE",
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: palette.primary,
-                                    ),
-                                  )
-                                else if (!isUnlocked)
-                                  Text(
-                                    "LOCKED",
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
                               ],
                             ),
                           ],
@@ -219,12 +166,6 @@ class ThemeSelector extends ConsumerWidget {
                           Icons.check_circle_rounded,
                           color: colorScheme.primary,
                           size: 18,
-                        )
-                      else if (!isUnlocked)
-                        Icon(
-                          Icons.lock_outline_rounded,
-                          color: colorScheme.onSurface.withValues(alpha: 0.4),
-                          size: 16,
                         ),
                     ],
                   ),

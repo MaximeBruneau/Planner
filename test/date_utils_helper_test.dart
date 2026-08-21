@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_dairy/core/utils/date_utils_helper.dart';
+import 'package:super_planner/core/utils/date_utils_helper.dart';
 
 void main() {
   group('DateUtilsHelper Robust Parsing & Formatting Tests', () {

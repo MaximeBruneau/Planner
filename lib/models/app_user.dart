@@ -1,16 +1,13 @@
 import 'dart:convert';
 import '../core/utils/date_utils_helper.dart';
-import 'emoji_pack.dart';
 
 class AppUser {
   final String id;
   final String email;
   final String displayName;
   final String? photoUrl;
-  final String? partnerId;
-  final List<String> unlockedThemes;
-  final List<String> unlockedEmojiPacks;
-  final Map<String, bool> claimedFlameMilestones;
+  final String? currentSpaceId;
+  final List<String> joinedSpaceIds;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,16 +16,11 @@ class AppUser {
     required this.email,
     required this.displayName,
     this.photoUrl,
-    this.partnerId,
-    List<String>? unlockedThemes,
-    List<String>? unlockedEmojiPacks,
-    Map<String, bool>? claimedFlameMilestones,
+    this.currentSpaceId,
+    List<String>? joinedSpaceIds,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : unlockedThemes = unlockedThemes ?? ['pastel_pink'],
-        unlockedEmojiPacks =
-            unlockedEmojiPacks ?? [EmojiPacks.defaultPackId],
-        claimedFlameMilestones = claimedFlameMilestones ?? {},
+  })  : joinedSpaceIds = joinedSpaceIds ?? [],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -37,11 +29,8 @@ class AppUser {
     String? email,
     String? displayName,
     String? photoUrl,
-    String? partnerId,
-    bool clearPartner = false,
-    List<String>? unlockedThemes,
-    List<String>? unlockedEmojiPacks,
-    Map<String, bool>? claimedFlameMilestones,
+    String? currentSpaceId,
+    List<String>? joinedSpaceIds,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -50,12 +39,8 @@ class AppUser {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
-      partnerId: clearPartner ? null : (partnerId ?? this.partnerId),
-      unlockedThemes: unlockedThemes ?? List<String>.from(this.unlockedThemes),
-      unlockedEmojiPacks:
-          unlockedEmojiPacks ?? List<String>.from(this.unlockedEmojiPacks),
-      claimedFlameMilestones: claimedFlameMilestones ??
-          Map<String, bool>.from(this.claimedFlameMilestones),
+      currentSpaceId: currentSpaceId ?? this.currentSpaceId,
+      joinedSpaceIds: joinedSpaceIds ?? List<String>.from(this.joinedSpaceIds),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -67,43 +52,23 @@ class AppUser {
       'email': email,
       'displayName': displayName,
       'photoUrl': photoUrl,
-      'partnerId': partnerId,
-      'unlockedThemes': unlockedThemes,
-      'unlockedEmojiPacks': unlockedEmojiPacks,
-      'claimedFlameMilestones': claimedFlameMilestones,
+      'currentSpaceId': currentSpaceId,
+      'joinedSpaceIds': joinedSpaceIds,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
   factory AppUser.fromMap(Map<String, dynamic> map) {
-    final rawThemes = map['unlockedThemes'] as List?;
-    final themes = rawThemes != null
-        ? List<String>.from(rawThemes.map((e) => e.toString()))
-        : <String>['pastel_pink'];
-
-    final rawEmojiPacks = map['unlockedEmojiPacks'] as List?;
-    final emojiPacks = rawEmojiPacks != null
-        ? List<String>.from(rawEmojiPacks.map((e) => e.toString()))
-        : <String>[EmojiPacks.defaultPackId];
-
-    final rawMilestones = map['claimedFlameMilestones'] as Map?;
-    final milestones = <String, bool>{};
-    if (rawMilestones != null) {
-      rawMilestones.forEach((key, value) {
-        milestones[key.toString()] = value == true;
-      });
-    }
+    final rawSpaces = (map['joinedSpaceIds'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
     return AppUser(
       id: map['id'] as String? ?? '',
       email: map['email'] as String? ?? '',
       displayName: map['displayName'] as String? ?? 'User',
       photoUrl: map['photoUrl'] as String?,
-      partnerId: map['partnerId'] as String?,
-      unlockedThemes: themes,
-      unlockedEmojiPacks: emojiPacks,
-      claimedFlameMilestones: milestones,
+      currentSpaceId: map['currentSpaceId'] as String?,
+      joinedSpaceIds: rawSpaces,
       createdAt: DateUtilsHelper.parseDateTime(map['createdAt']),
       updatedAt: DateUtilsHelper.parseDateTime(map['updatedAt']),
     );

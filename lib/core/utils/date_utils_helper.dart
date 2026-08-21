@@ -11,6 +11,11 @@ class DateUtilsHelper {
     return _ymdFormat.format(date);
   }
 
+  /// Alias for formatYmd
+  static String formatDate(DateTime date) {
+    return _ymdFormat.format(date);
+  }
+
   /// Parses 'yyyy-MM-dd' string to DateTime
   static DateTime? parseYmd(String dateStr) {
     try {
@@ -18,6 +23,11 @@ class DateUtilsHelper {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Alias for parseYmd
+  static DateTime? parseDate(String dateStr) {
+    return parseYmd(dateStr);
   }
 
   /// Returns true if date is strictly in the future (after today)

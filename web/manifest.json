@@ -1,11 +1,11 @@
 {
-    "name": "Shagmap",
-    "short_name": "Shagmap",
+    "name": "Super Planner",
+    "short_name": "Super Planner",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#121212",
     "theme_color": "#6750A4",
-    "description": "Shagmap - Your Personal Mood & Vibe Tracker",
+    "description": "Super Planner - Collaborative shared calendar for groups, friends, and couples.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

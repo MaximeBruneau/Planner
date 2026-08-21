@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "850562549978",
-    "project_id": "my-dairy-2f7e2",
-    "storage_bucket": "my-dairy-2f7e2.firebasestorage.app"
+    "project_number": "475381692973",
+    "project_id": "super-planner-app-3af40",
+    "storage_bucket": "super-planner-app-3af40.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:850562549978:android:8f2e98a301caecd92dfde3",
+        "mobilesdk_app_id": "1:475381692973:android:28f7c0f72f53c9325916a4",
         "android_client_info": {
-          "package_name": "com.vibecalendar.my_dairy"
+          "package_name": "com.superplanner.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "850562549978-n11nab3mmevlj2mkaubomtj8tkuh77mv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.vibecalendar.my_dairy",
-            "certificate_hash": "e712926b53cb64485535f60543868bc60c59c6f6"
-          }
-        },
-        {
-          "client_id": "850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com",
+          "client_id": "475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCCf6FgvjttG6mcI74K1xbL7o7R3ZX9iIU"
+          "current_key": "AIzaSyBFIHb8E1E4TGW-pT1qG0od8yZTY0AN0mc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com",
+              "client_id": "475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

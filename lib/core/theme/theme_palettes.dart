@@ -4,7 +4,6 @@ class ThemePalette {
   final String id;
   final String name;
   final String emoji;
-  final bool isFreeByDefault;
   final bool isDark;
   final Color primary;
   final Color onPrimary;
@@ -21,7 +20,6 @@ class ThemePalette {
     required this.id,
     required this.name,
     required this.emoji,
-    this.isFreeByDefault = false,
     this.isDark = false,
     required this.primary,
     required this.onPrimary,
@@ -37,12 +35,11 @@ class ThemePalette {
 }
 
 class AppPalettes {
-  // 0: Pastel Pink (Default Free Theme)
+  // 0: Pastel Pink 🌸
   static const ThemePalette pastelPink = ThemePalette(
     id: 'pastel_pink',
     name: 'Pastel Pink',
     emoji: '🌸',
-    isFreeByDefault: true,
     isDark: false,
     primary: Color(0xFFE85D75),
     onPrimary: Colors.white,
@@ -56,12 +53,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFFBC4CB),
   );
 
-  // 1: Light Blue (Fish)
+  // 1: Light Blue 🐟
   static const ThemePalette lightBlue = ThemePalette(
     id: 'light_blue',
     name: 'Light Blue',
     emoji: '🐟',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF0284C7),
     onPrimary: Colors.white,
@@ -75,12 +71,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFBAE6FD),
   );
 
-  // 2: Deep Ocean (Tropical Fish)
+  // 2: Deep Ocean 🐠
   static const ThemePalette deepOcean = ThemePalette(
     id: 'deep_ocean',
     name: 'Deep Ocean',
     emoji: '🐠',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF1D4ED8),
     onPrimary: Colors.white,
@@ -94,12 +89,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFBFDBFE),
   );
 
-  // 3: Aqua Lagoon (Blowfish)
+  // 3: Aqua Lagoon 🐡
   static const ThemePalette aquaLagoon = ThemePalette(
     id: 'aqua_lagoon',
     name: 'Aqua Lagoon',
     emoji: '🐡',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF0891B2),
     onPrimary: Colors.white,
@@ -113,12 +107,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFA5F3FC),
   );
 
-  // 4: Starry Night
+  // 4: Starry Night 🌌
   static const ThemePalette starryNight = ThemePalette(
     id: 'starry_night',
     name: 'Starry Night',
     emoji: '🌌',
-    isFreeByDefault: false,
     isDark: true,
     primary: Color(0xFFF59E0B),
     onPrimary: Color(0xFF0F172A),
@@ -132,12 +125,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFF475569),
   );
 
-  // 5: Matcha Green
+  // 5: Matcha Green 🌿
   static const ThemePalette matchaGreen = ThemePalette(
     id: 'matcha_green',
     name: 'Matcha Green',
     emoji: '🌿',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF3D5A40),
     onPrimary: Colors.white,
@@ -151,12 +143,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFA3B18A),
   );
 
-  // 6: Soft Lavender
+  // 6: Soft Lavender 🪻
   static const ThemePalette softLavender = ThemePalette(
     id: 'soft_lavender',
     name: 'Soft Lavender',
     emoji: '🪻',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF581C87),
     onPrimary: Colors.white,
@@ -170,12 +161,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFDDD6FE),
   );
 
-  // 7: Warm Sunset
+  // 7: Warm Sunset 🌅
   static const ThemePalette warmSunset = ThemePalette(
     id: 'warm_sunset',
     name: 'Warm Sunset',
     emoji: '🌅',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFFC2410C),
     onPrimary: Colors.white,
@@ -189,12 +179,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFFED7AA),
   );
 
-  // 8: Cozy Coffee
+  // 8: Cozy Coffee ☕
   static const ThemePalette cozyCoffee = ThemePalette(
     id: 'cozy_coffee',
     name: 'Cozy Coffee',
     emoji: '☕',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF451A03),
     onPrimary: Colors.white,
@@ -208,12 +197,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFDEB887),
   );
 
-  // 9: Ocean Breeze
+  // 9: Ocean Breeze 🌊
   static const ThemePalette oceanBreeze = ThemePalette(
     id: 'ocean_breeze',
     name: 'Ocean Breeze',
     emoji: '🌊',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF0F766E),
     onPrimary: Colors.white,
@@ -227,12 +215,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFF99F6E4),
   );
 
-  // 10: Neon Cyberpunk
+  // 10: Neon Cyberpunk ⚡
   static const ThemePalette neonCyberpunk = ThemePalette(
     id: 'neon_cyberpunk',
     name: 'Neon Cyberpunk',
     emoji: '⚡',
-    isFreeByDefault: false,
     isDark: true,
     primary: Color(0xFFEC4899),
     onPrimary: Colors.white,
@@ -246,12 +233,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFF3F3F46),
   );
 
-  // 11: Minimal Light
+  // 11: Minimal Light ⚪
   static const ThemePalette minimalLight = ThemePalette(
     id: 'minimal_light',
     name: 'Minimal Light',
     emoji: '⚪',
-    isFreeByDefault: false,
     isDark: false,
     primary: Color(0xFF1E293B),
     onPrimary: Colors.white,
@@ -265,12 +251,11 @@ class AppPalettes {
     selectedCellColor: Color(0xFFCBD5E1),
   );
 
-  // 12: Minimal Dark
+  // 12: Minimal Dark 🖤
   static const ThemePalette minimalDark = ThemePalette(
     id: 'minimal_dark',
     name: 'Minimal Dark',
     emoji: '🖤',
-    isFreeByDefault: false,
     isDark: true,
     primary: Color(0xFFF8FAFC),
     onPrimary: Color(0xFF020617),
@@ -284,27 +269,8 @@ class AppPalettes {
     selectedCellColor: Color(0xFF334155),
   );
 
-  // 13: Christmas Magic (Holiday Festive & Rich Santa Red)
-  static const ThemePalette christmasMagic = ThemePalette(
-    id: 'christmas_magic',
-    name: 'Christmas Magic',
-    emoji: '🎄',
-    isFreeByDefault: false,
-    isDark: false,
-    primary: Color(0xFFD32F2F), // Vibrant Santa Holiday Red
-    onPrimary: Colors.white,
-    primaryContainer: Color(0xFFFFCDD2), // Festive warm red container
-    onPrimaryContainer: Color(0xFF5C0008),
-    secondary: Color(0xFF1B5E20), // Evergreen Pine Green
-    surface: Color(0xFFFFF5F6), // Warm soft red tinted surface
-    onSurface: Color(0xFF330A10), // Deep rich cranberry for crisp contrast
-    background: Color(0xFFFFEBEE), // Clearly warm red festive background
-    cardColor: Color(0xFFFFFFFF),
-    selectedCellColor: Color(0xFFEF9A9A), // Distinctive holiday red cell selection
-  );
-
   static const List<ThemePalette> list = [
-    pastelPink,      // 0: Free Default 🌸
+    pastelPink,      // 0: 🌸
     lightBlue,       // 1: 🐟
     deepOcean,       // 2: 🐠
     aquaLagoon,      // 3: 🐡
@@ -317,7 +283,6 @@ class AppPalettes {
     neonCyberpunk,   // 10: ⚡
     minimalLight,    // 11: ⚪
     minimalDark,     // 12: 🖤
-    christmasMagic,  // 13: 🎄
   ];
 
   static ThemePalette getById(String id) {
@@ -338,8 +303,4 @@ class AppPalettes {
     final idx = list.indexWhere((p) => p.id == id);
     return idx >= 0 ? idx : 0;
   }
-
-  /// List of IDs of paid themes that can be unlocked
-  static List<String> get paidThemeIds =>
-      list.where((p) => !p.isFreeByDefault).map((p) => p.id).toList();
 }
