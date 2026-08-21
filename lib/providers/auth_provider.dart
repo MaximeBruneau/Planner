@@ -48,7 +48,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _authSyncService.signInWithGoogle();
-      state = AuthState(user: user, isLoading: false);
+      if (user != null) {
+        state = AuthState(user: user, isLoading: false);
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
       return user;
     } catch (e) {
       state = state.copyWith(

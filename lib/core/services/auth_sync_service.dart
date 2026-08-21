@@ -11,12 +11,12 @@ class AuthSyncService {
   final StorageService _storageService;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
-        ? '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com'
+        ? '475381692973-0b69a658e36328b75916a4.apps.googleusercontent.com'
         : (defaultTargetPlatform == TargetPlatform.iOS
-            ? '850562549978-nsemf5qk36gq707f3pj2u6k3ehe22dsd.apps.googleusercontent.com'
+            ? '475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com'
             : null),
     serverClientId:
-        '850562549978-i50kisru72t3dv8649alfmc1mliv97dd.apps.googleusercontent.com',
+        '475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com',
   );
 
   AppUser? _currentUser;
