@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/plan_activity.dart';
+import '../../models/activity_notification.dart';
 import '../../models/app_user.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
@@ -88,6 +89,62 @@ class PlanService {
     } catch (e) {
       debugPrint('Error setting up activity stream: $e');
       return Stream.value(_storageService.getSpaceActivities(spaceId));
+    }
+  }
+
+  /// Stream notifications for a given shared space
+  Stream<List<ActivityNotification>> streamSpaceNotifications({required String spaceId}) {
+    if (spaceId.isEmpty) {
+      return Stream.value(_storageService.getSpaceNotifications(spaceId));
+    }
+
+    try {
+      final collection = FirebaseFirestore.instance
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .limit(80);
+
+      return collection.snapshots().map((snapshot) {
+        final List<ActivityNotification> list = [];
+        for (final doc in snapshot.docs) {
+          try {
+            list.add(ActivityNotification.fromMap(doc.data()));
+          } catch (e) {
+            debugPrint('Error parsing notification: $e');
+          }
+        }
+        _storageService.saveSpaceNotifications(spaceId, list);
+        return list;
+      });
+    } catch (e) {
+      debugPrint('Error streaming notifications: $e');
+      return Stream.value(_storageService.getSpaceNotifications(spaceId));
+    }
+  }
+
+  /// Log a notification entry both locally and in Firestore
+  Future<void> logNotification({
+    required String spaceId,
+    required ActivityNotification notification,
+  }) async {
+    final cached = _storageService.getSpaceNotifications(spaceId);
+    cached.removeWhere((n) => n.id == notification.id);
+    cached.insert(0, notification);
+    await _storageService.saveSpaceNotifications(spaceId, cached);
+
+    if (spaceId.isNotEmpty && spaceId != 'space_default') {
+      try {
+        await FirebaseFirestore.instance
+            .collection('spaces')
+            .doc(spaceId)
+            .collection('notifications')
+            .doc(notification.id)
+            .set(notification.toMap(), SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore notification log error: $e');
+      }
     }
   }
 

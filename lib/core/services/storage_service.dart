@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/app_user.dart';
 import '../../models/shared_space.dart';
 import '../../models/plan_activity.dart';
+import '../../models/activity_notification.dart';
 import '../../models/app_settings.dart';
 
 class StorageService {
   static const String _userKey = 'super_planner_user_v1';
   static const String _spaceKey = 'super_planner_current_space_v1';
   static const String _activitiesPrefix = 'super_planner_activities_';
+  static const String _notificationsPrefix = 'super_planner_notifications_';
   static const String _settingsKey = 'super_planner_settings_v1';
 
   late SharedPreferences _prefs;
@@ -83,6 +85,34 @@ class StorageService {
       await _prefs.setString('$_activitiesPrefix$spaceId', jsonEncode(rawList));
     } catch (e) {
       debugPrint('Error saving space activities: $e');
+    }
+  }
+
+  // --- Space Activity Notifications ---
+  List<ActivityNotification> getSpaceNotifications(String spaceId) {
+    if (spaceId.isEmpty) return [];
+    try {
+      final jsonString = _prefs.getString('$_notificationsPrefix$spaceId');
+      if (jsonString == null || jsonString.isEmpty) return [];
+      final List<dynamic> rawList = jsonDecode(jsonString);
+      return rawList
+          .map((item) => ActivityNotification.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error reading space notifications: $e');
+      return [];
+    }
+  }
+
+  Future<void> saveSpaceNotifications(String spaceId, List<ActivityNotification> notifications) async {
+    if (spaceId.isEmpty) return;
+    try {
+      // Keep up to 100 most recent notifications
+      final trimmed = notifications.length > 100 ? notifications.sublist(0, 100) : notifications;
+      final rawList = trimmed.map((a) => a.toMap()).toList();
+      await _prefs.setString('$_notificationsPrefix$spaceId', jsonEncode(rawList));
+    } catch (e) {
+      debugPrint('Error saving space notifications: $e');
     }
   }
 

@@ -11,6 +11,7 @@ import '../../core/theme/theme_palettes.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/calendar_day_cell.dart';
 import 'widgets/space_management_sheet.dart';
+import 'widgets/activity_notifications_sheet.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -143,6 +144,52 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
         actions: [
+          // Activity Notifications Feed
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                tooltip: "Activity & Updates",
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {
+                  ActivityNotificationsSheet.show(
+                    context,
+                    onDateSelected: (date) {
+                      setState(() {
+                        _focusedDay = date;
+                        _selectedDay = date;
+                      });
+                    },
+                  );
+                },
+              ),
+              if (planState.unreadNotificationsCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${planState.unreadNotificationsCount > 9 ? '9+' : planState.unreadNotificationsCount}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           // Jump to Today
           IconButton(
             tooltip: "Today",
@@ -171,7 +218,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               );
             },
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
         ],
       ),
       body: Align(
@@ -180,40 +227,81 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           constraints: const BoxConstraints(maxWidth: 620),
           child: Column(
             children: [
-              // In-app live notification banner (e.g. "Alex added an idea for Saturday")
-              if (planState.lastInAppNotice != null) ...[
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text("🔔", style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          planState.lastInAppNotice!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onPrimaryContainer,
+              // In-app live notification banner with smooth animation (auto-dismisses after 2s)
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) {
+                  return SizeTransition(
+                    sizeFactor: animation,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: planState.lastInAppNotice == null
+                    ? const SizedBox.shrink()
+                    : Material(
+                        key: ValueKey(planState.lastInAppNotice),
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            ActivityNotificationsSheet.show(
+                              context,
+                              onDateSelected: (date) {
+                                setState(() {
+                                  _focusedDay = date;
+                                  _selectedDay = date;
+                                });
+                              },
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withValues(alpha: 0.12),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Text("🔔", style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    planState.lastInAppNotice!,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_ios_rounded,
+                                    size: 11, color: colorScheme.primary),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: const Icon(Icons.close_rounded, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () => planNotifier.clearNotice(),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => planNotifier.clearNotice(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
 
               // Expanded Scrollable Content
               Expanded(
