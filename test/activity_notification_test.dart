@@ -47,6 +47,8 @@ void main() {
       expect(base.copyWith(type: NotificationType.upvote).iconEmoji, equals('👍'));
       expect(base.copyWith(type: NotificationType.delete).iconEmoji, equals('🗑️'));
       expect(base.copyWith(type: NotificationType.join).iconEmoji, equals('👋'));
+      expect(base.copyWith(type: NotificationType.ideaAdd).iconEmoji, equals('💡'));
+      expect(base.copyWith(type: NotificationType.ideaUpvote).iconEmoji, equals('⭐'));
     });
 
     test('formattedTimeAgo handles relative timings', () {

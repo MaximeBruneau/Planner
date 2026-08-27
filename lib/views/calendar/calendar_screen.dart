@@ -12,6 +12,9 @@ import '../settings/settings_screen.dart';
 import 'widgets/calendar_day_cell.dart';
 import 'widgets/space_management_sheet.dart';
 import 'widgets/activity_notifications_sheet.dart';
+import '../../providers/idea_provider.dart';
+import '../idea_bank/idea_bank_sheet.dart';
+import '../idea_bank/widgets/random_idea_dialog.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -64,6 +67,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final spaceState = ref.watch(spaceProvider);
     final planState = ref.watch(planProvider);
     final planNotifier = ref.read(planProvider.notifier);
+    final ideaState = ref.watch(ideaProvider);
 
     final palette = AppPalettes.getById(settings.themeId);
     final currentSpace = spaceState.currentSpace;
@@ -144,6 +148,42 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
         actions: [
+          // Idea Bank 💡 Action
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                tooltip: "Banque d'idées 💡",
+                icon: const Icon(Icons.lightbulb_outline_rounded),
+                onPressed: () => IdeaBankSheet.show(context),
+              ),
+              if (ideaState.totalCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${ideaState.totalCount > 99 ? '99+' : ideaState.totalCount}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           // Activity Notifications Feed
           Stack(
             alignment: Alignment.center,
@@ -454,8 +494,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Text("💡", style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 10),
+                            InkWell(
+                              onTap: () {
+                                final idea = ref.read(ideaProvider.notifier).pickRandomIdea();
+                                if (idea != null) {
+                                  RandomIdeaDialog.show(context, initialIdea: idea);
+                                } else {
+                                  IdeaBankSheet.show(context);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Text("🎲", style: TextStyle(fontSize: 18)),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: TextField(
                                 controller: _itemInputController,
@@ -515,6 +569,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  OutlinedButton.icon(
+                                    onPressed: () {
+                                      final idea = ref.read(ideaProvider.notifier).pickRandomIdea();
+                                      if (idea != null) {
+                                        RandomIdeaDialog.show(context, initialIdea: idea);
+                                      } else {
+                                        IdeaBankSheet.show(context);
+                                      }
+                                    },
+                                    icon: const Text("🎲", style: TextStyle(fontSize: 16)),
+                                    label: Text(
+                                      "Piocher une idée dans la banque 💡",
+                                      style: GoogleFonts.fredoka(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   ),
                                 ],

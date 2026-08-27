@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/bank_idea.dart';
-import '../../models/activity_notification.dart';
 import '../../models/app_user.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';

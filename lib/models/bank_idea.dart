@@ -7,6 +7,7 @@ enum IdeaCategory {
   food,
   place,
   activity,
+  sex,
   other;
 
   String get label {
@@ -17,6 +18,8 @@ enum IdeaCategory {
         return 'Places & Spots';
       case IdeaCategory.activity:
         return 'Activities & Fun';
+      case IdeaCategory.sex:
+        return 'Sex & Intimacy';
       case IdeaCategory.other:
         return 'Other';
     }
@@ -30,6 +33,8 @@ enum IdeaCategory {
         return 'Lieux & Spots';
       case IdeaCategory.activity:
         return 'Activités & Sorties';
+      case IdeaCategory.sex:
+        return 'Sex & Intimité';
       case IdeaCategory.other:
         return 'Autre';
     }
@@ -43,6 +48,8 @@ enum IdeaCategory {
         return '📍';
       case IdeaCategory.activity:
         return '🎯';
+      case IdeaCategory.sex:
+        return '🌶️';
       case IdeaCategory.other:
         return '💡';
     }
@@ -56,6 +63,8 @@ enum IdeaCategory {
         return Icons.location_on_rounded;
       case IdeaCategory.activity:
         return Icons.celebration_rounded;
+      case IdeaCategory.sex:
+        return Icons.local_fire_department_rounded;
       case IdeaCategory.other:
         return Icons.lightbulb_outline_rounded;
     }
@@ -63,8 +72,16 @@ enum IdeaCategory {
 
   static IdeaCategory fromString(String? val) {
     if (val == null) return IdeaCategory.other;
+    final normalized = val.toLowerCase();
+    if (normalized == 'sex' ||
+        normalized == 'sexy' ||
+        normalized == 'intimate' ||
+        normalized == 'intime' ||
+        normalized == 'spicy') {
+      return IdeaCategory.sex;
+    }
     return IdeaCategory.values.firstWhere(
-      (c) => c.name.toLowerCase() == val.toLowerCase(),
+      (c) => c.name.toLowerCase() == normalized,
       orElse: () => IdeaCategory.other,
     );
   }
