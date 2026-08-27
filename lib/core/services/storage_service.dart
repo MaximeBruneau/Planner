@@ -6,6 +6,7 @@ import '../../models/app_user.dart';
 import '../../models/shared_space.dart';
 import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
+import '../../models/bank_idea.dart';
 import '../../models/app_settings.dart';
 
 class StorageService {
@@ -13,6 +14,7 @@ class StorageService {
   static const String _spaceKey = 'super_planner_current_space_v1';
   static const String _activitiesPrefix = 'super_planner_activities_';
   static const String _notificationsPrefix = 'super_planner_notifications_';
+  static const String _ideasPrefix = 'super_planner_ideas_';
   static const String _settingsKey = 'super_planner_settings_v1';
 
   late SharedPreferences _prefs;
@@ -113,6 +115,33 @@ class StorageService {
       await _prefs.setString('$_notificationsPrefix$spaceId', jsonEncode(rawList));
     } catch (e) {
       debugPrint('Error saving space notifications: $e');
+    }
+  }
+
+  // --- Space Ideas (Banque d'idées) ---
+  List<BankIdea> getSpaceIdeas(String spaceId) {
+    if (spaceId.isEmpty) return [];
+    try {
+      final jsonString = _prefs.getString('$_ideasPrefix$spaceId');
+      if (jsonString == null || jsonString.isEmpty) return [];
+      final List<dynamic> rawList = jsonDecode(jsonString);
+      return rawList
+          .map((item) => BankIdea.fromMap(item as Map<String, dynamic>))
+          .where((i) => !i.deleted)
+          .toList();
+    } catch (e) {
+      debugPrint('Error reading space ideas: $e');
+      return [];
+    }
+  }
+
+  Future<void> saveSpaceIdeas(String spaceId, List<BankIdea> ideas) async {
+    if (spaceId.isEmpty) return;
+    try {
+      final rawList = ideas.map((i) => i.toMap()).toList();
+      await _prefs.setString('$_ideasPrefix$spaceId', jsonEncode(rawList));
+    } catch (e) {
+      debugPrint('Error saving space ideas: $e');
     }
   }
 

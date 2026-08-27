@@ -9,6 +9,8 @@ enum NotificationType {
   upvote,
   delete,
   join,
+  ideaAdd,
+  ideaUpvote,
 }
 
 class ActivityNotification {
@@ -50,6 +52,10 @@ class ActivityNotification {
         return '🗑️';
       case NotificationType.join:
         return '👋';
+      case NotificationType.ideaAdd:
+        return '💡';
+      case NotificationType.ideaUpvote:
+        return '⭐';
     }
   }
 

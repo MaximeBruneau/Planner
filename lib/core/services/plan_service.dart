@@ -11,7 +11,7 @@ class PlanService {
   final StorageService _storageService;
   final NotificationService _notificationService;
   StreamSubscription? _activitySubscription;
-  String? _lastNotifiedChangeId;
+  final Set<String> _seenChangeIds = <String>{};
 
   PlanService(this._storageService, this._notificationService);
 
@@ -32,6 +32,9 @@ class PlanService {
           .collection('activities')
           .where('deleted', isNotEqualTo: true);
 
+      final subscriptionStartTime = DateTime.now();
+      bool isInitialSnapshot = true;
+
       return collection.snapshots().map((snapshot) {
         final List<PlanActivity> activities = [];
 
@@ -49,35 +52,60 @@ class PlanService {
         // Check for changes made by other members to send notifications
         final settings = _storageService.getSettings();
         if (settings.groupActivityNotifications && snapshot.docChanges.isNotEmpty) {
-          for (final change in snapshot.docChanges) {
-            if (change.type == DocumentChangeType.added || change.type == DocumentChangeType.modified) {
+          if (isInitialSnapshot) {
+            // First snapshot contains all existing documents: mark them as seen and DO NOT fire live notifications!
+            for (final change in snapshot.docChanges) {
               try {
                 final activity = PlanActivity.fromMap(change.doc.data() as Map<String, dynamic>);
-                final modifier = activity.lastModifiedBy ?? activity.creatorName;
-                final changeKey = '${activity.id}_${activity.updatedAt.millisecondsSinceEpoch}';
-
-                if (modifier.isNotEmpty &&
-                    modifier != currentUser.displayName &&
-                    changeKey != _lastNotifiedChangeId) {
-                  _lastNotifiedChangeId = changeKey;
-
-                  String noticeText;
-                  if (change.type == DocumentChangeType.added) {
-                    noticeText = '$modifier added: "${activity.title}" for ${activity.date}';
-                  } else {
-                    noticeText = '$modifier updated "${activity.title}" (${activity.date})';
-                  }
-
-                  _notificationService.showGroupActivityNotification(
-                    title: 'Super Planner 🗓️',
-                    body: noticeText,
-                  );
-
-                  if (onGroupActivityNotice != null) {
-                    onGroupActivityNotice(noticeText);
-                  }
-                }
+                _seenChangeIds.add('${activity.id}_${activity.updatedAt.millisecondsSinceEpoch}');
               } catch (_) {}
+            }
+            isInitialSnapshot = false;
+          } else {
+            // Subsequent live snapshots: only notify for genuine new live events
+            for (final change in snapshot.docChanges) {
+              if (change.type == DocumentChangeType.added || change.type == DocumentChangeType.modified) {
+                try {
+                  final activity = PlanActivity.fromMap(change.doc.data() as Map<String, dynamic>);
+                  final modifier = activity.lastModifiedBy ?? activity.creatorName;
+                  final changeKey = '${activity.id}_${activity.updatedAt.millisecondsSinceEpoch}';
+
+                  // Only notify if:
+                  // 1. Modified by someone other than current user
+                  // 2. We haven't already notified for this exact change revision
+                  // 3. The update was actually done recently (since subscription or within the last 60 seconds)
+                  final isRecent = activity.updatedAt.isAfter(subscriptionStartTime.subtract(const Duration(seconds: 15))) ||
+                      DateTime.now().difference(activity.updatedAt).inSeconds < 60;
+
+                  if (modifier.isNotEmpty &&
+                      modifier != currentUser.displayName &&
+                      !_seenChangeIds.contains(changeKey) &&
+                      isRecent) {
+                    _seenChangeIds.add(changeKey);
+
+                    // Prevent unbounded set growth
+                    if (_seenChangeIds.length > 500) {
+                      _seenChangeIds.clear();
+                    }
+
+                    String noticeText;
+                    if (change.type == DocumentChangeType.added) {
+                      noticeText = '$modifier added: "${activity.title}" for ${activity.date}';
+                    } else {
+                      noticeText = '$modifier updated "${activity.title}" (${activity.date})';
+                    }
+
+                    _notificationService.showGroupActivityNotification(
+                      title: 'Super Planner 🗓️',
+                      body: noticeText,
+                    );
+
+                    if (onGroupActivityNotice != null) {
+                      onGroupActivityNotice(noticeText);
+                    }
+                  }
+                } catch (_) {}
+              }
             }
           }
         }
