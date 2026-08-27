@@ -74,13 +74,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
 
   /// Ensure the user is connected to a shared space (or create their first one)
   Future<void> ensureSpaceForUser(AppUser user) async {
-    final cached = _storageService.getCurrentSpace();
-    if (cached != null) {
-      state = state.copyWith(currentSpace: cached);
-      _listenToSpace(cached.id);
-      return;
-    }
-
+    // 1. If user document has a designated cloud space, load it first
     if (user.currentSpaceId != null && user.currentSpaceId!.isNotEmpty) {
       state = state.copyWith(isLoading: true);
       final space = await _spaceService.fetchSpace(user.currentSpaceId!);
@@ -91,7 +85,15 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
       }
     }
 
-    // Auto-create initial personal/group shared space
+    // 2. Otherwise check local cached space
+    final cached = _storageService.getCurrentSpace();
+    if (cached != null && cached.id != 'space_default') {
+      state = state.copyWith(currentSpace: cached);
+      _listenToSpace(cached.id);
+      return;
+    }
+
+    // 3. Auto-create initial personal/group shared space if none exists
     await createSpace(
       name: "${user.displayName}'s Calendar 🗓️",
     );
