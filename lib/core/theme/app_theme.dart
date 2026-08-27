@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme_palettes.dart';
 
+/// Builds [ThemeData] from the app's custom [ThemePalette] definitions.
+///
+/// Uses Material 3 with Google Fonts (Fredoka for titles, Plus Jakarta Sans for body).
 class AppTheme {
+  /// Returns a [ThemeData] for the palette matching [id].
   static ThemeData getThemeById(String id) {
     final palette = AppPalettes.getById(id);
     return _buildTheme(palette);
   }
 
+  /// Returns a [ThemeData] for the palette at [index].
   static ThemeData getTheme(int index) {
     final palette = AppPalettes.getByIndex(index);
     return _buildTheme(palette);
@@ -24,8 +29,8 @@ class AppTheme {
       onSecondary: Colors.white,
       surface: palette.surface,
       onSurface: palette.onSurface,
-      error: const Color(0xFFBA1A1A),
-      onError: Colors.white,
+      error: palette.isDark ? const Color(0xFFFFB4AB) : const Color(0xFFBA1A1A),
+      onError: palette.isDark ? const Color(0xFF690005) : Colors.white,
     );
 
     final baseTextTheme = palette.isDark

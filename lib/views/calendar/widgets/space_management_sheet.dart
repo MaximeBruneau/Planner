@@ -4,10 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/space_provider.dart';
 import '../../../providers/auth_provider.dart';
+import 'join_space_dialog.dart';
+import 'create_space_dialog.dart';
+import 'invite_card.dart';
+import 'member_list_tile.dart';
 
+/// The main bottom sheet for orchestrating shared calendar space management.
 class SpaceManagementSheet extends ConsumerStatefulWidget {
   const SpaceManagementSheet({super.key});
 
+  /// Displays the space management bottom sheet.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
       context: context,
@@ -22,216 +28,31 @@ class SpaceManagementSheet extends ConsumerStatefulWidget {
 }
 
 class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
-  final _joinCodeController = TextEditingController();
-  final _createNameController = TextEditingController();
 
-  @override
-  void dispose() {
-    _joinCodeController.dispose();
-    _createNameController.dispose();
-    super.dispose();
+  void _showJoinDialog(BuildContext parentContext) async {
+    final code = await JoinSpaceDialog.show(parentContext);
+    if (code != null && mounted) {
+      Navigator.of(context).pop(); // Close sheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("🎉 Joined shared calendar space $code!"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  void _showJoinDialog(BuildContext parentContext) {
-    String? localError;
-    bool isSubmitting = false;
-
-    showDialog(
-      context: parentContext,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Row(
-              children: [
-                const Text("🔗", style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 8),
-                Text(
-                  "Join Calendar",
-                  style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Enter the invite code (e.g. SUPER-4892) shared by your group.",
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _joinCodeController,
-                  textCapitalization: TextCapitalization.characters,
-                  enabled: !isSubmitting,
-                  decoration: InputDecoration(
-                    labelText: "Invite Code",
-                    hintText: "SUPER-1234",
-                    prefixIcon: const Icon(Icons.vpn_key_rounded),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                if (localError != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            localError!,
-                            style: const TextStyle(color: Colors.red, fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        final code = _joinCodeController.text.trim();
-                        if (code.isEmpty) return;
-
-                        setDialogState(() {
-                          isSubmitting = true;
-                          localError = null;
-                        });
-
-                        final success = await ref.read(spaceProvider.notifier).joinSpace(code);
-
-                        if (!mounted || !parentContext.mounted) return;
-
-                        if (success) {
-                          if (ctx.mounted) Navigator.pop(ctx); // Close dialog
-                          Navigator.of(context).pop(); // Close sheet
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("🎉 Joined shared calendar space $code!"),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        } else {
-                          final err = ref.read(spaceProvider).errorMessage ?? "Could not join space.";
-                          setDialogState(() {
-                            isSubmitting = false;
-                            localError = err;
-                          });
-                        }
-                      },
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text("Join Space"),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  void _showCreateDialog(BuildContext parentContext) {
-    bool isSubmitting = false;
-
-    showDialog(
-      context: parentContext,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Row(
-              children: [
-                const Text("✨", style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 8),
-                Text(
-                  "New Shared Calendar",
-                  style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Give your shared calendar space a name (e.g. Weekend Squad 🍕, Paris Trip ✈️, Family 🏡)",
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _createNameController,
-                  enabled: !isSubmitting,
-                  decoration: InputDecoration(
-                    labelText: "Space Name",
-                    hintText: "e.g. Weekend Squad 🍕",
-                    prefixIcon: const Icon(Icons.group_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        final name = _createNameController.text.trim();
-                        setDialogState(() => isSubmitting = true);
-
-                        final space = await ref.read(spaceProvider.notifier).createSpace(
-                              name: name.isNotEmpty ? name : 'Our Shared Calendar 🗓️',
-                            );
-                        if (!mounted || !parentContext.mounted) return;
-
-                        if (space != null) {
-                          if (ctx.mounted) Navigator.pop(ctx); // Close dialog
-                          Navigator.of(context).pop(); // Close sheet
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("✨ Created '${space.name}'! Code: ${space.code}"),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        } else {
-                          setDialogState(() => isSubmitting = false);
-                        }
-                      },
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text("Create Space"),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  void _showCreateDialog(BuildContext parentContext) async {
+    final spaceData = await CreateSpaceDialog.show(parentContext);
+    if (spaceData != null && mounted) {
+      Navigator.of(context).pop(); // Close sheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✨ Created '${spaceData['name']}'! Code: ${spaceData['code']}"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -331,100 +152,10 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- INVITE CODE CARD ---
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primaryContainer,
-                          colorScheme.secondaryContainer,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.12),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Text("🔑", style: TextStyle(fontSize: 22)),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Shared Calendar Invite Code",
-                              style: GoogleFonts.fredoka(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Share this code with friends, family, or your partner so they can join and plan together!",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Code display & Copy Button
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                currentSpace.code,
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.primary,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  Clipboard.setData(ClipboardData(text: currentSpace.code));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("📋 Code ${currentSpace.code} copied to clipboard!"),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.copy_rounded, size: 16),
-                                label: const Text("Copy"),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                  minimumSize: const Size(0, 36),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  InviteCard(spaceCode: currentSpace.code),
                   const SizedBox(height: 24),
 
-                  // --- MEMBERS DIRECTORY ---
+                  // Members Directory
                   Row(
                     children: [
                       Text(
@@ -462,99 +193,14 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                       child: Column(
                         children: membersList.map((m) {
                           final isMe = m.userId == authState.user?.id;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: colorScheme.primaryContainer,
-                                  backgroundImage: m.photoUrl != null && m.photoUrl!.isNotEmpty
-                                      ? NetworkImage(m.photoUrl!)
-                                      : null,
-                                  child: m.photoUrl == null || m.photoUrl!.isEmpty
-                                      ? Text(
-                                          m.displayName.isNotEmpty ? m.displayName[0].toUpperCase() : "👤",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: colorScheme.primary,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            m.displayName,
-                                            style: GoogleFonts.plusJakartaSans(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          if (isMe) ...[
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: colorScheme.primary.withValues(alpha: 0.12),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                "You",
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: colorScheme.primary,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                      if (m.email.isNotEmpty)
-                                        Text(
-                                          m.email,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: colorScheme.onSurface.withValues(alpha: 0.5),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: m.role == 'owner'
-                                        ? Colors.amber.withValues(alpha: 0.2)
-                                        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    m.role == 'owner' ? "Admin 👑" : "Member",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: m.role == 'owner' ? Colors.orange.shade800 : colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                          return MemberListTile(member: m, isMe: isMe);
                         }).toList(),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // --- SPACE ACTIONS ---
+                  // Space Actions
                   Row(
                     children: [
                       Expanded(
@@ -597,7 +243,10 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                             actions: [
                               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
                               ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colorScheme.error,
+                                  foregroundColor: colorScheme.onError,
+                                ),
                                 onPressed: () => Navigator.pop(ctx, true),
                                 child: const Text("Leave"),
                               ),

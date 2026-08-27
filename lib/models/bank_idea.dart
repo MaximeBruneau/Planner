@@ -25,21 +25,6 @@ enum IdeaCategory {
     }
   }
 
-  String get labelFr {
-    switch (this) {
-      case IdeaCategory.food:
-        return 'Food & Restos';
-      case IdeaCategory.place:
-        return 'Lieux & Spots';
-      case IdeaCategory.activity:
-        return 'Activités & Sorties';
-      case IdeaCategory.sex:
-        return 'Sex & Intimité';
-      case IdeaCategory.other:
-        return 'Autre';
-    }
-  }
-
   String get emoji {
     switch (this) {
       case IdeaCategory.food:
@@ -87,7 +72,7 @@ enum IdeaCategory {
   }
 }
 
-/// Represents an idea in the Idea Bank ("Banque d'idées en vrac")
+/// Represents a loose idea stored in the collaborative Idea Bank.
 class BankIdea {
   final String id;
   final String spaceId;

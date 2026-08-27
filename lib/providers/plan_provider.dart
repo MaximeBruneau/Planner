@@ -137,7 +137,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   // --- Filtering & Date Helpers ---
 
   List<PlanActivity> getActivitiesForDate(DateTime date) {
-    final dateStr = DateUtilsHelper.formatDate(date);
+    final dateStr = DateUtilsHelper.formatYmd(date);
     final list = state.activities.where((a) => a.date == dateStr && !a.deleted).toList();
     // Sort: Unchecked items first, then newer items first
     list.sort((a, b) {
@@ -150,12 +150,12 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   bool hasActivitiesForDate(DateTime date) {
-    final dateStr = DateUtilsHelper.formatDate(date);
+    final dateStr = DateUtilsHelper.formatYmd(date);
     return state.activities.any((a) => a.date == dateStr && !a.deleted);
   }
 
   int getCountForDate(DateTime date) {
-    final dateStr = DateUtilsHelper.formatDate(date);
+    final dateStr = DateUtilsHelper.formatYmd(date);
     return state.activities.where((a) => a.date == dateStr && !a.deleted).length;
   }
 
@@ -172,7 +172,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
         AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
     final space = _ref.read(spaceProvider).currentSpace;
     final spaceId = space?.id ?? 'space_default';
-    final dateStr = DateUtilsHelper.formatDate(date);
+    final dateStr = DateUtilsHelper.formatYmd(date);
 
     final item = PlanActivity(
       id: 'item_${DateTime.now().millisecondsSinceEpoch}',

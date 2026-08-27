@@ -3,6 +3,7 @@ import '../core/services/notification_service.dart';
 import '../core/services/storage_service.dart';
 import '../core/theme/theme_palettes.dart';
 import '../models/app_settings.dart';
+import 'plan_provider.dart'; // for notificationServiceProvider
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final StorageService _storageService;
@@ -57,6 +58,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 final settingsProvider =
     StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
   final storageService = ref.watch(storageServiceProvider);
-  final notificationService = NotificationService();
+  final notificationService = ref.watch(notificationServiceProvider);
   return SettingsNotifier(storageService, notificationService);
 });

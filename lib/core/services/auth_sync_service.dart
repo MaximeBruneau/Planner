@@ -229,7 +229,9 @@ class AuthSyncService {
 
       try {
         await fbUser.updateDisplayName(name);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Failed to update display name: $e');
+      }
 
       _currentUser = AppUser(
         id: fbUser.uid,
@@ -264,7 +266,9 @@ class AuthSyncService {
           options: DefaultFirebaseOptions.currentPlatform,
         );
         _isFirebaseInitialized = true;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Firebase init in guest mode: $e');
+      }
     }
 
     String id = 'guest_${DateTime.now().millisecondsSinceEpoch}';
@@ -325,19 +329,25 @@ class AuthSyncService {
       if (uid != null && uid.isNotEmpty && _isFirebaseInitialized) {
         try {
           await firestore.collection('users').doc(uid).delete();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Failed to delete user document: $e');
+        }
 
         try {
           final fbUser = FirebaseAuth.instance.currentUser;
           if (fbUser != null) {
             await fbUser.delete();
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Failed to delete Firebase auth user: $e');
+        }
       }
 
       try {
         await _googleSignIn.signOut();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Failed to sign out from Google during deletion: $e');
+      }
 
       await _storageService.clearAll();
       _currentUser = null;

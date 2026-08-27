@@ -21,10 +21,10 @@ void main() {
       expect(IdeaCategory.sex.emoji, equals('🌶️'));
       expect(IdeaCategory.other.emoji, equals('💡'));
 
-      expect(IdeaCategory.food.labelFr, contains('Food'));
-      expect(IdeaCategory.place.labelFr, contains('Lieux'));
-      expect(IdeaCategory.activity.labelFr, contains('Activités'));
-      expect(IdeaCategory.sex.labelFr, contains('Sex'));
+      expect(IdeaCategory.food.label, contains('Food'));
+      expect(IdeaCategory.place.label, contains('Places'));
+      expect(IdeaCategory.activity.label, contains('Activities'));
+      expect(IdeaCategory.sex.label, contains('Sex'));
     });
 
     test('BankIdea serialization to/from Map and JSON', () {

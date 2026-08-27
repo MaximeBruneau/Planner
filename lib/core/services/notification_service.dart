@@ -3,6 +3,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Manages local push notifications and scheduled reminders.
+///
+/// Uses a singleton pattern to ensure only one instance manages
+/// the notification plugin throughout the app lifecycle.
 class NotificationService {
   static NotificationService? _instance;
   factory NotificationService() {
@@ -16,6 +20,9 @@ class NotificationService {
 
   bool _initialized = false;
 
+  /// Initializes the notification plugin and requests permissions.
+  ///
+  /// Safe to call multiple times — subsequent calls are no-ops.
   Future<void> init() async {
     if (_initialized) return;
 
@@ -38,10 +45,11 @@ class NotificationService {
       await _notificationsPlugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: (details) {
-          debugPrint('Notification clicked: ${details.payload}');
+          debugPrint('Notification tapped: ${details.payload}');
         },
       );
 
+      // Request iOS permissions
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -53,13 +61,26 @@ class NotificationService {
             );
       }
 
+      // Request Android 13+ (API 33) POST_NOTIFICATIONS permission
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final androidPlugin = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          await androidPlugin.requestNotificationsPermission();
+        }
+      }
+
       _initialized = true;
+      debugPrint('NotificationService initialized successfully');
     } catch (e) {
-      debugPrint('Notification initialization notice: $e');
+      debugPrint('NotificationService init error: $e');
     }
   }
 
-  /// Show notification when someone in the shared group adds/updates an idea or plan
+  /// Shows an immediate notification for group activity changes.
+  ///
+  /// Used when another member adds, updates, or deletes a plan or idea.
   Future<void> showGroupActivityNotification({
     required String title,
     required String body,
@@ -77,7 +98,8 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'group_activity_channel',
             'Shared Calendar Updates',
-            channelDescription: 'Notifications when group members add or modify plans and ideas',
+            channelDescription:
+                'Notifications when group members add or modify plans and ideas',
             importance: Importance.max,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
@@ -91,11 +113,14 @@ class NotificationService {
         ),
       );
     } catch (e) {
-      debugPrint('Group notification notice: $e');
+      debugPrint('Failed to show group activity notification: $e');
     }
   }
 
-  /// Schedule a reminder for an upcoming confirmed event
+  /// Schedules a future reminder notification for an upcoming event.
+  ///
+  /// The notification fires at [eventTime]. If [eventTime] is in the past,
+  /// the scheduling is silently skipped.
   Future<void> scheduleActivityReminder({
     required int notificationId,
     required String title,
@@ -107,6 +132,22 @@ class NotificationService {
 
     try {
       if (eventTime.isBefore(DateTime.now())) return;
+
+      // Check if exact alarms are permitted on Android 12+
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final androidPlugin = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          final canSchedule =
+              await androidPlugin.canScheduleExactNotifications() ?? false;
+          if (!canSchedule) {
+            debugPrint(
+                'Cannot schedule exact alarms — permission not granted');
+            return;
+          }
+        }
+      }
 
       await _notificationsPlugin.zonedSchedule(
         notificationId,
@@ -137,12 +178,13 @@ class NotificationService {
     }
   }
 
+  /// Cancels all pending and shown notifications.
   Future<void> cancelAll() async {
     if (kIsWeb) return;
     try {
       await _notificationsPlugin.cancelAll();
     } catch (e) {
-      debugPrint('Cancel notifications notice: $e');
+      debugPrint('Failed to cancel notifications: $e');
     }
   }
 }

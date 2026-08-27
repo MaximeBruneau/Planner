@@ -11,12 +11,7 @@ class DateUtilsHelper {
     return _ymdFormat.format(date);
   }
 
-  /// Alias for formatYmd
-  static String formatDate(DateTime date) {
-    return _ymdFormat.format(date);
-  }
-
-  /// Parses 'yyyy-MM-dd' string to DateTime
+  /// Parses 'yyyy-MM-dd' string to DateTime, returns null on failure.
   static DateTime? parseYmd(String dateStr) {
     try {
       return _ymdFormat.parse(dateStr);
@@ -25,12 +20,7 @@ class DateUtilsHelper {
     }
   }
 
-  /// Alias for parseYmd
-  static DateTime? parseDate(String dateStr) {
-    return parseYmd(dateStr);
-  }
-
-  /// Returns true if date is strictly in the future (after today)
+  /// Returns true if date is strictly in the future (after today).
   static bool isFutureDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -73,7 +63,9 @@ class DateUtilsHelper {
           if (res is DateTime) return res;
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      // Intentionally silent — runtime type probe for Firestore Timestamp
+    }
 
     // Handle int (timestamp in millis or seconds)
     if (value is int) {

@@ -151,7 +151,7 @@ class ThemeSelector extends ConsumerWidget {
                                     color: palette.cardColor,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.grey.shade400,
+                                      color: colorScheme.outlineVariant,
                                       width: 0.5,
                                     ),
                                   ),

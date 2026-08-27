@@ -111,7 +111,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Ajouter une idée en vrac",
+                        "Add a random idea",
                         style: GoogleFonts.fredoka(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -119,7 +119,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
                         ),
                       ),
                       Text(
-                        "Elle sera conservée dans la banque pour plus tard ✨",
+                        "It will be kept in the bank for later ✨",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -138,7 +138,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
 
             // Category selector
             Text(
-              "Catégorie",
+              "Category",
               style: GoogleFonts.fredoka(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -158,7 +158,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
                       showCheckmark: false,
                       avatar: Text(cat.emoji, style: const TextStyle(fontSize: 14)),
                       label: Text(
-                        cat.labelFr,
+                        cat.label,
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
@@ -189,7 +189,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
 
             // Title TextField
             Text(
-              "Titre de l'idée *",
+              "Idea title *",
               style: GoogleFonts.fredoka(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -229,7 +229,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
 
             // Notes / details optional
             Text(
-              "Note ou détails (optionnel)",
+              "Note or details (optional)",
               style: GoogleFonts.fredoka(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -242,7 +242,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                hintText: "Adresse, lien, recommandation d'un ami...",
+                hintText: "Address, link, friend's recommendation...",
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: colorScheme.onSurface.withValues(alpha: 0.45),
@@ -274,7 +274,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
                 onPressed: _isSubmitting ? null : _submit,
                 icon: const Icon(Icons.add_rounded, size: 20),
                 label: Text(
-                  "Ajouter à la banque ✨",
+                  "Add to bank ✨",
                   style: GoogleFonts.fredoka(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -294,15 +294,15 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
   String _getHintForCategory(IdeaCategory category) {
     switch (category) {
       case IdeaCategory.food:
-        return "Ex: Tester le resto de ramen en ville 🍜";
+        return "Ex: Try the ramen restaurant in town 🍜";
       case IdeaCategory.place:
-        return "Ex: Balade au belvédère du lac 🏞️";
+        return "Ex: Walk to the lake viewpoint 🏞️";
       case IdeaCategory.activity:
-        return "Ex: Soirée escape game ou bowling 🎳";
+        return "Ex: Escape game or bowling night 🎳";
       case IdeaCategory.sex:
-        return "Ex: Massage aux huiles, nuit d'hôtel, lingerie 🌶️";
+        return "Ex: Oil massage, hotel night, lingerie 🌶️";
       case IdeaCategory.other:
-        return "Ex: Acheter un nouveau jeu de société 🎲";
+        return "Ex: Buy a new board game 🎲";
     }
   }
 }

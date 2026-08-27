@@ -1,3 +1,9 @@
+/// Super Planner — Entry point.
+///
+/// Initializes Firebase, local storage, and notification services,
+/// then launches the app with a [ProviderScope] for Riverpod state management.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,7 +24,7 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    debugPrint('Firebase init in main: $e');
+    debugPrint('Firebase initialization failed: $e');
   }
 
   final storageService = StorageService();
@@ -37,6 +43,10 @@ void main() async {
   );
 }
 
+/// Root application widget.
+///
+/// Watches auth state to route between [AuthScreen] and [CalendarScreen],
+/// and applies the user-selected theme from [settingsProvider].
 class SuperPlannerApp extends ConsumerWidget {
   const SuperPlannerApp({super.key});
 
@@ -47,12 +57,10 @@ class SuperPlannerApp extends ConsumerWidget {
     final themeData = AppTheme.getThemeById(settings.themeId);
 
     return MaterialApp(
-      title: 'Super Planner 🗓️',
+      title: 'Super Planner',
       debugShowCheckedModeBanner: false,
       theme: themeData,
-      home: authState.isSignedIn
-          ? const CalendarScreen()
-          : const AuthScreen(),
+      home: authState.isSignedIn ? const CalendarScreen() : const AuthScreen(),
     );
   }
 }

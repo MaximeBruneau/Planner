@@ -77,7 +77,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Pas d'autre idée trouvée dans cette catégorie ! 💡"),
+          content: Text("No other idea found in this category ! 💡"),
           duration: Duration(seconds: 2),
         ),
       );
@@ -131,7 +131,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
               const SizedBox(height: 12),
 
               Text(
-                "Et si on faisait ça ?",
+                "How about we do this?",
                 style: GoogleFonts.fredoka(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -140,7 +140,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
               ),
               const SizedBox(height: 4),
               Text(
-                "Idée piochée au hasard dans la banque 💡",
+                "Idea picked randomly from the bank 💡",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -154,9 +154,9 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildCategoryFilterChip(null, "✨ Toutes"),
+                    _buildCategoryFilterChip(null, "✨ All"),
                     ...IdeaCategory.values.map(
-                      (cat) => _buildCategoryFilterChip(cat, "${cat.emoji} ${cat.labelFr}"),
+                      (cat) => _buildCategoryFilterChip(cat, "${cat.emoji} ${cat.label}"),
                     ),
                   ],
                 ),
@@ -202,7 +202,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
                                 Text(freshIdea.category.emoji, style: const TextStyle(fontSize: 13)),
                                 const SizedBox(width: 5),
                                 Text(
-                                  freshIdea.category.labelFr,
+                                  freshIdea.category.label,
                                   style: GoogleFonts.fredoka(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -299,7 +299,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
 
                       // Author
                       Text(
-                        "Proposé par ${freshIdea.creatorName}",
+                        "Suggested by ${freshIdea.creatorName}",
                         style: TextStyle(
                           fontSize: 11,
                           color: colorScheme.onSurface.withValues(alpha: 0.45),
@@ -321,7 +321,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: const Text("Fermer"),
+                      child: const Text("Close"),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -331,7 +331,7 @@ class _RandomIdeaDialogState extends ConsumerState<RandomIdeaDialog>
                       onPressed: _pickAnother,
                       icon: const Text("🎲", style: TextStyle(fontSize: 16)),
                       label: Text(
-                        "Piocher une autre",
+                        "Pick another",
                         style: GoogleFonts.fredoka(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

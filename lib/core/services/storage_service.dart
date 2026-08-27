@@ -118,7 +118,7 @@ class StorageService {
     }
   }
 
-  // --- Space Ideas (Banque d'idées) ---
+  // --- Space Ideas (Idea Bank) ---
   List<BankIdea> getSpaceIdeas(String spaceId) {
     if (spaceId.isEmpty) return [];
     try {
