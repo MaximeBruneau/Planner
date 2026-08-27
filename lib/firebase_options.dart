@@ -43,7 +43,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBFIHb8E1E4TGW-pT1qG0od8yZTY0AN0mc',
-    appId: '1:475381692973:android:28f7c0f72f53c9325916a4',
+    appId: '1:475381692973:android:8d64d0c1795265c85916a4',
     messagingSenderId: '475381692973',
     projectId: 'super-planner-app-3af40',
     storageBucket: 'super-planner-app-3af40.firebasestorage.app',

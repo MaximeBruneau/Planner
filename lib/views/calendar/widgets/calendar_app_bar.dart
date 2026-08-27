@@ -31,14 +31,14 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return AppBar(
-      titleSpacing: 16,
+      titleSpacing: 10,
       elevation: 0,
       scrolledUnderElevation: 0,
       title: InkWell(
         onTap: () => SpaceManagementSheet.show(context),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -50,47 +50,51 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: Text(
                       currentSpace?.name ?? "Super Planner 🗓️",
                       style: GoogleFonts.fredoka(
-                        fontSize: 19,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: colorScheme.primary),
+                  const SizedBox(width: 2),
+                  Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: colorScheme.primary),
                 ],
               ),
-              if (currentSpace != null) ...[
+              if (currentSpace != null)
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: colorScheme.primaryContainer.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(
                         currentSpace!.code,
                         style: GoogleFonts.fredoka(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: colorScheme.primary,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      "• ${currentSpace!.memberCount} member${currentSpace!.memberCount > 1 ? 's' : ''}",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        "• ${currentSpace!.memberCount} ${currentSpace!.memberCount > 1 ? 'members' : 'member'}",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-              ],
             ],
           ),
         ),
@@ -102,29 +106,31 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               tooltip: "Idea Bank 💡",
-              icon: const Icon(Icons.lightbulb_outline_rounded),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              icon: const Icon(Icons.lightbulb_outline_rounded, size: 21),
               onPressed: () => IdeaBankSheet.show(context),
             ),
             if (totalIdeasCount > 0)
               Positioned(
-                top: 8,
-                right: 8,
+                top: 4,
+                right: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
                     color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
+                    minWidth: 15,
+                    minHeight: 15,
                   ),
                   child: Text(
                     '${totalIdeasCount > 99 ? '99+' : totalIdeasCount}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colorScheme.onPrimary,
-                      fontSize: 9,
+                      fontSize: 8.5,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -138,7 +144,9 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               tooltip: "Activity & Updates",
-              icon: const Icon(Icons.notifications_outlined),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              icon: const Icon(Icons.notifications_outlined, size: 21),
               onPressed: () {
                 ActivityNotificationsSheet.show(
                   context,
@@ -148,24 +156,24 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             if (unreadNotificationsCount > 0)
               Positioned(
-                top: 8,
-                right: 8,
+                top: 4,
+                right: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
                     color: colorScheme.error,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
+                    minWidth: 15,
+                    minHeight: 15,
                   ),
                   child: Text(
                     '${unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colorScheme.onError,
-                      fontSize: 9.5,
+                      fontSize: 8.5,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -176,26 +184,24 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
         // Jump to Today
         IconButton(
           tooltip: "Today",
-          icon: const Icon(Icons.today_rounded),
+          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          icon: const Icon(Icons.today_rounded, size: 21),
           onPressed: onTodayPressed,
-        ),
-        // Invite / Group Share
-        IconButton(
-          tooltip: "Group & Invite Code",
-          icon: const Icon(Icons.group_outlined),
-          onPressed: () => SpaceManagementSheet.show(context),
         ),
         // Settings
         IconButton(
           tooltip: "Settings",
-          icon: const Icon(Icons.settings_rounded),
+          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          icon: const Icon(Icons.settings_rounded, size: 21),
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             );
           },
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
       ],
     );
   }

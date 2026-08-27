@@ -7,9 +7,53 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:475381692973:android:28f7c0f72f53c9325916a4",
+        "mobilesdk_app_id": "1:475381692973:android:8d64d0c1795265c85916a4",
         "android_client_info": {
           "package_name": "com.superplanner.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "475381692973-4nghf4g8mhdoku5mabo46uei9qm2e8bt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.superplanner.app",
+            "certificate_hash": "e712926b53cb64485535f60543868bc60c59c6f6"
+          }
+        },
+        {
+          "client_id": "475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFIHb8E1E4TGW-pT1qG0od8yZTY0AN0mc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vibecalendar.myDairy.J8LC2ARP9K"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475381692973:android:28f7c0f72f53c9325916a4",
+        "android_client_info": {
+          "package_name": "com.vibecalendar.my_dairy"
         }
       },
       "oauth_client": [
@@ -29,6 +73,13 @@
             {
               "client_id": "475381692973-f2sdrbl4sf0e1n1a2u4if9dtafcjr6ge.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "475381692973-2um7rmq7gdfb3gdtmb8r7r0q8nfenp53.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vibecalendar.myDairy.J8LC2ARP9K"
+              }
             }
           ]
         }
