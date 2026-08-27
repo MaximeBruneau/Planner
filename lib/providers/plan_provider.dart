@@ -84,7 +84,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   void _subscribeToSpace(String spaceId) {
-    if (spaceId == 'space_default') return;
+    if (spaceId.isEmpty) return;
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
 

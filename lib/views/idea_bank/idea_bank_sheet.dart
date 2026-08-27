@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../models/bank_idea.dart';
 import '../../providers/idea_provider.dart';
 import '../../providers/auth_provider.dart';
 import 'widgets/add_idea_sheet.dart';
@@ -62,7 +60,6 @@ class _IdeaBankSheetState extends ConsumerState<IdeaBankSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final authState = ref.watch(authProvider);
     final currentUserId = authState.user?.id ?? '';
     final ideaState = ref.watch(ideaProvider);
@@ -110,58 +107,26 @@ class _IdeaBankSheetState extends ConsumerState<IdeaBankSheet> {
 
           // Idea List / Empty State
           Expanded(
-            child: filteredIdeas.isEmpty
-                ? IdeaBankEmptyState(ideaState: ideaState)
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    itemCount: filteredIdeas.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final idea = filteredIdeas[index];
-                      final isUpvoted = idea.isUpvotedBy(currentUserId);
+            child: SafeArea(
+              top: false,
+              child: filteredIdeas.isEmpty
+                  ? IdeaBankEmptyState(ideaState: ideaState)
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      itemCount: filteredIdeas.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final idea = filteredIdeas[index];
+                        final isUpvoted = idea.isUpvotedBy(currentUserId);
 
-                      return IdeaCard(
-                        idea: idea,
-                        isUpvoted: isUpvoted,
-                        onUpvote: () => ideaNotifier.toggleUpvote(idea),
-                        onDelete: () => ideaNotifier.deleteIdea(idea),
-                      );
-                    },
-                  ),
-          ),
-
-          // Pinned Bottom Add Button
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor,
-              border: Border(
-                top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
-              ),
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  AddIdeaSheet.show(
-                    context,
-                    initialCategory: ideaState.selectedCategory ?? IdeaCategory.food,
-                  );
-                },
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                label: Text(
-                  "Add a random idea 💡",
-                  style: GoogleFonts.fredoka(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-              ),
+                        return IdeaCard(
+                          idea: idea,
+                          isUpvoted: isUpvoted,
+                          onUpvote: () => ideaNotifier.toggleUpvote(idea),
+                          onDelete: () => ideaNotifier.deleteIdea(idea),
+                        );
+                      },
+                    ),
             ),
           ),
         ],

@@ -29,8 +29,7 @@ class PlanService {
       final collection = FirebaseFirestore.instance
           .collection('spaces')
           .doc(spaceId)
-          .collection('activities')
-          .where('deleted', isNotEqualTo: true);
+          .collection('activities');
 
       final subscriptionStartTime = DateTime.now();
       bool isInitialSnapshot = true;

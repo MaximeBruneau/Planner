@@ -109,12 +109,13 @@ class AppTheme {
           backgroundColor: palette.primary,
           foregroundColor: palette.onPrimary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(64, 44),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
           ),
           textStyle: GoogleFonts.fredoka(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -123,9 +124,10 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: palette.primary,
           side: BorderSide(color: palette.primary.withValues(alpha: 0.3)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(64, 44),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
           ),
           textStyle: GoogleFonts.fredoka(
             fontSize: 15,

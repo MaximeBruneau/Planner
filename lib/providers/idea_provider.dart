@@ -119,7 +119,7 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
   }
 
   void _subscribeToSpace(String spaceId) {
-    if (spaceId == 'space_default') return;
+    if (spaceId.isEmpty) return;
     _ideaSubscription?.cancel();
 
     final user = _ref.read(authProvider).user ??

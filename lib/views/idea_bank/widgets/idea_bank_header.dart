@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../models/bank_idea.dart';
 import '../../../providers/idea_provider.dart';
+import 'add_idea_sheet.dart';
 
 /// The header section with title, count badge, and search
 class IdeaBankHeader extends ConsumerWidget {
@@ -99,6 +101,17 @@ class IdeaBankHeader extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                tooltip: "Add idea",
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                color: colorScheme.primary,
+                onPressed: () {
+                  AddIdeaSheet.show(
+                    context,
+                    initialCategory: ideaState.selectedCategory ?? IdeaCategory.food,
+                  );
+                },
               ),
               IconButton(
                 tooltip: "Search",

@@ -160,7 +160,17 @@ class AuthSyncService {
             idToken: googleAuth.idToken,
           );
 
-          await FirebaseAuth.instance.signInWithCredential(credential);
+          final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+          final fbUser = userCredential.user;
+          if (fbUser != null) {
+            _currentUser = AppUser(
+              id: fbUser.uid,
+              email: fbUser.email ?? googleUser.email,
+              displayName: fbUser.displayName ?? googleUser.displayName ?? googleUser.email.split('@')[0],
+              photoUrl: fbUser.photoURL ?? googleUser.photoUrl,
+            );
+            await _storageService.saveUser(_currentUser);
+          }
           await _syncUserDataFromCloud();
         }
       } catch (fbError) {

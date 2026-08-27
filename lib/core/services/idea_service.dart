@@ -27,8 +27,7 @@ class IdeaService {
       final collection = FirebaseFirestore.instance
           .collection('spaces')
           .doc(spaceId)
-          .collection('ideas')
-          .where('deleted', isNotEqualTo: true);
+          .collection('ideas');
 
       return collection.snapshots().map((snapshot) {
         final List<BankIdea> ideas = [];

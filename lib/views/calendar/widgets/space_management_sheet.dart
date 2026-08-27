@@ -147,8 +147,10 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
           const Divider(height: 1),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -268,8 +270,9 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
               ),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 }

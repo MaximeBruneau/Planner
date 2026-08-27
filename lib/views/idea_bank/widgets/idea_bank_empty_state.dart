@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../models/bank_idea.dart';
 import '../../../providers/idea_provider.dart';
+import 'add_idea_sheet.dart';
 
 /// The empty state illustration when no ideas match
 class IdeaBankEmptyState extends ConsumerWidget {
@@ -78,6 +79,21 @@ class IdeaBankEmptyState extends ConsumerWidget {
                 _buildStarterChip(ref, "Escape game night 🕵️", IdeaCategory.activity),
                 _buildStarterChip(ref, "Board game night 🎲", IdeaCategory.activity),
               ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                AddIdeaSheet.show(
+                  context,
+                  initialCategory: ideaState.selectedCategory ?? IdeaCategory.food,
+                );
+              },
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text("Add custom idea 💡"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
             ),
           ],
         ),

@@ -111,64 +111,67 @@ class ActivityNotificationsSheet extends ConsumerWidget {
 
           // Notifications List or Empty State
           Expanded(
-            child: notifications.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                              shape: BoxShape.circle,
+            child: SafeArea(
+              top: false,
+              child: notifications.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Text('✨', style: TextStyle(fontSize: 36)),
                             ),
-                            child: const Text('🔔', style: TextStyle(fontSize: 36)),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No notifications yet',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
+                            const SizedBox(height: 16),
+                            Text(
+                              'No activity yet',
+                              style: GoogleFonts.fredoka(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'When you or members add, update, check or upvote plans, the history will appear here in real-time.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
-                              height: 1.4,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Changes to shared plans and ideas will appear here.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                height: 1.4,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    itemCount: notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final notif = notifications[index];
-                      return _NotificationTile(
-                        notification: notif,
-                        onTap: () {
-                          if (notif.date.isNotEmpty) {
-                            final parsed = DateUtilsHelper.parseYmd(notif.date);
-                            if (parsed != null && onDateSelected != null) {
-                              onDateSelected!(parsed);
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      itemCount: notifications.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final notif = notifications[index];
+                        return _NotificationTile(
+                          notification: notif,
+                          onTap: () {
+                            if (notif.date.isNotEmpty) {
+                              final parsed = DateUtilsHelper.parseYmd(notif.date);
+                              if (parsed != null && onDateSelected != null) {
+                                onDateSelected!(parsed);
+                              }
                             }
-                          }
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    },
-                  ),
+                            Navigator.of(context).pop();
+                          },
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),

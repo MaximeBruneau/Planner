@@ -75,8 +75,10 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +271,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
             // Submit Button
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 50,
               child: ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
                 icon: const Icon(Icons.add_rounded, size: 20),
@@ -281,14 +283,17 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 2,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
             ),
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   String _getHintForCategory(IdeaCategory category) {
