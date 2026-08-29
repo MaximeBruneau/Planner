@@ -110,6 +110,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
     // Stream Notifications Feed
     _notificationSubscription = _planService.streamSpaceNotifications(
       spaceId: spaceId,
+      currentUser: user,
     ).listen((notifications) {
       state = state.copyWith(notifications: notifications);
     });
@@ -130,12 +131,14 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   void markAllNotificationsAsRead() {
+    final ids = state.notifications.map((n) => n.id).toList();
     final updated = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
     state = state.copyWith(notifications: updated);
 
     final currentSpace = _ref.read(spaceProvider).currentSpace;
     if (currentSpace != null) {
       _storageService.saveSpaceNotifications(currentSpace.id, updated);
+      _storageService.markNotificationIdsAsRead(currentSpace.id, ids);
     }
   }
 
@@ -186,7 +189,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
       creatorId: user.id,
       creatorName: user.displayName,
       creatorPhotoUrl: user.photoUrl,
-      upvoterIds: [user.id],
+      upvoterIds: const [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

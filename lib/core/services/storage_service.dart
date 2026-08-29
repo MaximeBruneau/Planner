@@ -14,6 +14,7 @@ class StorageService {
   static const String _spaceKey = 'super_planner_current_space_v1';
   static const String _activitiesPrefix = 'super_planner_activities_';
   static const String _notificationsPrefix = 'super_planner_notifications_';
+  static const String _readNotifsPrefix = 'super_planner_read_notifs_';
   static const String _ideasPrefix = 'super_planner_ideas_';
   static const String _settingsKey = 'super_planner_settings_v1';
 
@@ -115,6 +116,31 @@ class StorageService {
       await _prefs.setString('$_notificationsPrefix$spaceId', jsonEncode(rawList));
     } catch (e) {
       debugPrint('Error saving space notifications: $e');
+    }
+  }
+
+  Set<String> getReadNotificationIds(String spaceId) {
+    if (spaceId.isEmpty) return {};
+    try {
+      final list = _prefs.getStringList('$_readNotifsPrefix$spaceId');
+      return list?.toSet() ?? {};
+    } catch (e) {
+      debugPrint('Error reading read notification IDs: $e');
+      return {};
+    }
+  }
+
+  Future<void> markNotificationIdsAsRead(String spaceId, Iterable<String> ids) async {
+    if (spaceId.isEmpty || ids.isEmpty) return;
+    try {
+      final current = getReadNotificationIds(spaceId);
+      current.addAll(ids);
+      final trimmed = current.length > 200
+          ? current.toList().sublist(current.length - 200)
+          : current.toList();
+      await _prefs.setStringList('$_readNotifsPrefix$spaceId', trimmed);
+    } catch (e) {
+      debugPrint('Error saving read notification IDs: $e');
     }
   }
 

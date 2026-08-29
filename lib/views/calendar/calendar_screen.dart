@@ -85,7 +85,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final spaceState = ref.watch(spaceProvider);
     final planState = ref.watch(planProvider);
     final planNotifier = ref.read(planProvider.notifier);
-    final ideaState = ref.watch(ideaProvider);
 
     final palette = AppPalettes.getById(settings.themeId);
     final currentSpace = spaceState.currentSpace;
@@ -100,9 +99,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       appBar: CalendarAppBar(
         currentSpace: currentSpace,
-        totalIdeasCount: ideaState.totalCount,
         unreadNotificationsCount: planState.unreadNotificationsCount,
         onTodayPressed: () => _onDateSelected(DateTime.now()),
+        onNotificationsPressed: () => planNotifier.markAllNotificationsAsRead(),
         onDateSelectedFromNotifications: _onDateSelected,
       ),
       body: GestureDetector(
@@ -119,6 +118,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   notice: planState.lastInAppNotice,
                   onTap: () {
                     FocusScope.of(context).unfocus();
+                    planNotifier.markAllNotificationsAsRead();
                     ActivityNotificationsSheet.show(
                       context,
                       onDateSelected: _onDateSelected,

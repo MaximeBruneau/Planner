@@ -9,17 +9,17 @@ import '../../idea_bank/idea_bank_sheet.dart';
 /// App bar for the main calendar screen with navigation and group controls.
 class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
   final SharedSpace? currentSpace;
-  final int totalIdeasCount;
   final int unreadNotificationsCount;
   final VoidCallback onTodayPressed;
+  final VoidCallback onNotificationsPressed;
   final ValueChanged<DateTime> onDateSelectedFromNotifications;
 
   const CalendarAppBar({
     super.key,
     required this.currentSpace,
-    required this.totalIdeasCount,
     required this.unreadNotificationsCount,
     required this.onTodayPressed,
+    required this.onNotificationsPressed,
     required this.onDateSelectedFromNotifications,
   });
 
@@ -103,46 +103,16 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        // Idea Bank 💡 Action
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              tooltip: "Idea Bank 💡",
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              icon: const Icon(Icons.lightbulb_outline_rounded, size: 21),
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                IdeaBankSheet.show(context);
-              },
-            ),
-            if (totalIdeasCount > 0)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 15,
-                    minHeight: 15,
-                  ),
-                  child: Text(
-                    '${totalIdeasCount > 99 ? '99+' : totalIdeasCount}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        // Idea Bank 💡 Action (no count badge)
+        IconButton(
+          tooltip: "Idea Bank 💡",
+          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          icon: const Icon(Icons.lightbulb_outline_rounded, size: 21),
+          onPressed: () {
+            FocusScope.of(context).unfocus();
+            IdeaBankSheet.show(context);
+          },
         ),
         // Activity Notifications Feed
         Stack(
@@ -155,6 +125,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
               icon: const Icon(Icons.notifications_outlined, size: 21),
               onPressed: () {
                 FocusScope.of(context).unfocus();
+                onNotificationsPressed();
                 ActivityNotificationsSheet.show(
                   context,
                   onDateSelected: onDateSelectedFromNotifications,
@@ -165,23 +136,25 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
               Positioned(
                 top: 4,
                 right: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: colorScheme.error,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 15,
-                    minHeight: 15,
-                  ),
-                  child: Text(
-                    '${unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: colorScheme.onError,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.bold,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 15,
+                      minHeight: 15,
+                    ),
+                    child: Text(
+                      '${unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colorScheme.onError,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

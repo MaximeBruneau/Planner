@@ -206,7 +206,7 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
       creatorId: user.id,
       creatorName: user.displayName,
       creatorPhotoUrl: user.photoUrl,
-      upvoterIds: [user.id],
+      upvoterIds: const [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

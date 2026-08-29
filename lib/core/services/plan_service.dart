@@ -120,7 +120,10 @@ class PlanService {
   }
 
   /// Stream notifications for a given shared space
-  Stream<List<ActivityNotification>> streamSpaceNotifications({required String spaceId}) {
+  Stream<List<ActivityNotification>> streamSpaceNotifications({
+    required String spaceId,
+    required AppUser currentUser,
+  }) {
     if (spaceId.isEmpty) {
       return Stream.value(_storageService.getSpaceNotifications(spaceId));
     }
@@ -134,10 +137,16 @@ class PlanService {
           .limit(80);
 
       return collection.snapshots().map((snapshot) {
+        final readIds = _storageService.getReadNotificationIds(spaceId);
         final List<ActivityNotification> list = [];
         for (final doc in snapshot.docs) {
           try {
-            list.add(ActivityNotification.fromMap(doc.data()));
+            final notif = ActivityNotification.fromMap(doc.data());
+            final isRead = notif.isRead ||
+                readIds.contains(notif.id) ||
+                (currentUser.displayName.isNotEmpty &&
+                    notif.authorName == currentUser.displayName);
+            list.add(notif.copyWith(isRead: isRead));
           } catch (e) {
             debugPrint('Error parsing notification: $e');
           }

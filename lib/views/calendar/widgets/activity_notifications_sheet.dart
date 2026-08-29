@@ -5,7 +5,7 @@ import '../../../models/activity_notification.dart';
 import '../../../core/utils/date_utils_helper.dart';
 import '../../../providers/plan_provider.dart';
 
-class ActivityNotificationsSheet extends ConsumerWidget {
+class ActivityNotificationsSheet extends ConsumerStatefulWidget {
   final Function(DateTime selectedDate)? onDateSelected;
 
   const ActivityNotificationsSheet({super.key, this.onDateSelected});
@@ -23,7 +23,20 @@ class ActivityNotificationsSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityNotificationsSheet> createState() => _ActivityNotificationsSheetState();
+}
+
+class _ActivityNotificationsSheetState extends ConsumerState<ActivityNotificationsSheet> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(planProvider.notifier).markAllNotificationsAsRead();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final planState = ref.watch(planProvider);
@@ -162,8 +175,8 @@ class ActivityNotificationsSheet extends ConsumerWidget {
                           onTap: () {
                             if (notif.date.isNotEmpty) {
                               final parsed = DateUtilsHelper.parseYmd(notif.date);
-                              if (parsed != null && onDateSelected != null) {
-                                onDateSelected!(parsed);
+                              if (parsed != null && widget.onDateSelected != null) {
+                                widget.onDateSelected!(parsed);
                               }
                             }
                             Navigator.of(context).pop();
