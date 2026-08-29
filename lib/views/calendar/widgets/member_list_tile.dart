@@ -6,12 +6,16 @@ import '../../../../models/shared_space.dart';
 class MemberListTile extends StatelessWidget {
   final SpaceMember member;
   final bool isMe;
+  final bool canRemove;
+  final VoidCallback? onRemove;
   final VoidCallback? onEditPseudo;
 
   const MemberListTile({
     super.key,
     required this.member,
     required this.isMe,
+    this.canRemove = false,
+    this.onRemove,
     this.onEditPseudo,
   });
 
@@ -116,6 +120,16 @@ class MemberListTile extends StatelessWidget {
               ),
             ),
           ),
+          if (canRemove && onRemove != null) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: Icon(Icons.remove_circle_outline_rounded, size: 18, color: colorScheme.error.withValues(alpha: 0.8)),
+              tooltip: "Remove from space",
+              onPressed: onRemove,
+            ),
+          ],
         ],
       ),
     );

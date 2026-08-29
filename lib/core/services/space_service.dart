@@ -282,4 +282,124 @@ class SpaceService {
       debugPrint('Update member name in space notice: $e');
     }
   }
+
+  /// Update or sync a member inside a shared space cleanly (deduplicating by email/ID)
+  Future<SharedSpace?> syncOrUpdateMember({
+    required String spaceId,
+    required AppUser user,
+    String? newDisplayName,
+  }) async {
+    if (spaceId.isEmpty || user.id.isEmpty) return null;
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('spaces').doc(spaceId).get();
+      if (!doc.exists || doc.data() == null) return null;
+
+      final currentSpace = SharedSpace.fromMap(doc.data()!);
+      final updatedMembers = Map<String, SpaceMember>.from(currentSpace.members);
+      final memberIds = List<String>.from(currentSpace.memberIds);
+
+      final displayName = (newDisplayName?.trim().isNotEmpty == true)
+          ? newDisplayName!.trim()
+          : user.displayName;
+
+      // Check if user already exists by ID or by email
+      String? matchedKey;
+      String currentRole = 'member';
+      DateTime joinedAt = DateTime.now();
+
+      updatedMembers.forEach((k, v) {
+        final matchesId = k == user.id || v.userId == user.id;
+        final matchesEmail = user.email.isNotEmpty &&
+            v.email.isNotEmpty &&
+            v.email.toLowerCase() == user.email.toLowerCase();
+
+        if (matchesId || matchesEmail) {
+          matchedKey = k;
+          if (v.role == 'owner' || currentSpace.creatorId == k || currentSpace.creatorId == user.id) {
+            currentRole = 'owner';
+          }
+          joinedAt = v.joinedAt;
+        }
+      });
+
+      // Remove any duplicate keys that belong to this user
+      final duplicateKeys = <String>[];
+      updatedMembers.forEach((k, v) {
+        final matchesEmail = user.email.isNotEmpty &&
+            v.email.isNotEmpty &&
+            v.email.toLowerCase() == user.email.toLowerCase();
+        if (k != user.id && (v.userId == user.id || matchesEmail)) {
+          duplicateKeys.add(k);
+        }
+      });
+
+      for (final dupKey in duplicateKeys) {
+        updatedMembers.remove(dupKey);
+        memberIds.remove(dupKey);
+      }
+
+      // If user is the space creator, ensure owner role
+      if (currentSpace.creatorId == user.id ||
+          (matchedKey != null && currentSpace.creatorId == matchedKey)) {
+        currentRole = 'owner';
+      }
+
+      // Set the clean member entry under user.id
+      final updatedMember = SpaceMember(
+        userId: user.id,
+        displayName: displayName,
+        email: user.email,
+        photoUrl: user.photoUrl,
+        role: currentRole,
+        joinedAt: joinedAt,
+      );
+
+      updatedMembers[user.id] = updatedMember;
+      if (!memberIds.contains(user.id)) {
+        memberIds.add(user.id);
+      }
+
+      final creatorId = (matchedKey != null && currentSpace.creatorId == matchedKey)
+          ? user.id
+          : currentSpace.creatorId;
+
+      final updatedSpace = currentSpace.copyWith(
+        creatorId: creatorId,
+        memberIds: memberIds,
+        members: updatedMembers,
+        updatedAt: DateTime.now(),
+      );
+
+      await firestore.collection('spaces').doc(spaceId).set(
+        updatedSpace.toMap(),
+        SetOptions(merge: true),
+      );
+
+      await _storageService.saveCurrentSpace(updatedSpace);
+      return updatedSpace;
+    } catch (e) {
+      debugPrint('Sync member in space error: $e');
+      return null;
+    }
+  }
+
+  /// Remove a member from a shared space
+  Future<void> removeMember({
+    required String spaceId,
+    required String memberId,
+  }) async {
+    if (spaceId.isEmpty || memberId.isEmpty) return;
+    try {
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('spaces').doc(spaceId).update({
+        'memberIds': FieldValue.arrayRemove([memberId]),
+        'members.$memberId': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Remove member error: $e');
+    }
+  }
 }

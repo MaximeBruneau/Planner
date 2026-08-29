@@ -81,6 +81,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
       if (space != null) {
         state = state.copyWith(currentSpace: space, isLoading: false);
         _listenToSpace(space.id);
+        await _spaceService.syncOrUpdateMember(spaceId: space.id, user: user);
         return;
       }
     }
@@ -90,6 +91,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     if (cached != null && cached.id != 'space_default') {
       state = state.copyWith(currentSpace: cached);
       _listenToSpace(cached.id);
+      await _spaceService.syncOrUpdateMember(spaceId: cached.id, user: user);
       return;
     }
 
@@ -165,6 +167,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
+
   /// Update the current user's member display name inside the active space
   Future<void> updateMyMemberName(String newName) async {
     final cleanName = newName.trim();
@@ -174,30 +177,33 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     final space = state.currentSpace;
     if (user == null || space == null) return;
 
-    // Optimistically update local space state
-    if (space.members.containsKey(user.id)) {
-      final oldMember = space.members[user.id]!;
-      final updatedMembers = Map<String, SpaceMember>.from(space.members);
-      updatedMembers[user.id] = SpaceMember(
-        userId: oldMember.userId,
-        displayName: cleanName,
-        email: oldMember.email,
-        photoUrl: oldMember.photoUrl,
-        role: oldMember.role,
-        joinedAt: oldMember.joinedAt,
-      );
-      final updatedSpace = space.copyWith(members: updatedMembers);
-      state = state.copyWith(currentSpace: updatedSpace);
-      await _storageService.saveCurrentSpace(updatedSpace);
-    }
-
     if (space.id != 'space_default') {
-      await _spaceService.updateMemberDisplayName(
+      final updatedSpace = await _spaceService.syncOrUpdateMember(
         spaceId: space.id,
-        userId: user.id,
-        newName: cleanName,
+        user: user,
+        newDisplayName: cleanName,
       );
+      if (updatedSpace != null) {
+        state = state.copyWith(currentSpace: updatedSpace);
+      }
     }
+  }
+
+  /// Remove a member from the current space
+  Future<void> removeMember(String memberId) async {
+    final space = state.currentSpace;
+    if (space == null || memberId.isEmpty || space.id == 'space_default') return;
+
+    final updatedMembers = Map<String, SpaceMember>.from(space.members)..remove(memberId);
+    final updatedMemberIds = List<String>.from(space.memberIds)..remove(memberId);
+    final updatedSpace = space.copyWith(
+      memberIds: updatedMemberIds,
+      members: updatedMembers,
+    );
+    state = state.copyWith(currentSpace: updatedSpace);
+    await _storageService.saveCurrentSpace(updatedSpace);
+
+    await _spaceService.removeMember(spaceId: space.id, memberId: memberId);
   }
 
   @override

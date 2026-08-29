@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/space_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../models/shared_space.dart';
 import 'join_space_dialog.dart';
 import 'create_space_dialog.dart';
 import 'invite_card.dart';
@@ -126,6 +127,43 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
     );
   }
 
+  void _confirmRemoveMember(BuildContext context, SpaceMember member) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Remove member?", style: GoogleFonts.fredoka(fontWeight: FontWeight.w600)),
+        content: Text("Are you sure you want to remove \"${member.displayName}\" from this shared space?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(spaceProvider.notifier).removeMember(member.userId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Member \"${member.displayName}\" removed"),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            child: const Text("Remove"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -156,6 +194,13 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
     }
 
     final membersList = currentSpace.members.values.toList();
+    final currentUserEmail = authState.user?.email.toLowerCase().trim() ?? '';
+    final currentUserId = authState.user?.id ?? '';
+    final isOwnerOfSpace = currentSpace.creatorId == currentUserId ||
+        currentSpace.members[currentUserId]?.role == 'owner' ||
+        (currentUserEmail.isNotEmpty &&
+            currentSpace.members.values.any((m) =>
+                m.email.toLowerCase().trim() == currentUserEmail && m.role == 'owner'));
 
     return Container(
       constraints: BoxConstraints(
@@ -266,10 +311,17 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         children: membersList.map((m) {
-                          final isMe = m.userId == authState.user?.id;
+                          final isMe = m.userId == currentUserId ||
+                              (m.email.isNotEmpty &&
+                                  currentUserEmail.isNotEmpty &&
+                                  m.email.toLowerCase().trim() == currentUserEmail);
                           return MemberListTile(
                             member: m,
                             isMe: isMe,
+                            canRemove: isOwnerOfSpace && !isMe,
+                            onRemove: isOwnerOfSpace && !isMe
+                                ? () => _confirmRemoveMember(context, m)
+                                : null,
                             onEditPseudo: isMe
                                 ? () => _showEditPseudoDialog(context, m.displayName)
                                 : null,

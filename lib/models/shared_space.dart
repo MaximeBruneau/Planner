@@ -134,17 +134,65 @@ class SharedSpace {
     if (rawMembers != null) {
       rawMembers.forEach((k, v) {
         if (v is Map<String, dynamic>) {
-          membersMap[k.toString()] = SpaceMember.fromMap(v);
+          final member = SpaceMember.fromMap(v);
+          final uid = member.userId.isNotEmpty ? member.userId : k.toString();
+          membersMap[uid] = member.userId.isNotEmpty
+              ? member
+              : SpaceMember(
+                  userId: uid,
+                  displayName: member.displayName,
+                  email: member.email,
+                  photoUrl: member.photoUrl,
+                  role: member.role,
+                  joinedAt: member.joinedAt,
+                );
         }
       });
     }
+
+    // Deduplicate members by email to prevent duplicate cards
+    final emailToKey = <String, String>{};
+    final keysToRemove = <String>[];
+
+    membersMap.forEach((key, member) {
+      if (member.email.isNotEmpty) {
+        final lowerEmail = member.email.toLowerCase().trim();
+        if (emailToKey.containsKey(lowerEmail)) {
+          final existingKey = emailToKey[lowerEmail]!;
+          final existing = membersMap[existingKey]!;
+          final role = (existing.role == 'owner' || member.role == 'owner') ? 'owner' : 'member';
+          final name = member.displayName.isNotEmpty && member.displayName != 'Member'
+              ? member.displayName
+              : existing.displayName;
+          final photo = member.photoUrl ?? existing.photoUrl;
+
+          membersMap[existingKey] = SpaceMember(
+            userId: existingKey,
+            displayName: name,
+            email: member.email,
+            photoUrl: photo,
+            role: role,
+            joinedAt: existing.joinedAt.isBefore(member.joinedAt) ? existing.joinedAt : member.joinedAt,
+          );
+          keysToRemove.add(key);
+        } else {
+          emailToKey[lowerEmail] = key;
+        }
+      }
+    });
+
+    for (final k in keysToRemove) {
+      membersMap.remove(k);
+    }
+
+    final deduplicatedMemberIds = rawMemberIds.where((id) => membersMap.containsKey(id) || !keysToRemove.contains(id)).toSet().toList();
 
     return SharedSpace(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? 'Our Shared Calendar 🗓️',
       code: map['code'] as String? ?? '',
       creatorId: map['creatorId'] as String? ?? '',
-      memberIds: rawMemberIds,
+      memberIds: deduplicatedMemberIds.isNotEmpty ? deduplicatedMemberIds : membersMap.keys.toList(),
       members: membersMap,
       lastActivityNotice: map['lastActivityNotice'] as String?,
       createdAt: DateUtilsHelper.parseDateTime(map['createdAt']),
