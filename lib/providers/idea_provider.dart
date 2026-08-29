@@ -118,12 +118,17 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
     });
   }
 
+  AppUser _getCurrentUser() {
+    return _ref.read(authProvider).user ??
+        _storageService.getSavedUser() ??
+        AppUser(id: 'local_user', displayName: 'Planner User', email: '');
+  }
+
   void _subscribeToSpace(String spaceId) {
     if (spaceId.isEmpty) return;
     _ideaSubscription?.cancel();
 
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     _ideaSubscription = _ideaService.streamSpaceIdeas(
       spaceId: spaceId,
@@ -188,8 +193,7 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
     final cleanTitle = title.trim();
     if (cleanTitle.isEmpty) return;
 
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
     final space = _ref.read(spaceProvider).currentSpace;
     final spaceId = space?.id ?? 'space_default';
 
@@ -229,8 +233,7 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
 
   /// Toggle upvote 👍
   Future<void> toggleUpvote(BankIdea idea) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     final upvoters = List<String>.from(idea.upvoterIds);
     final hasVoted = upvoters.contains(user.id);
@@ -270,8 +273,7 @@ class IdeaNotifier extends StateNotifier<IdeaState> {
 
   /// Delete an idea
   Future<void> deleteIdea(BankIdea idea) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     // 1. Optimistic update
     final updatedList = state.ideas.where((i) => i.id != idea.id).toList();

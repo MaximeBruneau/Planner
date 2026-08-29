@@ -61,11 +61,20 @@ class AppUser {
 
   factory AppUser.fromMap(Map<String, dynamic> map) {
     final rawSpaces = (map['joinedSpaceIds'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final email = map['email'] as String? ?? '';
+    var name = (map['displayName'] as String?)?.trim() ?? '';
+    if (name.isEmpty || name.toLowerCase() == 'user' || name.toLowerCase() == 'planner user') {
+      if (email.contains('@')) {
+        name = email.split('@')[0];
+      } else if (name.isEmpty) {
+        name = 'Planner User';
+      }
+    }
 
     return AppUser(
       id: map['id'] as String? ?? '',
-      email: map['email'] as String? ?? '',
-      displayName: map['displayName'] as String? ?? 'User',
+      email: email,
+      displayName: name,
       photoUrl: map['photoUrl'] as String?,
       currentSpaceId: map['currentSpaceId'] as String?,
       joinedSpaceIds: rawSpaces,

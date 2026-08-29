@@ -84,12 +84,58 @@ class AuthSyncService {
       final doc = await FirebaseFirestore.instance.collection('users').doc(_currentUser!.id).get();
       if (doc.exists && doc.data() != null) {
         final cloudUser = AppUser.fromMap(doc.data()!);
-        _currentUser = cloudUser;
+        final finalName = cloudUser.displayName.isNotEmpty &&
+                cloudUser.displayName != 'User' &&
+                cloudUser.displayName != 'Planner User'
+            ? cloudUser.displayName
+            : _currentUser!.displayName;
+
+        _currentUser = cloudUser.copyWith(displayName: finalName);
         await _storageService.saveUser(_currentUser);
+      } else {
+        await FirebaseFirestore.instance.collection('users').doc(_currentUser!.id).set({
+          'id': _currentUser!.id,
+          'email': _currentUser!.email,
+          'displayName': _currentUser!.displayName,
+          'photoUrl': _currentUser!.photoUrl,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
     } catch (e) {
       debugPrint('Sync user data notice: $e');
     }
+  }
+
+  /// Update user's nickname / pseudo everywhere
+  Future<AppUser?> updateDisplayName(String newDisplayName) async {
+    final cleanName = newDisplayName.trim();
+    if (cleanName.isEmpty || _currentUser == null) return _currentUser;
+
+    final updatedUser = _currentUser!.copyWith(displayName: cleanName);
+    _currentUser = updatedUser;
+    await _storageService.saveUser(updatedUser);
+
+    if (_isFirebaseInitialized) {
+      try {
+        final fbUser = FirebaseAuth.instance.currentUser;
+        if (fbUser != null) {
+          await fbUser.updateDisplayName(cleanName);
+        }
+      } catch (e) {
+        debugPrint('Update Firebase Auth display name: $e');
+      }
+
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(updatedUser.id).set({
+          'displayName': cleanName,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Update Firestore user display name: $e');
+      }
+    }
+
+    return updatedUser;
   }
 
   /// Sign in with Google
@@ -113,10 +159,14 @@ class AuthSyncService {
               await FirebaseAuth.instance.signInWithPopup(googleProvider);
           final User? fbUser = userCredential.user;
           if (fbUser != null) {
+            final displayName = fbUser.displayName?.trim().isNotEmpty == true
+                ? fbUser.displayName!.trim()
+                : (fbUser.email?.split('@')[0] ?? 'Planner User');
+
             _currentUser = AppUser(
               id: fbUser.uid,
               email: fbUser.email ?? '',
-              displayName: fbUser.displayName ?? (fbUser.email?.split('@')[0] ?? 'Planner User'),
+              displayName: displayName,
               photoUrl: fbUser.photoURL,
             );
             await _storageService.saveUser(_currentUser);
@@ -137,13 +187,12 @@ class AuthSyncService {
         return null;
       }
 
-      _currentUser = AppUser(
-        id: googleUser.id,
-        email: googleUser.email,
-        displayName: googleUser.displayName ?? googleUser.email.split('@')[0],
-        photoUrl: googleUser.photoUrl,
-      );
-      await _storageService.saveUser(_currentUser);
+      String calculatedName = googleUser.displayName?.trim() ?? '';
+      if (calculatedName.isEmpty) {
+        calculatedName = googleUser.email.split('@')[0];
+      }
+
+      String userId = googleUser.id;
 
       try {
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -160,13 +209,42 @@ class AuthSyncService {
             idToken: googleAuth.idToken,
           );
 
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          await _syncUserDataFromCloud();
+          final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+          final fbUser = userCredential.user;
+          if (fbUser != null) {
+            userId = fbUser.uid;
+            if (fbUser.displayName != null && fbUser.displayName!.trim().isNotEmpty) {
+              calculatedName = fbUser.displayName!.trim();
+            }
+          }
         }
       } catch (fbError) {
         debugPrint('Firebase linking notice: $fbError');
       }
 
+      _currentUser = AppUser(
+        id: userId,
+        email: googleUser.email,
+        displayName: calculatedName,
+        photoUrl: googleUser.photoUrl,
+      );
+      await _storageService.saveUser(_currentUser);
+
+      if (_isFirebaseInitialized && userId.isNotEmpty) {
+        try {
+          await FirebaseFirestore.instance.collection('users').doc(userId).set({
+            'id': userId,
+            'email': googleUser.email,
+            'displayName': calculatedName,
+            'photoUrl': googleUser.photoUrl,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Firestore save Google user error: $e');
+        }
+      }
+
+      await _syncUserDataFromCloud();
       return _currentUser;
     } catch (e) {
       debugPrint('Google Sign In error: $e');

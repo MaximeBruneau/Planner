@@ -109,10 +109,15 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     });
   }
 
+  AppUser _getCurrentUser() {
+    return _ref.read(authProvider).user ??
+        _storageService.getSavedUser() ??
+        AppUser(id: 'local_user', displayName: 'Planner User', email: '');
+  }
+
   /// Create a new shared space
   Future<SharedSpace?> createSpace({required String name}) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -128,8 +133,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
 
   /// Join an existing space with a code
   Future<bool> joinSpace(String code) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -145,8 +149,7 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
 
   /// Leave current space
   Future<void> leaveSpace() async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
     final space = state.currentSpace;
     if (space == null) return;
 
@@ -160,6 +163,40 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
       await createSpace(name: "${user.displayName}'s Calendar 🗓️");
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+  /// Update the current user's member display name inside the active space
+  Future<void> updateMyMemberName(String newName) async {
+    final cleanName = newName.trim();
+    if (cleanName.isEmpty) return;
+
+    final user = _ref.read(authProvider).user;
+    final space = state.currentSpace;
+    if (user == null || space == null) return;
+
+    // Optimistically update local space state
+    if (space.members.containsKey(user.id)) {
+      final oldMember = space.members[user.id]!;
+      final updatedMembers = Map<String, SpaceMember>.from(space.members);
+      updatedMembers[user.id] = SpaceMember(
+        userId: oldMember.userId,
+        displayName: cleanName,
+        email: oldMember.email,
+        photoUrl: oldMember.photoUrl,
+        role: oldMember.role,
+        joinedAt: oldMember.joinedAt,
+      );
+      final updatedSpace = space.copyWith(members: updatedMembers);
+      state = state.copyWith(currentSpace: updatedSpace);
+      await _storageService.saveCurrentSpace(updatedSpace);
+    }
+
+    if (space.id != 'space_default') {
+      await _spaceService.updateMemberDisplayName(
+        spaceId: space.id,
+        userId: user.id,
+        newName: cleanName,
+      );
     }
   }
 

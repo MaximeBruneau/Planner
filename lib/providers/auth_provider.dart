@@ -146,6 +146,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return 'Authentication error: ${error.toString().split(']').last.trim()}';
   }
 
+  Future<bool> updateDisplayName(String newName) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final updated = await _authSyncService.updateDisplayName(newName);
+      if (updated != null) {
+        state = AuthState(user: updated, isLoading: false);
+        return true;
+      }
+      state = state.copyWith(isLoading: false);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to update nickname. Please try again.',
+      );
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
     await _authSyncService.signOut();

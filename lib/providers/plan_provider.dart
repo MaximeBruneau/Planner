@@ -83,13 +83,18 @@ class PlanNotifier extends StateNotifier<PlanState> {
     });
   }
 
+  AppUser _getCurrentUser() {
+    return _ref.read(authProvider).user ??
+        _storageService.getSavedUser() ??
+        AppUser(id: 'local_user', displayName: 'Planner User', email: '');
+  }
+
   void _subscribeToSpace(String spaceId) {
     if (spaceId.isEmpty) return;
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
 
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     // Stream Activities
     _activitySubscription = _planService.streamSpaceActivities(
@@ -168,8 +173,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
     final space = _ref.read(spaceProvider).currentSpace;
     final spaceId = space?.id ?? 'space_default';
     final dateStr = DateUtilsHelper.formatYmd(date);
@@ -211,8 +215,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   Future<void> toggleUpvote(PlanActivity activity) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     final upvoters = List<String>.from(activity.upvoterIds);
     final hasVoted = upvoters.contains(user.id);
@@ -254,8 +257,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   Future<void> toggleDone(PlanActivity activity) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     final isNowDone = !activity.isDone;
     final updated = activity.copyWith(
@@ -292,8 +294,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   Future<void> deleteActivity(PlanActivity activity) async {
-    final user = _ref.read(authProvider).user ??
-        AppUser(id: 'local_user', displayName: 'Planner Friend', email: '');
+    final user = _getCurrentUser();
 
     final notif = ActivityNotification(
       id: 'notif_${DateTime.now().millisecondsSinceEpoch}',

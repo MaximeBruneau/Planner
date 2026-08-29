@@ -92,13 +92,19 @@ class _JoinSpaceDialogState extends ConsumerState<JoinSpaceDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  FocusScope.of(context).unfocus();
+                  Navigator.pop(context);
+                },
           child: const Text("Cancel"),
         ),
         ElevatedButton(
           onPressed: _isSubmitting
               ? null
               : () async {
+                  FocusScope.of(context).unfocus();
                   final code = _joinCodeController.text.trim();
                   if (code.isEmpty) return;
 

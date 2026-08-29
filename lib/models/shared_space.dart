@@ -31,10 +31,19 @@ class SpaceMember {
   }
 
   factory SpaceMember.fromMap(Map<String, dynamic> map) {
+    final email = map['email'] as String? ?? '';
+    var name = (map['displayName'] as String?)?.trim() ?? '';
+    if (name.isEmpty || name.toLowerCase() == 'member' || name.toLowerCase() == 'user') {
+      if (email.contains('@')) {
+        name = email.split('@')[0];
+      } else if (name.isEmpty) {
+        name = 'Member';
+      }
+    }
     return SpaceMember(
       userId: map['userId'] as String? ?? '',
-      displayName: map['displayName'] as String? ?? 'Member',
-      email: map['email'] as String? ?? '',
+      displayName: name,
+      email: email,
       photoUrl: map['photoUrl'] as String?,
       role: map['role'] as String? ?? 'member',
       joinedAt: DateUtilsHelper.parseDateTime(map['joinedAt']),

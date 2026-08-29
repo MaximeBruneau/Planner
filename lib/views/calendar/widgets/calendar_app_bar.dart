@@ -35,7 +35,10 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       title: InkWell(
-        onTap: () => SpaceManagementSheet.show(context),
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          SpaceManagementSheet.show(context);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
@@ -109,7 +112,10 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
               padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: const Icon(Icons.lightbulb_outline_rounded, size: 21),
-              onPressed: () => IdeaBankSheet.show(context),
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                IdeaBankSheet.show(context);
+              },
             ),
             if (totalIdeasCount > 0)
               Positioned(
@@ -148,6 +154,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: const Icon(Icons.notifications_outlined, size: 21),
               onPressed: () {
+                FocusScope.of(context).unfocus();
                 ActivityNotificationsSheet.show(
                   context,
                   onDateSelected: onDateSelectedFromNotifications,
@@ -187,7 +194,10 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           icon: const Icon(Icons.today_rounded, size: 21),
-          onPressed: onTodayPressed,
+          onPressed: () {
+            FocusScope.of(context).unfocus();
+            onTodayPressed();
+          },
         ),
         // Settings
         IconButton(
@@ -196,6 +206,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           icon: const Icon(Icons.settings_rounded, size: 21),
           onPressed: () {
+            FocusScope.of(context).unfocus();
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             );

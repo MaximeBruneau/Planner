@@ -6,11 +6,13 @@ import '../../../../models/shared_space.dart';
 class MemberListTile extends StatelessWidget {
   final SpaceMember member;
   final bool isMe;
+  final VoidCallback? onEditPseudo;
 
   const MemberListTile({
     super.key,
     required this.member,
     required this.isMe,
+    this.onEditPseudo,
   });
 
   @override
@@ -45,11 +47,14 @@ class MemberListTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      member.displayName,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                    Flexible(
+                      child: Text(
+                        member.displayName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (isMe) ...[
@@ -69,6 +74,17 @@ class MemberListTile extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (onEditPseudo != null) ...[
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: onEditPseudo,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: Icon(Icons.edit_rounded, size: 14, color: colorScheme.primary),
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),

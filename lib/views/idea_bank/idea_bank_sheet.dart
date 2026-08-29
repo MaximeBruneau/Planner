@@ -67,69 +67,75 @@ class _IdeaBankSheetState extends ConsumerState<IdeaBankSheet> {
 
     final filteredIdeas = ideaState.filteredIdeas;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.90,
-        maxWidth: 640,
-      ),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          IdeaBankHeader(
-            ideaState: ideaState,
-            isSearching: _isSearching,
-            onToggleSearch: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  ideaNotifier.setSearchQuery('');
-                }
-              });
-            },
-            onClearSearch: () {
-              _searchController.clear();
-              ideaNotifier.setSearchQuery('');
-            },
-            onSearchChanged: (val) => ideaNotifier.setSearchQuery(val),
-            searchController: _searchController,
-            onRandomPick: () => _onRandomPick(ideaState),
-          ),
-
-          const SizedBox(height: 10),
-
-          CategoryFilterChips(ideaState: ideaState),
-
-          const Divider(height: 1),
-
-          // Idea List / Empty State
-          Expanded(
-            child: SafeArea(
-              top: false,
-              child: filteredIdeas.isEmpty
-                  ? IdeaBankEmptyState(ideaState: ideaState)
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      itemCount: filteredIdeas.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final idea = filteredIdeas[index];
-                        final isUpvoted = idea.isUpvotedBy(currentUserId);
-
-                        return IdeaCard(
-                          idea: idea,
-                          isUpvoted: isUpvoted,
-                          onUpvote: () => ideaNotifier.toggleUpvote(idea),
-                          onDelete: () => ideaNotifier.deleteIdea(idea),
-                        );
-                      },
-                    ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.90,
+          maxWidth: 640,
+        ),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            IdeaBankHeader(
+              ideaState: ideaState,
+              isSearching: _isSearching,
+              onToggleSearch: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchController.clear();
+                    ideaNotifier.setSearchQuery('');
+                  }
+                });
+              },
+              onClearSearch: () {
+                _searchController.clear();
+                ideaNotifier.setSearchQuery('');
+              },
+              onSearchChanged: (val) => ideaNotifier.setSearchQuery(val),
+              searchController: _searchController,
+              onRandomPick: () => _onRandomPick(ideaState),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 10),
+
+            CategoryFilterChips(ideaState: ideaState),
+
+            const Divider(height: 1),
+
+            // Idea List / Empty State
+            Expanded(
+              child: SafeArea(
+                top: false,
+                child: filteredIdeas.isEmpty
+                    ? IdeaBankEmptyState(ideaState: ideaState)
+                    : ListView.separated(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        itemCount: filteredIdeas.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final idea = filteredIdeas[index];
+                          final isUpvoted = idea.isUpvotedBy(currentUserId);
+
+                          return IdeaCard(
+                            idea: idea,
+                            isUpvoted: isUpvoted,
+                            onUpvote: () => ideaNotifier.toggleUpvote(idea),
+                            onDelete: () => ideaNotifier.deleteIdea(idea),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

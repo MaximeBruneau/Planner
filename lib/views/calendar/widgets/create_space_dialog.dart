@@ -66,13 +66,19 @@ class _CreateSpaceDialogState extends ConsumerState<CreateSpaceDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  FocusScope.of(context).unfocus();
+                  Navigator.pop(context);
+                },
           child: const Text("Cancel"),
         ),
         ElevatedButton(
           onPressed: _isSubmitting
               ? null
               : () async {
+                  FocusScope.of(context).unfocus();
                   final name = _createNameController.text.trim();
                   setState(() => _isSubmitting = true);
 

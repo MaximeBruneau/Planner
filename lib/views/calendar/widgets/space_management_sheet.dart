@@ -55,6 +55,77 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
     }
   }
 
+  void _showEditPseudoDialog(BuildContext context, String currentName) {
+    final controller = TextEditingController(text: currentName);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Text("✏️", style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Text(
+              "Edit your Pseudo",
+              style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 20),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Your friends will see this name in the group and on shared plans.",
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: "Your Pseudo / Nickname",
+                hintText: "e.g. Alex, Sam 🍕, Captain",
+                prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                Navigator.pop(ctx);
+                await ref.read(authProvider.notifier).updateDisplayName(newName);
+                await ref.read(spaceProvider.notifier).updateMyMemberName(newName);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("✨ Pseudo updated to \"$newName\"!"),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -123,14 +194,14 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                         currentSpace.name,
                         style: GoogleFonts.fredoka(
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
-                        "${currentSpace.memberCount} member${currentSpace.memberCount > 1 ? 's' : ''} sharing this calendar",
+                        "${currentSpace.memberCount} member${currentSpace.memberCount > 1 ? 's' : ''}",
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
@@ -144,6 +215,7 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
           const Divider(height: 1),
 
           Expanded(
@@ -195,7 +267,13 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                       child: Column(
                         children: membersList.map((m) {
                           final isMe = m.userId == authState.user?.id;
-                          return MemberListTile(member: m, isMe: isMe);
+                          return MemberListTile(
+                            member: m,
+                            isMe: isMe,
+                            onEditPseudo: isMe
+                                ? () => _showEditPseudoDialog(context, m.displayName)
+                                : null,
+                          );
                         }).toList(),
                       ),
                     ),

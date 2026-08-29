@@ -50,6 +50,7 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _isSubmitting = true);
 
     await ref.read(ideaProvider.notifier).addIdea(
@@ -69,19 +70,23 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
     final colorScheme = theme.colorScheme;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Drag handle
             Center(
@@ -293,8 +298,9 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
         ),
       ),
     ),
-  );
-  }
+  ),
+);
+}
 
   String _getHintForCategory(IdeaCategory category) {
     switch (category) {

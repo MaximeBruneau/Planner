@@ -264,4 +264,22 @@ class SpaceService {
       await _storageService.saveCurrentSpace(null);
     }
   }
+
+  /// Update a member's display name inside a shared space
+  Future<void> updateMemberDisplayName({
+    required String spaceId,
+    required String userId,
+    required String newName,
+  }) async {
+    if (spaceId.isEmpty || userId.isEmpty || newName.trim().isEmpty) return;
+    try {
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('spaces').doc(spaceId).update({
+        'members.$userId.displayName': newName.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Update member name in space notice: $e');
+    }
+  }
 }

@@ -60,6 +60,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _pickRandomIdea() {
+    FocusScope.of(context).unfocus();
     final idea = ref.read(ideaProvider.notifier).pickRandomIdea();
     if (idea != null) {
       RandomIdeaDialog.show(context, initialIdea: idea);
@@ -69,6 +70,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _onDateSelected(DateTime date) {
+    FocusScope.of(context).unfocus();
     setState(() {
       _focusedDay = date;
       _selectedDay = date;
@@ -103,50 +105,60 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         onTodayPressed: () => _onDateSelected(DateTime.now()),
         onDateSelectedFromNotifications: _onDateSelected,
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: Column(
-            children: [
-              // In-app live notification banner (auto-dismisses after 2s)
-              InAppNoticeBanner(
-                notice: planState.lastInAppNotice,
-                onTap: () {
-                  ActivityNotificationsSheet.show(
-                    context,
-                    onDateSelected: _onDateSelected,
-                  );
-                },
-                onClose: () => planNotifier.clearNotice(),
-              ),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              children: [
+                // In-app live notification banner (auto-dismisses after 2s)
+                InAppNoticeBanner(
+                  notice: planState.lastInAppNotice,
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    ActivityNotificationsSheet.show(
+                      context,
+                      onDateSelected: _onDateSelected,
+                    );
+                  },
+                  onClose: () => planNotifier.clearNotice(),
+                ),
 
-              // Expanded Scrollable Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Monthly Calendar Card
-                      CalendarMonthCard(
-                        focusedDay: _focusedDay,
-                        selectedDay: _selectedDay,
-                        adaptiveRowHeight: adaptiveRowHeight,
-                        adaptiveDaysOfWeekHeight: adaptiveDaysOfWeekHeight,
-                        getCountForDate: (day) => planNotifier.getCountForDate(day),
-                        onDaySelected: (selectedDay, focusedDay) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
-                          });
-                        },
-                        onPageChanged: (focusedDay) {
-                          setState(() {
-                            _focusedDay = focusedDay;
-                          });
-                        },
-                      ),
+                // Expanded Scrollable Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14.0, vertical: 4.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Monthly Calendar Card
+                        CalendarMonthCard(
+                          focusedDay: _focusedDay,
+                          selectedDay: _selectedDay,
+                          adaptiveRowHeight: adaptiveRowHeight,
+                          adaptiveDaysOfWeekHeight: adaptiveDaysOfWeekHeight,
+                          getCountForDate: (day) =>
+                              planNotifier.getCountForDate(day),
+                          onDaySelected: (selectedDay, focusedDay) {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
+                          },
+                          onPageChanged: (focusedDay) {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _focusedDay = focusedDay;
+                            });
+                          },
+                        ),
                       const SizedBox(height: 14),
 
                       // Selected Day Header (1 Date = 1 List)
@@ -202,6 +214,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
