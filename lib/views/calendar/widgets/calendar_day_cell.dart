@@ -99,49 +99,16 @@ class CalendarDayCell extends StatelessWidget {
                             : textColor.withValues(alpha: isOutside ? 0.25 : 0.9)),
                   ),
                 ),
-                if (!isOutside && (hasItems || isUnavailable)) ...[
+                if (hasItems && !isOutside) ...[
                   const SizedBox(height: 3),
-                  if (hasItems && isUnavailable)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: const BoxDecoration(
-                            color: redColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    )
-                  else if (isUnavailable)
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: redColor,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                  else
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
                     ),
+                  ),
                 ],
               ],
             ),

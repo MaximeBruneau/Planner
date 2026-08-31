@@ -349,21 +349,6 @@ class PlanService {
               .collection('unavailabilities')
               .doc(unavailId)
               .delete();
-
-          // Log notification
-          await logNotification(
-            spaceId: spaceId,
-            notification: ActivityNotification(
-              id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
-              spaceId: spaceId,
-              title: '${user.displayName} is now available on $date',
-              type: NotificationType.available,
-              authorName: user.displayName,
-              authorPhotoUrl: user.photoUrl,
-              date: date,
-              createdAt: DateTime.now(),
-            ),
-          );
         } catch (e) {
           debugPrint('Error removing cloud unavailability: $e');
         }
@@ -391,21 +376,6 @@ class PlanService {
               .collection('unavailabilities')
               .doc(unavailId)
               .set(newUnavail.toMap(), SetOptions(merge: true));
-
-          // Log notification
-          await logNotification(
-            spaceId: spaceId,
-            notification: ActivityNotification(
-              id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
-              spaceId: spaceId,
-              title: '${user.displayName} is not available on $date 🚫',
-              type: NotificationType.unavailable,
-              authorName: user.displayName,
-              authorPhotoUrl: user.photoUrl,
-              date: date,
-              createdAt: DateTime.now(),
-            ),
-          );
         } catch (e) {
           debugPrint('Error saving cloud unavailability: $e');
         }
