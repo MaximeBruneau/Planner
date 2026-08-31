@@ -12,6 +12,8 @@ class CalendarMonthCard extends StatelessWidget {
   final void Function(DateTime selectedDay, DateTime focusedDay) onDaySelected;
   final void Function(DateTime focusedDay) onPageChanged;
   final int Function(DateTime day) getCountForDate;
+  final bool Function(DateTime day)? isUnavailableForDate;
+  final int Function(DateTime day)? getUnavailableCountForDate;
 
   const CalendarMonthCard({
     super.key,
@@ -22,6 +24,8 @@ class CalendarMonthCard extends StatelessWidget {
     required this.onDaySelected,
     required this.onPageChanged,
     required this.getCountForDate,
+    this.isUnavailableForDate,
+    this.getUnavailableCountForDate,
   });
 
   @override
@@ -77,24 +81,36 @@ class CalendarMonthCard extends StatelessWidget {
           calendarBuilders: CalendarBuilders(
             defaultBuilder: (context, day, focusedDay) {
               final count = getCountForDate(day);
+              final isUnavailable = isUnavailableForDate?.call(day) ?? false;
+              final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
               return CalendarDayCell(
                 day: day,
                 count: count,
+                isUnavailable: isUnavailable,
+                unavailableCount: unavailableCount,
               );
             },
             selectedBuilder: (context, day, focusedDay) {
               final count = getCountForDate(day);
+              final isUnavailable = isUnavailableForDate?.call(day) ?? false;
+              final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
               return CalendarDayCell(
                 day: day,
                 count: count,
+                isUnavailable: isUnavailable,
+                unavailableCount: unavailableCount,
                 isSelected: true,
               );
             },
             todayBuilder: (context, day, focusedDay) {
               final count = getCountForDate(day);
+              final isUnavailable = isUnavailableForDate?.call(day) ?? false;
+              final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
               return CalendarDayCell(
                 day: day,
                 count: count,
+                isUnavailable: isUnavailable,
+                unavailableCount: unavailableCount,
                 isToday: true,
                 isSelected: isSameDay(selectedDay, day),
               );

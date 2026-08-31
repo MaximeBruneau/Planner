@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
+import '../../models/day_unavailability.dart';
 import '../../models/app_user.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
@@ -288,6 +289,126 @@ class PlanService {
         }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('Error deleting cloud activity: $e');
+      }
+    }
+  }
+
+  /// Stream member unavailabilities for a given shared space
+  Stream<List<DayUnavailability>> streamSpaceUnavailabilities({
+    required String spaceId,
+  }) {
+    if (spaceId.isEmpty) {
+      return Stream.value(_storageService.getSpaceUnavailabilities(spaceId));
+    }
+
+    try {
+      final collection = FirebaseFirestore.instance
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('unavailabilities');
+
+      return collection.snapshots().map((snapshot) {
+        final List<DayUnavailability> unavailabilities = [];
+        for (final doc in snapshot.docs) {
+          try {
+            final u = DayUnavailability.fromMap(doc.data());
+            unavailabilities.add(u);
+          } catch (e) {
+            debugPrint('Error parsing unavailability: $e');
+          }
+        }
+        _storageService.saveSpaceUnavailabilities(spaceId, unavailabilities);
+        return unavailabilities;
+      });
+    } catch (e) {
+      debugPrint('Error streaming unavailabilities: $e');
+      return Stream.value(_storageService.getSpaceUnavailabilities(spaceId));
+    }
+  }
+
+  /// Toggle a member's unavailability for a specific date
+  Future<void> toggleUserUnavailability({
+    required String spaceId,
+    required String date,
+    required AppUser user,
+  }) async {
+    final unavailId = '${spaceId}_${date}_${user.id}';
+    final cached = _storageService.getSpaceUnavailabilities(spaceId);
+    final isAlreadyUnavailable = cached.any((u) => u.id == unavailId || (u.date == date && u.userId == user.id));
+
+    if (isAlreadyUnavailable) {
+      // Remove unavailability
+      cached.removeWhere((u) => u.id == unavailId || (u.date == date && u.userId == user.id));
+      await _storageService.saveSpaceUnavailabilities(spaceId, cached);
+
+      if (spaceId.isNotEmpty && spaceId != 'space_default') {
+        try {
+          await FirebaseFirestore.instance
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('unavailabilities')
+              .doc(unavailId)
+              .delete();
+
+          // Log notification
+          await logNotification(
+            spaceId: spaceId,
+            notification: ActivityNotification(
+              id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
+              spaceId: spaceId,
+              title: '${user.displayName} is now available on $date',
+              type: NotificationType.available,
+              authorName: user.displayName,
+              authorPhotoUrl: user.photoUrl,
+              date: date,
+              createdAt: DateTime.now(),
+            ),
+          );
+        } catch (e) {
+          debugPrint('Error removing cloud unavailability: $e');
+        }
+      }
+    } else {
+      // Add unavailability
+      final newUnavail = DayUnavailability(
+        id: unavailId,
+        spaceId: spaceId,
+        date: date,
+        userId: user.id,
+        userName: user.displayName,
+        userPhotoUrl: user.photoUrl,
+        createdAt: DateTime.now(),
+      );
+
+      cached.add(newUnavail);
+      await _storageService.saveSpaceUnavailabilities(spaceId, cached);
+
+      if (spaceId.isNotEmpty && spaceId != 'space_default') {
+        try {
+          await FirebaseFirestore.instance
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('unavailabilities')
+              .doc(unavailId)
+              .set(newUnavail.toMap(), SetOptions(merge: true));
+
+          // Log notification
+          await logNotification(
+            spaceId: spaceId,
+            notification: ActivityNotification(
+              id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
+              spaceId: spaceId,
+              title: '${user.displayName} is not available on $date 🚫',
+              type: NotificationType.unavailable,
+              authorName: user.displayName,
+              authorPhotoUrl: user.photoUrl,
+              date: date,
+              createdAt: DateTime.now(),
+            ),
+          );
+        } catch (e) {
+          debugPrint('Error saving cloud unavailability: $e');
+        }
       }
     }
   }

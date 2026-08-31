@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 class CalendarDayCell extends StatelessWidget {
   final DateTime day;
   final int count;
+  final bool isUnavailable;
+  final int unavailableCount;
   final bool isSelected;
   final bool isToday;
   final bool isOutside;
@@ -12,6 +14,8 @@ class CalendarDayCell extends StatelessWidget {
     super.key,
     required this.day,
     this.count = 0,
+    this.isUnavailable = false,
+    this.unavailableCount = 0,
     this.isSelected = false,
     this.isToday = false,
     this.isOutside = false,
@@ -23,15 +27,24 @@ class CalendarDayCell extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final hasItems = count > 0;
 
-    Color backgroundColor = Colors.transparent;
+    const redColor = Color(0xFFE53935);
+    final redTint = redColor.withValues(alpha: isSelected ? 0.24 : 0.16);
+
+    Color backgroundColor = isUnavailable && !isOutside ? redTint : Colors.transparent;
     Color textColor = isOutside
         ? colorScheme.onSurface.withValues(alpha: 0.25)
-        : colorScheme.onSurface;
-    BoxBorder? border;
+        : (isUnavailable && !isSelected && !isToday
+            ? const Color(0xFFC62828)
+            : colorScheme.onSurface);
+    BoxBorder? border = isUnavailable && !isOutside && !isSelected && !isToday
+        ? Border.all(color: redColor.withValues(alpha: 0.35), width: 1.0)
+        : null;
     List<BoxShadow> shadows = [];
 
     if (isSelected) {
-      backgroundColor = colorScheme.primary.withValues(alpha: 0.14);
+      backgroundColor = isUnavailable
+          ? Color.alphaBlend(redTint, colorScheme.primary.withValues(alpha: 0.16))
+          : colorScheme.primary.withValues(alpha: 0.14);
       border = Border.all(color: colorScheme.primary, width: 2.0);
       shadows = [
         BoxShadow(
@@ -41,7 +54,9 @@ class CalendarDayCell extends StatelessWidget {
         ),
       ];
     } else if (isToday) {
-      backgroundColor = colorScheme.secondary.withValues(alpha: 0.10);
+      backgroundColor = isUnavailable
+          ? Color.alphaBlend(redTint, colorScheme.secondary.withValues(alpha: 0.12))
+          : colorScheme.secondary.withValues(alpha: 0.10);
       border = Border.all(
         color: colorScheme.secondary,
         width: 1.5,
@@ -76,24 +91,57 @@ class CalendarDayCell extends StatelessWidget {
                   '${day.day}',
                   style: GoogleFonts.fredoka(
                     fontSize: daySize,
-                    fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected || isToday ? FontWeight.w700 : (isUnavailable ? FontWeight.w600 : FontWeight.w500),
                     color: isSelected
                         ? colorScheme.primary
                         : (isToday
                             ? colorScheme.secondary
-                            : textColor.withValues(alpha: isOutside ? 0.25 : 0.85)),
+                            : textColor.withValues(alpha: isOutside ? 0.25 : 0.9)),
                   ),
                 ),
-                if (hasItems && !isOutside) ...[
+                if (!isOutside && (hasItems || isUnavailable)) ...[
                   const SizedBox(height: 3),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
+                  if (hasItems && isUnavailable)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: redColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (isUnavailable)
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: redColor,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
                 ],
               ],
             ),

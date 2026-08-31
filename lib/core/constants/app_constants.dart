@@ -11,6 +11,7 @@ abstract final class StorageKeys {
   static const String activitiesPrefix = 'super_planner_activities_';
   static const String notificationsPrefix = 'super_planner_notifications_';
   static const String ideasPrefix = 'super_planner_ideas_';
+  static const String unavailabilitiesPrefix = 'super_planner_unavailabilities_';
   static const String settings = 'super_planner_settings_v1';
 }
 
@@ -47,5 +48,6 @@ abstract final class FirestoreCollections {
   static const String activities = 'activities';
   static const String notifications = 'notifications';
   static const String ideas = 'ideas';
+  static const String unavailabilities = 'unavailabilities';
   static const String users = 'users';
 }

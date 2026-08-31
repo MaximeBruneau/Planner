@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
+import '../../models/day_unavailability.dart';
 import '../../models/app_user.dart';
 import '../../core/utils/date_utils_helper.dart';
 import '../core/services/plan_service.dart';
@@ -13,21 +14,42 @@ import 'space_provider.dart';
 class PlanState {
   final List<PlanActivity> activities;
   final List<ActivityNotification> notifications;
+  final List<DayUnavailability> unavailabilities;
   final bool isLoading;
   final String? lastInAppNotice;
 
   const PlanState({
     this.activities = const [],
     this.notifications = const [],
+    this.unavailabilities = const [],
     this.isLoading = false,
     this.lastInAppNotice,
   });
 
   int get unreadNotificationsCount => notifications.where((n) => !n.isRead).length;
 
+  /// Returns list of unavailabilities for a given date
+  List<DayUnavailability> getUnavailabilitiesForDate(DateTime date) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    return unavailabilities.where((u) => u.date == dateStr).toList();
+  }
+
+  /// Returns true if a specific user is marked unavailable on this date
+  bool isUserUnavailable(DateTime date, String userId) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    return unavailabilities.any((u) => u.date == dateStr && u.userId == userId);
+  }
+
+  /// Returns true if any member is marked unavailable on this date
+  bool hasUnavailability(DateTime date) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    return unavailabilities.any((u) => u.date == dateStr);
+  }
+
   PlanState copyWith({
     List<PlanActivity>? activities,
     List<ActivityNotification>? notifications,
+    List<DayUnavailability>? unavailabilities,
     bool? isLoading,
     String? lastInAppNotice,
     bool clearNotice = false,
@@ -35,6 +57,7 @@ class PlanState {
     return PlanState(
       activities: activities ?? this.activities,
       notifications: notifications ?? this.notifications,
+      unavailabilities: unavailabilities ?? this.unavailabilities,
       isLoading: isLoading ?? this.isLoading,
       lastInAppNotice: clearNotice ? null : (lastInAppNotice ?? this.lastInAppNotice),
     );
@@ -47,6 +70,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   final Ref _ref;
   StreamSubscription<List<PlanActivity>>? _activitySubscription;
   StreamSubscription<List<ActivityNotification>>? _notificationSubscription;
+  StreamSubscription<List<DayUnavailability>>? _unavailabilitySubscription;
   Timer? _noticeAutoDismissTimer;
 
   PlanNotifier(this._planService, this._storageService, this._ref)
@@ -59,9 +83,11 @@ class PlanNotifier extends StateNotifier<PlanState> {
     if (currentSpace != null) {
       final cachedActivities = _storageService.getSpaceActivities(currentSpace.id);
       final cachedNotifications = _storageService.getSpaceNotifications(currentSpace.id);
+      final cachedUnavailabilities = _storageService.getSpaceUnavailabilities(currentSpace.id);
       state = state.copyWith(
         activities: cachedActivities,
         notifications: cachedNotifications,
+        unavailabilities: cachedUnavailabilities,
       );
       _subscribeToSpace(currentSpace.id);
     }
@@ -70,14 +96,17 @@ class PlanNotifier extends StateNotifier<PlanState> {
       if (next.currentSpace != null) {
         final cachedActivities = _storageService.getSpaceActivities(next.currentSpace!.id);
         final cachedNotifications = _storageService.getSpaceNotifications(next.currentSpace!.id);
+        final cachedUnavailabilities = _storageService.getSpaceUnavailabilities(next.currentSpace!.id);
         state = state.copyWith(
           activities: cachedActivities,
           notifications: cachedNotifications,
+          unavailabilities: cachedUnavailabilities,
         );
         _subscribeToSpace(next.currentSpace!.id);
       } else {
         _activitySubscription?.cancel();
         _notificationSubscription?.cancel();
+        _unavailabilitySubscription?.cancel();
         state = const PlanState();
       }
     });
@@ -93,6 +122,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
     if (spaceId.isEmpty) return;
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
+    _unavailabilitySubscription?.cancel();
 
     final user = _getCurrentUser();
 
@@ -113,6 +143,13 @@ class PlanNotifier extends StateNotifier<PlanState> {
       currentUser: user,
     ).listen((notifications) {
       state = state.copyWith(notifications: notifications);
+    });
+
+    // Stream Unavailabilities
+    _unavailabilitySubscription = _planService.streamSpaceUnavailabilities(
+      spaceId: spaceId,
+    ).listen((unavailabilities) {
+      state = state.copyWith(unavailabilities: unavailabilities);
     });
   }
 
@@ -323,11 +360,46 @@ class PlanNotifier extends StateNotifier<PlanState> {
     await _planService.logNotification(spaceId: activity.spaceId, notification: notif);
   }
 
+  /// Toggle current user's unavailability for a specific date
+  Future<void> toggleMyUnavailability(DateTime date) async {
+    final user = _getCurrentUser();
+    final space = _ref.read(spaceProvider).currentSpace;
+    final spaceId = space?.id ?? 'space_default';
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    final unavailId = '${spaceId}_${dateStr}_${user.id}';
+
+    final isCurrentlyUnavailable = state.unavailabilities.any((u) => u.date == dateStr && u.userId == user.id);
+
+    // Optimistic UI state update
+    if (isCurrentlyUnavailable) {
+      final updated = state.unavailabilities.where((u) => !(u.date == dateStr && u.userId == user.id)).toList();
+      state = state.copyWith(unavailabilities: updated);
+    } else {
+      final newEntry = DayUnavailability(
+        id: unavailId,
+        spaceId: spaceId,
+        date: dateStr,
+        userId: user.id,
+        userName: user.displayName,
+        userPhotoUrl: user.photoUrl,
+        createdAt: DateTime.now(),
+      );
+      state = state.copyWith(unavailabilities: [...state.unavailabilities, newEntry]);
+    }
+
+    await _planService.toggleUserUnavailability(
+      spaceId: spaceId,
+      date: dateStr,
+      user: user,
+    );
+  }
+
   @override
   void dispose() {
     _noticeAutoDismissTimer?.cancel();
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
+    _unavailabilitySubscription?.cancel();
     super.dispose();
   }
 }

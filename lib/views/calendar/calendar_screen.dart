@@ -13,6 +13,7 @@ import 'widgets/activity_notifications_sheet.dart';
 import 'widgets/activity_list_item.dart';
 import 'widgets/add_activity_input.dart';
 import 'widgets/selected_day_header.dart';
+import 'widgets/selected_day_unavailability_card.dart';
 import 'widgets/empty_day_card.dart';
 import '../idea_bank/idea_bank_sheet.dart';
 import '../idea_bank/widgets/random_idea_dialog.dart';
@@ -145,6 +146,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           adaptiveDaysOfWeekHeight: adaptiveDaysOfWeekHeight,
                           getCountForDate: (day) =>
                               planNotifier.getCountForDate(day),
+                          isUnavailableForDate: (day) =>
+                              planState.hasUnavailability(day),
+                          getUnavailableCountForDate: (day) =>
+                              planState.getUnavailabilitiesForDate(day).length,
                           onDaySelected: (selectedDay, focusedDay) {
                             FocusScope.of(context).unfocus();
                             setState(() {
@@ -166,7 +171,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         selectedDay: _selectedDay,
                         itemCount: dayItems.length,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+
+                      // Member Unavailability Status Card & Quick Toggle
+                      SelectedDayUnavailabilityCard(
+                        selectedDay: _selectedDay,
+                        unavailabilities: planState.getUnavailabilitiesForDate(_selectedDay),
+                        isCurrentUserUnavailable: planState.isUserUnavailable(_selectedDay, currentUserId),
+                        onToggleAvailability: () => planNotifier.toggleMyUnavailability(_selectedDay),
+                      ),
+                      const SizedBox(height: 4),
 
                       // Inline Add Input Card
                       AddActivityInput(
