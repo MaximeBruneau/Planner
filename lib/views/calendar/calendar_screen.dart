@@ -176,8 +176,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       // Member Unavailability Status Card & Quick Toggle
                       SelectedDayUnavailabilityCard(
                         selectedDay: _selectedDay,
-                        unavailabilities: planState.getUnavailabilitiesForDate(_selectedDay),
-                        isCurrentUserUnavailable: planState.isUserUnavailable(_selectedDay, currentUserId),
+                        unavailabilities: planState.getUnavailabilitiesForDate(
+                          _selectedDay,
+                          currentUserId: currentUserId,
+                          currentUserName: authState.user?.displayName,
+                        ),
+                        isCurrentUserUnavailable: planState.isUserUnavailable(
+                          _selectedDay,
+                          currentUserId,
+                          userName: authState.user?.displayName,
+                        ),
                         onToggleAvailability: () => planNotifier.toggleMyUnavailability(_selectedDay),
                       ),
                       const SizedBox(height: 4),

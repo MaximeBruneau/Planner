@@ -150,10 +150,11 @@ class SharedSpace {
       });
     }
 
-    // Deduplicate members by email to prevent duplicate cards
+    // Deduplicate members to prevent duplicate cards
     final emailToKey = <String, String>{};
     final keysToRemove = <String>[];
 
+    // 1. Merge by non-empty email
     membersMap.forEach((key, member) {
       if (member.email.isNotEmpty) {
         final lowerEmail = member.email.toLowerCase().trim();
@@ -184,8 +185,43 @@ class SharedSpace {
     for (final k in keysToRemove) {
       membersMap.remove(k);
     }
+    keysToRemove.clear();
 
-    final deduplicatedMemberIds = rawMemberIds.where((id) => membersMap.containsKey(id) || !keysToRemove.contains(id)).toSet().toList();
+    // 2. Merge by display name / owner role if email is missing or same person
+    final nameToKey = <String, String>{};
+    membersMap.forEach((key, member) {
+      final cleanName = member.displayName.toLowerCase().trim();
+      if (cleanName.isNotEmpty && cleanName != 'member' && cleanName != 'user') {
+        if (nameToKey.containsKey(cleanName)) {
+          final existingKey = nameToKey[cleanName]!;
+          final existing = membersMap[existingKey]!;
+          final email = existing.email.isNotEmpty ? existing.email : member.email;
+          final photo = existing.photoUrl ?? member.photoUrl;
+          final role = (existing.role == 'owner' || member.role == 'owner') ? 'owner' : 'member';
+
+          membersMap[existingKey] = SpaceMember(
+            userId: existingKey,
+            displayName: existing.displayName,
+            email: email,
+            photoUrl: photo,
+            role: role,
+            joinedAt: existing.joinedAt.isBefore(member.joinedAt) ? existing.joinedAt : member.joinedAt,
+          );
+          keysToRemove.add(key);
+        } else {
+          nameToKey[cleanName] = key;
+        }
+      }
+    });
+
+    for (final k in keysToRemove) {
+      membersMap.remove(k);
+    }
+
+    final deduplicatedMemberIds = rawMemberIds
+        .where((id) => membersMap.containsKey(id) && !keysToRemove.contains(id))
+        .toSet()
+        .toList();
 
     return SharedSpace(
       id: map['id'] as String? ?? '',

@@ -206,6 +206,19 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     await _spaceService.removeMember(spaceId: space.id, memberId: memberId);
   }
 
+  /// Update the current space name
+  Future<void> updateSpaceName(String newName) async {
+    final clean = newName.trim();
+    if (clean.isEmpty) return;
+    final space = state.currentSpace;
+    if (space == null || space.id == 'space_default') return;
+
+    final updated = space.copyWith(name: clean);
+    state = state.copyWith(currentSpace: updated);
+    await _storageService.saveCurrentSpace(updated);
+    await _spaceService.updateSpaceName(spaceId: space.id, newName: clean);
+  }
+
   @override
   void dispose() {
     _spaceSubscription?.cancel();

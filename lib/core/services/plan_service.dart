@@ -309,10 +309,18 @@ class PlanService {
 
       return collection.snapshots().map((snapshot) {
         final List<DayUnavailability> unavailabilities = [];
+        final Set<String> seenKeys = <String>{};
+
         for (final doc in snapshot.docs) {
           try {
             final u = DayUnavailability.fromMap(doc.data());
-            unavailabilities.add(u);
+            final cleanName = u.userName.toLowerCase().trim();
+            final key = '${u.date}_$cleanName';
+            if (!seenKeys.contains(key) && !seenKeys.contains('${u.date}_${u.userId}')) {
+              seenKeys.add(key);
+              seenKeys.add('${u.date}_${u.userId}');
+              unavailabilities.add(u);
+            }
           } catch (e) {
             debugPrint('Error parsing unavailability: $e');
           }
@@ -334,27 +342,56 @@ class PlanService {
   }) async {
     final unavailId = '${spaceId}_${date}_${user.id}';
     final cached = _storageService.getSpaceUnavailabilities(spaceId);
-    final isAlreadyUnavailable = cached.any((u) => u.id == unavailId || (u.date == date && u.userId == user.id));
+    final cleanUserName = user.displayName.toLowerCase().trim();
+
+    final isAlreadyUnavailable = cached.any((u) =>
+        u.date == date &&
+        (u.id == unavailId ||
+            u.userId == user.id ||
+            u.userName.toLowerCase().trim() == cleanUserName ||
+            u.userName == 'Lil "LeBg" Binks'));
 
     if (isAlreadyUnavailable) {
-      // Remove unavailability
-      cached.removeWhere((u) => u.id == unavailId || (u.date == date && u.userId == user.id));
+      // Remove all matching entries locally
+      cached.removeWhere((u) =>
+          u.date == date &&
+          (u.id == unavailId ||
+              u.userId == user.id ||
+              u.userName.toLowerCase().trim() == cleanUserName ||
+              u.userName == 'Lil "LeBg" Binks'));
       await _storageService.saveSpaceUnavailabilities(spaceId, cached);
 
       if (spaceId.isNotEmpty && spaceId != 'space_default') {
         try {
-          await FirebaseFirestore.instance
+          final firestore = FirebaseFirestore.instance;
+          final snap = await firestore
               .collection('spaces')
               .doc(spaceId)
               .collection('unavailabilities')
-              .doc(unavailId)
-              .delete();
+              .where('date', isEqualTo: date)
+              .get();
+
+          for (final doc in snap.docs) {
+            final data = doc.data();
+            final uid = data['userId'] as String? ?? '';
+            final uName = (data['userName'] as String? ?? '').toLowerCase().trim();
+            if (uid == user.id || uName == cleanUserName || uName == 'lil "lebg" binks' || doc.id.contains(user.id)) {
+              await doc.reference.delete();
+            }
+          }
         } catch (e) {
           debugPrint('Error removing cloud unavailability: $e');
         }
       }
     } else {
-      // Add unavailability
+      // Remove any lingering duplicates before adding
+      cached.removeWhere((u) =>
+          u.date == date &&
+          (u.id == unavailId ||
+              u.userId == user.id ||
+              u.userName.toLowerCase().trim() == cleanUserName ||
+              u.userName == 'Lil "LeBg" Binks'));
+
       final newUnavail = DayUnavailability(
         id: unavailId,
         spaceId: spaceId,
@@ -370,12 +407,29 @@ class PlanService {
 
       if (spaceId.isNotEmpty && spaceId != 'space_default') {
         try {
-          await FirebaseFirestore.instance
+          final firestore = FirebaseFirestore.instance;
+          // Delete any ghost document for this date first
+          final snap = await firestore
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('unavailabilities')
+              .where('date', isEqualTo: date)
+              .get();
+
+          for (final doc in snap.docs) {
+            final data = doc.data();
+            final uName = (data['userName'] as String? ?? '').toLowerCase().trim();
+            if (uName == cleanUserName || uName == 'lil "lebg" binks' || doc.id.contains(user.id)) {
+              await doc.reference.delete();
+            }
+          }
+
+          await firestore
               .collection('spaces')
               .doc(spaceId)
               .collection('unavailabilities')
               .doc(unavailId)
-              .set(newUnavail.toMap(), SetOptions(merge: true));
+              .set(newUnavail.toMap());
         } catch (e) {
           debugPrint('Error saving cloud unavailability: $e');
         }

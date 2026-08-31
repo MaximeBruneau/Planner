@@ -28,16 +28,55 @@ class PlanState {
 
   int get unreadNotificationsCount => notifications.where((n) => !n.isRead).length;
 
-  /// Returns list of unavailabilities for a given date
-  List<DayUnavailability> getUnavailabilitiesForDate(DateTime date) {
+  /// Returns list of unavailabilities for a given date, deduplicated per person
+  List<DayUnavailability> getUnavailabilitiesForDate(
+    DateTime date, {
+    String? currentUserId,
+    String? currentUserName,
+  }) {
     final dateStr = DateUtilsHelper.formatYmd(date);
-    return unavailabilities.where((u) => u.date == dateStr).toList();
+    final rawList = unavailabilities.where((u) => u.date == dateStr).toList();
+
+    final result = <DayUnavailability>[];
+    final seenUserIds = <String>{};
+    final seenUserNames = <String>{};
+
+    for (final u in rawList) {
+      final isMe = (currentUserId != null && currentUserId.isNotEmpty && u.userId == currentUserId) ||
+          (currentUserName != null && currentUserName.isNotEmpty && u.userName.toLowerCase().trim() == currentUserName.toLowerCase().trim()) ||
+          u.userName == 'Lil "LeBg" Binks';
+
+      final effectiveName = isMe && currentUserName != null && currentUserName.isNotEmpty
+          ? currentUserName
+          : u.userName;
+      final effectiveId = isMe && currentUserId != null && currentUserId.isNotEmpty
+          ? currentUserId
+          : u.userId;
+
+      final keyName = effectiveName.toLowerCase().trim();
+
+      if (!seenUserIds.contains(effectiveId) && !seenUserNames.contains(keyName)) {
+        seenUserIds.add(effectiveId);
+        seenUserNames.add(keyName);
+        result.add(u.copyWith(
+          userId: effectiveId,
+          userName: effectiveName,
+        ));
+      }
+    }
+
+    return result;
   }
 
   /// Returns true if a specific user is marked unavailable on this date
-  bool isUserUnavailable(DateTime date, String userId) {
+  bool isUserUnavailable(DateTime date, String userId, {String? userName}) {
     final dateStr = DateUtilsHelper.formatYmd(date);
-    return unavailabilities.any((u) => u.date == dateStr && u.userId == userId);
+    final cleanName = userName?.toLowerCase().trim();
+    return unavailabilities.any((u) =>
+        u.date == dateStr &&
+        (u.userId == userId ||
+            (cleanName != null && cleanName.isNotEmpty && u.userName.toLowerCase().trim() == cleanName) ||
+            u.userName == 'Lil "LeBg" Binks'));
   }
 
   /// Returns true if any member is marked unavailable on this date

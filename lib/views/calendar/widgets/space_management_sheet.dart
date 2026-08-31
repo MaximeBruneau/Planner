@@ -127,6 +127,73 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
     );
   }
 
+  void _showEditSpaceNameDialog(BuildContext context, String currentName) {
+    final controller = TextEditingController(text: currentName);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          "Edit Calendar Name 🗓️",
+          style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Choose a name for this shared calendar space.",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: "Calendar Space Name",
+                hintText: "e.g. Our Shared Calendar 🗓️",
+                prefixIcon: const Icon(Icons.edit_calendar_rounded, size: 20),
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                Navigator.pop(ctx);
+                await ref.read(spaceProvider.notifier).updateSpaceName(newName);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("✨ Calendar name updated to \"$newName\"!"),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmRemoveMember(BuildContext context, SpaceMember member) {
     final theme = Theme.of(context);
     showDialog(
@@ -235,13 +302,31 @@ class _SpaceManagementSheetState extends ConsumerState<SpaceManagementSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        currentSpace.name,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              currentSpace.name,
+                              style: GoogleFonts.fredoka(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isOwnerOfSpace) ...[
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () => _showEditSpaceNameDialog(context, currentSpace.name),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(Icons.edit_rounded, size: 16, color: colorScheme.primary),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       Text(
                         "${currentSpace.memberCount} member${currentSpace.memberCount > 1 ? 's' : ''}",

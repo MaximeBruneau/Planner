@@ -304,7 +304,7 @@ class SpaceService {
           ? newDisplayName!.trim()
           : user.displayName;
 
-      // Check if user already exists by ID or by email
+      // Check if user already exists by ID, email, or creator reference
       String? matchedKey;
       String currentRole = 'member';
       DateTime joinedAt = DateTime.now();
@@ -313,11 +313,12 @@ class SpaceService {
         final matchesId = k == user.id || v.userId == user.id;
         final matchesEmail = user.email.isNotEmpty &&
             v.email.isNotEmpty &&
-            v.email.toLowerCase() == user.email.toLowerCase();
+            v.email.toLowerCase().trim() == user.email.toLowerCase().trim();
+        final matchesCreator = currentSpace.creatorId == k || currentSpace.creatorId == v.userId;
 
-        if (matchesId || matchesEmail) {
+        if (matchesId || matchesEmail || matchesCreator) {
           matchedKey = k;
-          if (v.role == 'owner' || currentSpace.creatorId == k || currentSpace.creatorId == user.id) {
+          if (v.role == 'owner' || matchesCreator || currentSpace.creatorId == user.id) {
             currentRole = 'owner';
           }
           joinedAt = v.joinedAt;
@@ -329,18 +330,30 @@ class SpaceService {
       updatedMembers.forEach((k, v) {
         final matchesEmail = user.email.isNotEmpty &&
             v.email.isNotEmpty &&
-            v.email.toLowerCase() == user.email.toLowerCase();
-        if (k != user.id && (v.userId == user.id || matchesEmail)) {
+            v.email.toLowerCase().trim() == user.email.toLowerCase().trim();
+        final matchesOldName = v.displayName == 'Lil "LeBg" Binks';
+        final matchesCreator = currentSpace.creatorId == k;
+
+        if (k != user.id && (v.userId == user.id || matchesEmail || matchesOldName || (matchesCreator && currentRole == 'owner'))) {
           duplicateKeys.add(k);
         }
       });
 
-      for (final dupKey in duplicateKeys) {
-        updatedMembers.remove(dupKey);
-        memberIds.remove(dupKey);
+      if (duplicateKeys.isNotEmpty) {
+        final deleteMap = <String, dynamic>{};
+        for (final dupKey in duplicateKeys) {
+          deleteMap['members.$dupKey'] = FieldValue.delete();
+          updatedMembers.remove(dupKey);
+          memberIds.remove(dupKey);
+        }
+        try {
+          await firestore.collection('spaces').doc(spaceId).update(deleteMap);
+        } catch (e) {
+          debugPrint('Error deleting duplicate member fields in Firestore: $e');
+        }
       }
 
-      // If user is the space creator, ensure owner role
+      // If user is the space creator or owner, ensure owner role
       if (currentSpace.creatorId == user.id ||
           (matchedKey != null && currentSpace.creatorId == matchedKey)) {
         currentRole = 'owner';
@@ -361,9 +374,7 @@ class SpaceService {
         memberIds.add(user.id);
       }
 
-      final creatorId = (matchedKey != null && currentSpace.creatorId == matchedKey)
-          ? user.id
-          : currentSpace.creatorId;
+      final creatorId = (currentRole == 'owner') ? user.id : currentSpace.creatorId;
 
       final updatedSpace = currentSpace.copyWith(
         creatorId: creatorId,
@@ -374,7 +385,6 @@ class SpaceService {
 
       await firestore.collection('spaces').doc(spaceId).set(
         updatedSpace.toMap(),
-        SetOptions(merge: true),
       );
 
       await _storageService.saveCurrentSpace(updatedSpace);
@@ -400,6 +410,29 @@ class SpaceService {
       });
     } catch (e) {
       debugPrint('Remove member error: $e');
+    }
+  }
+
+  /// Update space name
+  Future<void> updateSpaceName({
+    required String spaceId,
+    required String newName,
+  }) async {
+    final clean = newName.trim();
+    if (spaceId.isEmpty || clean.isEmpty) return;
+    try {
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('spaces').doc(spaceId).update({
+        'name': clean,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      final cached = _storageService.getCurrentSpace();
+      if (cached != null && cached.id == spaceId) {
+        final updated = cached.copyWith(name: clean, updatedAt: DateTime.now());
+        await _storageService.saveCurrentSpace(updated);
+      }
+    } catch (e) {
+      debugPrint('Error updating space name: $e');
     }
   }
 }
