@@ -8,6 +8,7 @@ import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
 import '../../models/bank_idea.dart';
 import '../../models/day_unavailability.dart';
+import '../../models/day_shagging_availability.dart';
 import '../../models/app_settings.dart';
 
 class StorageService {
@@ -18,6 +19,7 @@ class StorageService {
   static const String _readNotifsPrefix = 'super_planner_read_notifs_';
   static const String _ideasPrefix = 'super_planner_ideas_';
   static const String _unavailabilitiesPrefix = 'super_planner_unavailabilities_';
+  static const String _shaggingAvailabilitiesPrefix = 'super_planner_shagging_availabilities_';
   static const String _settingsKey = 'super_planner_settings_v1';
 
   late SharedPreferences _prefs;
@@ -196,6 +198,32 @@ class StorageService {
       await _prefs.setString('$_unavailabilitiesPrefix$spaceId', jsonEncode(rawList));
     } catch (e) {
       debugPrint('Error saving space unavailabilities: $e');
+    }
+  }
+
+  // --- Space Member Shagging Tool Availabilities ---
+  List<DayShaggingAvailability> getSpaceShaggingAvailabilities(String spaceId) {
+    if (spaceId.isEmpty) return [];
+    try {
+      final jsonString = _prefs.getString('$_shaggingAvailabilitiesPrefix$spaceId');
+      if (jsonString == null || jsonString.isEmpty) return [];
+      final List<dynamic> rawList = jsonDecode(jsonString);
+      return rawList
+          .map((item) => DayShaggingAvailability.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error reading space shagging availabilities: $e');
+      return [];
+    }
+  }
+
+  Future<void> saveSpaceShaggingAvailabilities(String spaceId, List<DayShaggingAvailability> list) async {
+    if (spaceId.isEmpty) return;
+    try {
+      final rawList = list.map((u) => u.toMap()).toList();
+      await _prefs.setString('$_shaggingAvailabilitiesPrefix$spaceId', jsonEncode(rawList));
+    } catch (e) {
+      debugPrint('Error saving space shagging availabilities: $e');
     }
   }
 

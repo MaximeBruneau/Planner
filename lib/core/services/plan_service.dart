@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
 import '../../models/day_unavailability.dart';
+import '../../models/day_shagging_availability.dart';
 import '../../models/app_user.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
@@ -432,6 +433,150 @@ class PlanService {
               .set(newUnavail.toMap());
         } catch (e) {
           debugPrint('Error saving cloud unavailability: $e');
+        }
+      }
+    }
+  }
+
+  /// Stream member shagging tool availabilities for a given shared space
+  Stream<List<DayShaggingAvailability>> streamSpaceShaggingAvailabilities({
+    required String spaceId,
+  }) {
+    if (spaceId.isEmpty) {
+      return Stream.value(_storageService.getSpaceShaggingAvailabilities(spaceId));
+    }
+
+    try {
+      final collection = FirebaseFirestore.instance
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('shagging_availabilities');
+
+      return collection.snapshots().map((snapshot) {
+        final List<DayShaggingAvailability> list = [];
+        final Set<String> seenKeys = <String>{};
+
+        for (final doc in snapshot.docs) {
+          try {
+            final item = DayShaggingAvailability.fromMap(doc.data());
+            final cleanName = item.userName.toLowerCase().trim();
+            final key = '${item.date}_$cleanName';
+            if (!seenKeys.contains(key) && !seenKeys.contains('${item.date}_${item.userId}')) {
+              seenKeys.add(key);
+              seenKeys.add('${item.date}_${item.userId}');
+              list.add(item);
+            }
+          } catch (e) {
+            debugPrint('Error parsing shagging availability: $e');
+          }
+        }
+        _storageService.saveSpaceShaggingAvailabilities(spaceId, list);
+        return list;
+      });
+    } catch (e) {
+      debugPrint('Error streaming shagging availabilities: $e');
+      return Stream.value(_storageService.getSpaceShaggingAvailabilities(spaceId));
+    }
+  }
+
+  /// Toggle a member's shagging tool availability for a specific date
+  Future<void> toggleUserShaggingAvailability({
+    required String spaceId,
+    required String date,
+    required AppUser user,
+  }) async {
+    final toolId = '${spaceId}_${date}_${user.id}';
+    final cached = _storageService.getSpaceShaggingAvailabilities(spaceId);
+    final cleanUserName = user.displayName.toLowerCase().trim();
+
+    final isAlreadyAvailable = cached.any((u) =>
+        u.date == date &&
+        (u.id == toolId ||
+            u.userId == user.id ||
+            u.userName.toLowerCase().trim() == cleanUserName ||
+            u.userName == 'Lil "LeBg" Binks'));
+
+    if (isAlreadyAvailable) {
+      // Remove all matching entries locally
+      cached.removeWhere((u) =>
+          u.date == date &&
+          (u.id == toolId ||
+              u.userId == user.id ||
+              u.userName.toLowerCase().trim() == cleanUserName ||
+              u.userName == 'Lil "LeBg" Binks'));
+      await _storageService.saveSpaceShaggingAvailabilities(spaceId, cached);
+
+      if (spaceId.isNotEmpty && spaceId != 'space_default') {
+        try {
+          final firestore = FirebaseFirestore.instance;
+          final snap = await firestore
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('shagging_availabilities')
+              .where('date', isEqualTo: date)
+              .get();
+
+          for (final doc in snap.docs) {
+            final data = doc.data();
+            final uid = data['userId'] as String? ?? '';
+            final uName = (data['userName'] as String? ?? '').toLowerCase().trim();
+            if (uid == user.id || uName == cleanUserName || uName == 'lil "lebg" binks' || doc.id.contains(user.id)) {
+              await doc.reference.delete();
+            }
+          }
+        } catch (e) {
+          debugPrint('Error removing cloud shagging availability: $e');
+        }
+      }
+    } else {
+      // Remove any lingering duplicates before adding
+      cached.removeWhere((u) =>
+          u.date == date &&
+          (u.id == toolId ||
+              u.userId == user.id ||
+              u.userName.toLowerCase().trim() == cleanUserName ||
+              u.userName == 'Lil "LeBg" Binks'));
+
+      final newAvailability = DayShaggingAvailability(
+        id: toolId,
+        spaceId: spaceId,
+        date: date,
+        userId: user.id,
+        userName: user.displayName,
+        userPhotoUrl: user.photoUrl,
+        createdAt: DateTime.now(),
+      );
+
+      cached.add(newAvailability);
+      await _storageService.saveSpaceShaggingAvailabilities(spaceId, cached);
+
+      if (spaceId.isNotEmpty && spaceId != 'space_default') {
+        try {
+          final firestore = FirebaseFirestore.instance;
+          // Delete any ghost document for this date first
+          final snap = await firestore
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('shagging_availabilities')
+              .where('date', isEqualTo: date)
+              .get();
+
+          for (final doc in snap.docs) {
+            final data = doc.data();
+            final uName = (data['userName'] as String? ?? '').toLowerCase().trim();
+            if (uName == cleanUserName || uName == 'lil "lebg" binks' || doc.id.contains(user.id)) {
+              await doc.reference.delete();
+            }
+          }
+
+          await firestore
+              .collection('spaces')
+              .doc(spaceId)
+              .collection('shagging_availabilities')
+              .doc(toolId)
+              .set(newAvailability.toMap());
+        } catch (e) {
+          debugPrint('Error saving cloud shagging availability: $e');
         }
       }
     }

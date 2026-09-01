@@ -6,6 +6,7 @@ class CalendarDayCell extends StatelessWidget {
   final int count;
   final bool isUnavailable;
   final int unavailableCount;
+  final bool isShaggingAvailable;
   final bool isSelected;
   final bool isToday;
   final bool isOutside;
@@ -16,6 +17,7 @@ class CalendarDayCell extends StatelessWidget {
     this.count = 0,
     this.isUnavailable = false,
     this.unavailableCount = 0,
+    this.isShaggingAvailable = false,
     this.isSelected = false,
     this.isToday = false,
     this.isOutside = false,
@@ -30,21 +32,46 @@ class CalendarDayCell extends StatelessWidget {
     const redColor = Color(0xFFE53935);
     final redTint = redColor.withValues(alpha: isSelected ? 0.24 : 0.16);
 
-    Color backgroundColor = isUnavailable && !isOutside ? redTint : Colors.transparent;
+    const greenColor = Color(0xFF43A047);
+    final greenTint = greenColor.withValues(alpha: isSelected ? 0.24 : 0.16);
+
+    // Priority: Red (unavailability) takes priority over Green (shaging tool)
+    final bool showRed = isUnavailable;
+    final bool showGreen = !isUnavailable && isShaggingAvailable;
+
+    Color backgroundColor = Colors.transparent;
+    if (!isOutside) {
+      if (showRed) {
+        backgroundColor = redTint;
+      } else if (showGreen) {
+        backgroundColor = greenTint;
+      }
+    }
+
     Color textColor = isOutside
         ? colorScheme.onSurface.withValues(alpha: 0.25)
-        : (isUnavailable && !isSelected && !isToday
+        : (showRed && !isSelected && !isToday
             ? const Color(0xFFC62828)
-            : colorScheme.onSurface);
-    BoxBorder? border = isUnavailable && !isOutside && !isSelected && !isToday
-        ? Border.all(color: redColor.withValues(alpha: 0.35), width: 1.0)
+            : (showGreen && !isSelected && !isToday
+                ? const Color(0xFF2E7D32)
+                : colorScheme.onSurface));
+
+    BoxBorder? border = (!isOutside && !isSelected && !isToday)
+        ? (showRed
+            ? Border.all(color: redColor.withValues(alpha: 0.35), width: 1.0)
+            : (showGreen
+                ? Border.all(color: greenColor.withValues(alpha: 0.35), width: 1.0)
+                : null))
         : null;
+
     List<BoxShadow> shadows = [];
 
     if (isSelected) {
-      backgroundColor = isUnavailable
+      backgroundColor = showRed
           ? Color.alphaBlend(redTint, colorScheme.primary.withValues(alpha: 0.16))
-          : colorScheme.primary.withValues(alpha: 0.14);
+          : (showGreen
+              ? Color.alphaBlend(greenTint, colorScheme.primary.withValues(alpha: 0.16))
+              : colorScheme.primary.withValues(alpha: 0.14));
       border = Border.all(color: colorScheme.primary, width: 2.0);
       shadows = [
         BoxShadow(
@@ -54,9 +81,11 @@ class CalendarDayCell extends StatelessWidget {
         ),
       ];
     } else if (isToday) {
-      backgroundColor = isUnavailable
+      backgroundColor = showRed
           ? Color.alphaBlend(redTint, colorScheme.secondary.withValues(alpha: 0.12))
-          : colorScheme.secondary.withValues(alpha: 0.10);
+          : (showGreen
+              ? Color.alphaBlend(greenTint, colorScheme.secondary.withValues(alpha: 0.12))
+              : colorScheme.secondary.withValues(alpha: 0.10));
       border = Border.all(
         color: colorScheme.secondary,
         width: 1.5,

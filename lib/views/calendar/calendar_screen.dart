@@ -150,6 +150,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               planState.hasUnavailability(day),
                           getUnavailableCountForDate: (day) =>
                               planState.getUnavailabilitiesForDate(day).length,
+                          isShaggingAvailableForDate: (day) =>
+                              planState.hasShaggingAvailability(day),
                           onDaySelected: (selectedDay, focusedDay) {
                             FocusScope.of(context).unfocus();
                             setState(() {
@@ -187,6 +189,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           userName: authState.user?.displayName,
                         ),
                         onToggleAvailability: () => planNotifier.toggleMyUnavailability(_selectedDay),
+                        shaggingAvailabilities: planState.getShaggingAvailabilitiesForDate(
+                          _selectedDay,
+                          currentUserId: currentUserId,
+                          currentUserName: authState.user?.displayName,
+                        ),
+                        isCurrentUserShaggingAvailable: planState.isUserShaggingAvailable(
+                          _selectedDay,
+                          currentUserId,
+                          userName: authState.user?.displayName,
+                        ),
+                        onToggleShaggingAvailability: () => planNotifier.toggleMyShaggingAvailability(_selectedDay),
                       ),
                       const SizedBox(height: 4),
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/plan_activity.dart';
 import '../../models/activity_notification.dart';
 import '../../models/day_unavailability.dart';
+import '../../models/day_shagging_availability.dart';
 import '../../models/app_user.dart';
 import '../../core/utils/date_utils_helper.dart';
 import '../core/services/plan_service.dart';
@@ -15,6 +16,7 @@ class PlanState {
   final List<PlanActivity> activities;
   final List<ActivityNotification> notifications;
   final List<DayUnavailability> unavailabilities;
+  final List<DayShaggingAvailability> shaggingAvailabilities;
   final bool isLoading;
   final String? lastInAppNotice;
 
@@ -22,6 +24,7 @@ class PlanState {
     this.activities = const [],
     this.notifications = const [],
     this.unavailabilities = const [],
+    this.shaggingAvailabilities = const [],
     this.isLoading = false,
     this.lastInAppNotice,
   });
@@ -85,10 +88,68 @@ class PlanState {
     return unavailabilities.any((u) => u.date == dateStr);
   }
 
+  /// Returns list of shagging tool availabilities for a given date, deduplicated per person
+  List<DayShaggingAvailability> getShaggingAvailabilitiesForDate(
+    DateTime date, {
+    String? currentUserId,
+    String? currentUserName,
+  }) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    final rawList = shaggingAvailabilities.where((u) => u.date == dateStr).toList();
+
+    final result = <DayShaggingAvailability>[];
+    final seenUserIds = <String>{};
+    final seenUserNames = <String>{};
+
+    for (final u in rawList) {
+      final isMe = (currentUserId != null && currentUserId.isNotEmpty && u.userId == currentUserId) ||
+          (currentUserName != null && currentUserName.isNotEmpty && u.userName.toLowerCase().trim() == currentUserName.toLowerCase().trim()) ||
+          u.userName == 'Lil "LeBg" Binks';
+
+      final effectiveName = isMe && currentUserName != null && currentUserName.isNotEmpty
+          ? currentUserName
+          : u.userName;
+      final effectiveId = isMe && currentUserId != null && currentUserId.isNotEmpty
+          ? currentUserId
+          : u.userId;
+
+      final keyName = effectiveName.toLowerCase().trim();
+
+      if (!seenUserIds.contains(effectiveId) && !seenUserNames.contains(keyName)) {
+        seenUserIds.add(effectiveId);
+        seenUserNames.add(keyName);
+        result.add(u.copyWith(
+          userId: effectiveId,
+          userName: effectiveName,
+        ));
+      }
+    }
+
+    return result;
+  }
+
+  /// Returns true if a specific user has enabled the shagging tool on this date
+  bool isUserShaggingAvailable(DateTime date, String userId, {String? userName}) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    final cleanName = userName?.toLowerCase().trim();
+    return shaggingAvailabilities.any((u) =>
+        u.date == dateStr &&
+        (u.userId == userId ||
+            (cleanName != null && cleanName.isNotEmpty && u.userName.toLowerCase().trim() == cleanName) ||
+            u.userName == 'Lil "LeBg" Binks'));
+  }
+
+  /// Returns true if the shagging tool is marked available on this date
+  bool hasShaggingAvailability(DateTime date) {
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    return shaggingAvailabilities.any((u) => u.date == dateStr);
+  }
+
   PlanState copyWith({
     List<PlanActivity>? activities,
     List<ActivityNotification>? notifications,
     List<DayUnavailability>? unavailabilities,
+    List<DayShaggingAvailability>? shaggingAvailabilities,
     bool? isLoading,
     String? lastInAppNotice,
     bool clearNotice = false,
@@ -97,6 +158,7 @@ class PlanState {
       activities: activities ?? this.activities,
       notifications: notifications ?? this.notifications,
       unavailabilities: unavailabilities ?? this.unavailabilities,
+      shaggingAvailabilities: shaggingAvailabilities ?? this.shaggingAvailabilities,
       isLoading: isLoading ?? this.isLoading,
       lastInAppNotice: clearNotice ? null : (lastInAppNotice ?? this.lastInAppNotice),
     );
@@ -110,6 +172,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   StreamSubscription<List<PlanActivity>>? _activitySubscription;
   StreamSubscription<List<ActivityNotification>>? _notificationSubscription;
   StreamSubscription<List<DayUnavailability>>? _unavailabilitySubscription;
+  StreamSubscription<List<DayShaggingAvailability>>? _shaggingSubscription;
   Timer? _noticeAutoDismissTimer;
 
   PlanNotifier(this._planService, this._storageService, this._ref)
@@ -123,10 +186,12 @@ class PlanNotifier extends StateNotifier<PlanState> {
       final cachedActivities = _storageService.getSpaceActivities(currentSpace.id);
       final cachedNotifications = _storageService.getSpaceNotifications(currentSpace.id);
       final cachedUnavailabilities = _storageService.getSpaceUnavailabilities(currentSpace.id);
+      final cachedShagging = _storageService.getSpaceShaggingAvailabilities(currentSpace.id);
       state = state.copyWith(
         activities: cachedActivities,
         notifications: cachedNotifications,
         unavailabilities: cachedUnavailabilities,
+        shaggingAvailabilities: cachedShagging,
       );
       _subscribeToSpace(currentSpace.id);
     }
@@ -136,16 +201,19 @@ class PlanNotifier extends StateNotifier<PlanState> {
         final cachedActivities = _storageService.getSpaceActivities(next.currentSpace!.id);
         final cachedNotifications = _storageService.getSpaceNotifications(next.currentSpace!.id);
         final cachedUnavailabilities = _storageService.getSpaceUnavailabilities(next.currentSpace!.id);
+        final cachedShagging = _storageService.getSpaceShaggingAvailabilities(next.currentSpace!.id);
         state = state.copyWith(
           activities: cachedActivities,
           notifications: cachedNotifications,
           unavailabilities: cachedUnavailabilities,
+          shaggingAvailabilities: cachedShagging,
         );
         _subscribeToSpace(next.currentSpace!.id);
       } else {
         _activitySubscription?.cancel();
         _notificationSubscription?.cancel();
         _unavailabilitySubscription?.cancel();
+        _shaggingSubscription?.cancel();
         state = const PlanState();
       }
     });
@@ -162,6 +230,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
     _unavailabilitySubscription?.cancel();
+    _shaggingSubscription?.cancel();
 
     final user = _getCurrentUser();
 
@@ -189,6 +258,13 @@ class PlanNotifier extends StateNotifier<PlanState> {
       spaceId: spaceId,
     ).listen((unavailabilities) {
       state = state.copyWith(unavailabilities: unavailabilities);
+    });
+
+    // Stream Shagging Tool Availabilities
+    _shaggingSubscription = _planService.streamSpaceShaggingAvailabilities(
+      spaceId: spaceId,
+    ).listen((shaggingAvailabilities) {
+      state = state.copyWith(shaggingAvailabilities: shaggingAvailabilities);
     });
   }
 
@@ -433,12 +509,47 @@ class PlanNotifier extends StateNotifier<PlanState> {
     );
   }
 
+  /// Toggle current user's shagging tool availability for a specific date
+  Future<void> toggleMyShaggingAvailability(DateTime date) async {
+    final user = _getCurrentUser();
+    final space = _ref.read(spaceProvider).currentSpace;
+    final spaceId = space?.id ?? 'space_default';
+    final dateStr = DateUtilsHelper.formatYmd(date);
+    final toolId = '${spaceId}_${dateStr}_${user.id}';
+
+    final isCurrentlyAvailable = state.shaggingAvailabilities.any((u) => u.date == dateStr && u.userId == user.id);
+
+    // Optimistic UI state update
+    if (isCurrentlyAvailable) {
+      final updated = state.shaggingAvailabilities.where((u) => !(u.date == dateStr && u.userId == user.id)).toList();
+      state = state.copyWith(shaggingAvailabilities: updated);
+    } else {
+      final newEntry = DayShaggingAvailability(
+        id: toolId,
+        spaceId: spaceId,
+        date: dateStr,
+        userId: user.id,
+        userName: user.displayName,
+        userPhotoUrl: user.photoUrl,
+        createdAt: DateTime.now(),
+      );
+      state = state.copyWith(shaggingAvailabilities: [...state.shaggingAvailabilities, newEntry]);
+    }
+
+    await _planService.toggleUserShaggingAvailability(
+      spaceId: spaceId,
+      date: dateStr,
+      user: user,
+    );
+  }
+
   @override
   void dispose() {
     _noticeAutoDismissTimer?.cancel();
     _activitySubscription?.cancel();
     _notificationSubscription?.cancel();
     _unavailabilitySubscription?.cancel();
+    _shaggingSubscription?.cancel();
     super.dispose();
   }
 }
