@@ -6,7 +6,7 @@ class CalendarDayCell extends StatelessWidget {
   final int count;
   final bool isUnavailable;
   final int unavailableCount;
-  final bool isShaggingAvailable;
+  final bool isShaggingUnavailable;
   final bool isSelected;
   final bool isToday;
   final bool isOutside;
@@ -17,7 +17,7 @@ class CalendarDayCell extends StatelessWidget {
     this.count = 0,
     this.isUnavailable = false,
     this.unavailableCount = 0,
-    this.isShaggingAvailable = false,
+    this.isShaggingUnavailable = false,
     this.isSelected = false,
     this.isToday = false,
     this.isOutside = false,
@@ -32,46 +32,23 @@ class CalendarDayCell extends StatelessWidget {
     const redColor = Color(0xFFE53935);
     final redTint = redColor.withValues(alpha: isSelected ? 0.24 : 0.16);
 
-    const greenColor = Color(0xFF43A047);
-    final greenTint = greenColor.withValues(alpha: isSelected ? 0.24 : 0.16);
-
-    // Priority: Red (unavailability) takes priority over Green (shaging tool)
-    final bool showRed = isUnavailable;
-    final bool showGreen = !isUnavailable && isShaggingAvailable;
-
-    Color backgroundColor = Colors.transparent;
-    if (!isOutside) {
-      if (showRed) {
-        backgroundColor = redTint;
-      } else if (showGreen) {
-        backgroundColor = greenTint;
-      }
-    }
-
+    Color backgroundColor = isUnavailable && !isOutside ? redTint : Colors.transparent;
     Color textColor = isOutside
         ? colorScheme.onSurface.withValues(alpha: 0.25)
-        : (showRed && !isSelected && !isToday
+        : (isUnavailable && !isSelected && !isToday
             ? const Color(0xFFC62828)
-            : (showGreen && !isSelected && !isToday
-                ? const Color(0xFF2E7D32)
-                : colorScheme.onSurface));
+            : colorScheme.onSurface);
 
-    BoxBorder? border = (!isOutside && !isSelected && !isToday)
-        ? (showRed
-            ? Border.all(color: redColor.withValues(alpha: 0.35), width: 1.0)
-            : (showGreen
-                ? Border.all(color: greenColor.withValues(alpha: 0.35), width: 1.0)
-                : null))
+    BoxBorder? border = isUnavailable && !isOutside && !isSelected && !isToday
+        ? Border.all(color: redColor.withValues(alpha: 0.35), width: 1.0)
         : null;
 
     List<BoxShadow> shadows = [];
 
     if (isSelected) {
-      backgroundColor = showRed
+      backgroundColor = isUnavailable
           ? Color.alphaBlend(redTint, colorScheme.primary.withValues(alpha: 0.16))
-          : (showGreen
-              ? Color.alphaBlend(greenTint, colorScheme.primary.withValues(alpha: 0.16))
-              : colorScheme.primary.withValues(alpha: 0.14));
+          : colorScheme.primary.withValues(alpha: 0.14);
       border = Border.all(color: colorScheme.primary, width: 2.0);
       shadows = [
         BoxShadow(
@@ -81,11 +58,9 @@ class CalendarDayCell extends StatelessWidget {
         ),
       ];
     } else if (isToday) {
-      backgroundColor = showRed
+      backgroundColor = isUnavailable
           ? Color.alphaBlend(redTint, colorScheme.secondary.withValues(alpha: 0.12))
-          : (showGreen
-              ? Color.alphaBlend(greenTint, colorScheme.secondary.withValues(alpha: 0.12))
-              : colorScheme.secondary.withValues(alpha: 0.10));
+          : colorScheme.secondary.withValues(alpha: 0.10);
       border = Border.all(
         color: colorScheme.secondary,
         width: 1.5,
@@ -111,36 +86,55 @@ class CalendarDayCell extends StatelessWidget {
             border: border,
             boxShadow: shadows,
           ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${day.day}',
-                  style: GoogleFonts.fredoka(
-                    fontSize: daySize,
-                    fontWeight: isSelected || isToday ? FontWeight.w700 : (isUnavailable ? FontWeight.w600 : FontWeight.w500),
-                    color: isSelected
-                        ? colorScheme.primary
-                        : (isToday
-                            ? colorScheme.secondary
-                            : textColor.withValues(alpha: isOutside ? 0.25 : 0.9)),
-                  ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${day.day}',
+                      style: GoogleFonts.fredoka(
+                        fontSize: daySize,
+                        fontWeight: isSelected || isToday
+                            ? FontWeight.w700
+                            : (isUnavailable ? FontWeight.w600 : FontWeight.w500),
+                        color: isSelected
+                            ? colorScheme.primary
+                            : (isToday
+                                ? colorScheme.secondary
+                                : textColor.withValues(alpha: isOutside ? 0.25 : 0.9)),
+                      ),
+                    ),
+                    if (hasItems && !isOutside) ...[
+                      const SizedBox(height: 3),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (hasItems && !isOutside) ...[
-                  const SizedBox(height: 3),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
+              ),
+              if (isShaggingUnavailable && !isOutside)
+                Positioned(
+                  top: 2,
+                  right: 3,
+                  child: Text(
+                    '😢',
+                    style: TextStyle(
+                      fontSize: (cellHeight * 0.24).clamp(9.0, 13.0),
+                      height: 1.0,
                     ),
                   ),
-                ],
-              ],
-            ),
+                ),
+            ],
           ),
         );
       },

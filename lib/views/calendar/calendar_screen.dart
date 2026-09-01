@@ -150,7 +150,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               planState.hasUnavailability(day),
                           getUnavailableCountForDate: (day) =>
                               planState.getUnavailabilitiesForDate(day).length,
-                          isShaggingAvailableForDate: (day) =>
+                          isShaggingUnavailableForDate: (day) =>
                               planState.hasShaggingAvailability(day),
                           onDaySelected: (selectedDay, focusedDay) {
                             FocusScope.of(context).unfocus();

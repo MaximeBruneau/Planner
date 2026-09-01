@@ -224,20 +224,17 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
 
   Widget _buildShaggingToolCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final hasShagging = shaggingAvailabilities.isNotEmpty;
+    final hasShaggingUnavailable = shaggingAvailabilities.isNotEmpty;
 
-    const greenColor = Color(0xFF43A047);
-    const darkGreenColor = Color(0xFF2E7D32);
-
-    if (hasShagging) {
+    if (hasShaggingUnavailable) {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: greenColor.withValues(alpha: 0.08),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: greenColor.withValues(alpha: 0.28),
+            color: colorScheme.outline.withValues(alpha: 0.15),
             width: 1.2,
           ),
         ),
@@ -250,22 +247,22 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: greenColor.withValues(alpha: 0.15),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
                   child: const Text(
-                    "🌿",
+                    "😢",
                     style: TextStyle(fontSize: 13),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Shaging tool available (${shaggingAvailabilities.length})",
+                    "Shagging tool unavailable 😢 (${shaggingAvailabilities.length})",
                     style: GoogleFonts.fredoka(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: darkGreenColor,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -283,7 +280,7 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: greenColor.withValues(alpha: 0.25),
+                      color: colorScheme.outline.withValues(alpha: 0.15),
                       width: 1,
                     ),
                     boxShadow: [
@@ -299,17 +296,17 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 10,
-                        backgroundColor: greenColor.withValues(alpha: 0.15),
+                        backgroundColor: colorScheme.surfaceContainerHighest,
                         backgroundImage: u.userPhotoUrl != null && u.userPhotoUrl!.isNotEmpty
                             ? NetworkImage(u.userPhotoUrl!)
                             : null,
                         child: u.userPhotoUrl == null || u.userPhotoUrl!.isEmpty
                             ? Text(
                                 u.userName.isNotEmpty ? u.userName[0].toUpperCase() : "👤",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: darkGreenColor,
+                                  color: colorScheme.onSurface,
                                 ),
                               )
                             : null,
@@ -333,7 +330,7 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
       );
     }
 
-    // When tool is not declared active yet
+    // When tool is available (no one marked it unavailable)
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -347,14 +344,15 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Text(
-            "🌿",
-            style: TextStyle(fontSize: 14),
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 16,
+            color: colorScheme.primary.withValues(alpha: 0.7),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              "Shaging tool available",
+              "Shagging tool available",
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
@@ -369,21 +367,20 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
   }
 
   Widget _buildShaggingToggleButton(BuildContext context) {
-    const greenColor = Color(0xFF43A047);
-    const darkGreenColor = Color(0xFF2E7D32);
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (isCurrentUserShaggingAvailable) {
       return OutlinedButton.icon(
         onPressed: onToggleShaggingAvailability,
-        icon: const Icon(Icons.check_circle_rounded, size: 14, color: darkGreenColor),
+        icon: const Icon(Icons.check_circle_rounded, size: 14, color: Colors.green),
         label: const Text(
-          "Tool Active ✅",
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: darkGreenColor),
+          "Tool Available ✅",
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.green),
         ),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           minimumSize: Size.zero,
-          side: BorderSide(color: greenColor.withValues(alpha: 0.5)),
+          side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
@@ -391,15 +388,15 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: onToggleShaggingAvailability,
-      icon: const Text("🌿", style: TextStyle(fontSize: 12)),
-      label: const Text(
-        "Available",
-        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: darkGreenColor),
+      icon: const Text("😢", style: TextStyle(fontSize: 12)),
+      label: Text(
+        "Unavailable",
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: colorScheme.onSurface.withValues(alpha: 0.8)),
       ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         minimumSize: Size.zero,
-        side: BorderSide(color: greenColor.withValues(alpha: 0.35)),
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.25)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );

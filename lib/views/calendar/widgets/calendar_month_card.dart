@@ -14,7 +14,7 @@ class CalendarMonthCard extends StatelessWidget {
   final int Function(DateTime day) getCountForDate;
   final bool Function(DateTime day)? isUnavailableForDate;
   final int Function(DateTime day)? getUnavailableCountForDate;
-  final bool Function(DateTime day)? isShaggingAvailableForDate;
+  final bool Function(DateTime day)? isShaggingUnavailableForDate;
 
   const CalendarMonthCard({
     super.key,
@@ -27,7 +27,7 @@ class CalendarMonthCard extends StatelessWidget {
     required this.getCountForDate,
     this.isUnavailableForDate,
     this.getUnavailableCountForDate,
-    this.isShaggingAvailableForDate,
+    this.isShaggingUnavailableForDate,
   });
 
   @override
@@ -85,26 +85,26 @@ class CalendarMonthCard extends StatelessWidget {
               final count = getCountForDate(day);
               final isUnavailable = isUnavailableForDate?.call(day) ?? false;
               final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
-              final isShaggingAvailable = isShaggingAvailableForDate?.call(day) ?? false;
+              final isShaggingUnavailable = isShaggingUnavailableForDate?.call(day) ?? false;
               return CalendarDayCell(
                 day: day,
                 count: count,
                 isUnavailable: isUnavailable,
                 unavailableCount: unavailableCount,
-                isShaggingAvailable: isShaggingAvailable,
+                isShaggingUnavailable: isShaggingUnavailable,
               );
             },
             selectedBuilder: (context, day, focusedDay) {
               final count = getCountForDate(day);
               final isUnavailable = isUnavailableForDate?.call(day) ?? false;
               final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
-              final isShaggingAvailable = isShaggingAvailableForDate?.call(day) ?? false;
+              final isShaggingUnavailable = isShaggingUnavailableForDate?.call(day) ?? false;
               return CalendarDayCell(
                 day: day,
                 count: count,
                 isUnavailable: isUnavailable,
                 unavailableCount: unavailableCount,
-                isShaggingAvailable: isShaggingAvailable,
+                isShaggingUnavailable: isShaggingUnavailable,
                 isSelected: true,
               );
             },
@@ -112,13 +112,13 @@ class CalendarMonthCard extends StatelessWidget {
               final count = getCountForDate(day);
               final isUnavailable = isUnavailableForDate?.call(day) ?? false;
               final unavailableCount = getUnavailableCountForDate?.call(day) ?? 0;
-              final isShaggingAvailable = isShaggingAvailableForDate?.call(day) ?? false;
+              final isShaggingUnavailable = isShaggingUnavailableForDate?.call(day) ?? false;
               return CalendarDayCell(
                 day: day,
                 count: count,
                 isUnavailable: isUnavailable,
                 unavailableCount: unavailableCount,
-                isShaggingAvailable: isShaggingAvailable,
+                isShaggingUnavailable: isShaggingUnavailable,
                 isToday: true,
                 isSelected: isSameDay(selectedDay, day),
               );
