@@ -175,34 +175,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Member Unavailability Status Card & Quick Toggle
-                      SelectedDayUnavailabilityCard(
-                        selectedDay: _selectedDay,
-                        unavailabilities: planState.getUnavailabilitiesForDate(
-                          _selectedDay,
-                          currentUserId: currentUserId,
-                          currentUserName: authState.user?.displayName,
-                        ),
-                        isCurrentUserUnavailable: planState.isUserUnavailable(
-                          _selectedDay,
-                          currentUserId,
-                          userName: authState.user?.displayName,
-                        ),
-                        onToggleAvailability: () => planNotifier.toggleMyUnavailability(_selectedDay),
-                        shaggingAvailabilities: planState.getShaggingAvailabilitiesForDate(
-                          _selectedDay,
-                          currentUserId: currentUserId,
-                          currentUserName: authState.user?.displayName,
-                        ),
-                        isCurrentUserShaggingAvailable: planState.isUserShaggingAvailable(
-                          _selectedDay,
-                          currentUserId,
-                          userName: authState.user?.displayName,
-                        ),
-                        onToggleShaggingAvailability: () => planNotifier.toggleMyShaggingAvailability(_selectedDay),
-                      ),
-                      const SizedBox(height: 4),
-
                       // Inline Add Input Card
                       AddActivityInput(
                         selectedDay: _selectedDay,
@@ -211,7 +183,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         onSubmit: _submitItem,
                         onRandomIdeaTap: _pickRandomIdea,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
 
                       // The 1 List for this Selected Date
                       if (dayItems.isEmpty)
@@ -240,6 +212,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             );
                           },
                         ),
+                      const SizedBox(height: 16),
+
+                      // Member Unavailability & Shaging Tool Status Cards & Quick Toggles
+                      SelectedDayUnavailabilityCard(
+                        selectedDay: _selectedDay,
+                        unavailabilities: planState.getUnavailabilitiesForDate(
+                          _selectedDay,
+                          currentUserId: currentUserId,
+                          currentUserName: authState.user?.displayName,
+                        ),
+                        isCurrentUserUnavailable: planState.isUserUnavailable(
+                          _selectedDay,
+                          currentUserId,
+                          userName: authState.user?.displayName,
+                        ),
+                        onToggleAvailability: () => planNotifier.toggleMyUnavailability(_selectedDay),
+                        shaggingAvailabilities: planState.getShaggingAvailabilitiesForDate(
+                          _selectedDay,
+                          currentUserId: currentUserId,
+                          currentUserName: authState.user?.displayName,
+                        ),
+                        isCurrentUserShaggingAvailable: planState.isUserShaggingAvailable(
+                          _selectedDay,
+                          currentUserId,
+                          userName: authState.user?.displayName,
+                        ),
+                        onToggleShaggingAvailability: () => planNotifier.toggleMyShaggingAvailability(_selectedDay),
+                      ),
                       const SizedBox(height: 40),
                     ],
                   ),
