@@ -258,7 +258,7 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Shagging tool unavailable 😢 (${shaggingAvailabilities.length})",
+                    "Garden unavailable 😢 (${shaggingAvailabilities.length})",
                     style: GoogleFonts.fredoka(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -352,7 +352,7 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              "Shagging tool available",
+              "Garden available",
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
@@ -374,7 +374,7 @@ class SelectedDayUnavailabilityCard extends StatelessWidget {
         onPressed: onToggleShaggingAvailability,
         icon: const Icon(Icons.check_circle_rounded, size: 14, color: Colors.green),
         label: const Text(
-          "Tool Available ✅",
+          "Garden Available ✅",
           style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.green),
         ),
         style: OutlinedButton.styleFrom(
