@@ -312,6 +312,8 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
         return "Ex: Escape game or bowling night 🎳";
       case IdeaCategory.sex:
         return "Ex: Oil massage, hotel night, lingerie 🌶️";
+      case IdeaCategory.discussion:
+        return "Ex: Talk about next trip, monthly budget 💬";
       case IdeaCategory.other:
         return "Ex: Buy a new board game 🎲";
     }

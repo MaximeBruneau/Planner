@@ -174,12 +174,15 @@ class PlanService {
 
     if (spaceId.isNotEmpty && spaceId != 'space_default') {
       try {
+        // Store with isRead: false in Firestore so other members see it as unread.
+        // The stream consumer determines read state locally per user.
+        final firestoreMap = notification.copyWith(isRead: false).toMap();
         await FirebaseFirestore.instance
             .collection('spaces')
             .doc(spaceId)
             .collection('notifications')
             .doc(notification.id)
-            .set(notification.toMap(), SetOptions(merge: true));
+            .set(firestoreMap, SetOptions(merge: true));
       } catch (e) {
         debugPrint('Firestore notification log error: $e');
       }

@@ -8,6 +8,7 @@ enum IdeaCategory {
   place,
   activity,
   sex,
+  discussion,
   other;
 
   String get label {
@@ -20,6 +21,8 @@ enum IdeaCategory {
         return 'Activities & Fun';
       case IdeaCategory.sex:
         return 'Sex & Intimacy';
+      case IdeaCategory.discussion:
+        return 'Discussion Topics';
       case IdeaCategory.other:
         return 'Other';
     }
@@ -35,6 +38,8 @@ enum IdeaCategory {
         return '🎯';
       case IdeaCategory.sex:
         return '🌶️';
+      case IdeaCategory.discussion:
+        return '💬';
       case IdeaCategory.other:
         return '💡';
     }
@@ -50,6 +55,8 @@ enum IdeaCategory {
         return Icons.celebration_rounded;
       case IdeaCategory.sex:
         return Icons.local_fire_department_rounded;
+      case IdeaCategory.discussion:
+        return Icons.forum_rounded;
       case IdeaCategory.other:
         return Icons.lightbulb_outline_rounded;
     }
@@ -64,6 +71,12 @@ enum IdeaCategory {
         normalized == 'intime' ||
         normalized == 'spicy') {
       return IdeaCategory.sex;
+    }
+    if (normalized == 'discussion' ||
+        normalized == 'sujet' ||
+        normalized == 'topic' ||
+        normalized == 'talk') {
+      return IdeaCategory.discussion;
     }
     return IdeaCategory.values.firstWhere(
       (c) => c.name.toLowerCase() == normalized,
